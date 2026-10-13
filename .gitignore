@@ -47,6 +47,11 @@ frontend/.vite/
 # Backend (Go)
 backend/bin/
 backend/*.exe
+backend/*.md
+!backend/agent.md
+
+# Temp / generated files
+prd_text.txt
 
 # Environment & IDE
 .env
