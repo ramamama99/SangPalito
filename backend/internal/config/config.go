@@ -5,19 +5,21 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	AppEnv         string
-	AppPort        string
-	AppSecretKey   string
-	DB             DBConfig
-	NIKEncryptKey  string
-	BcryptCost     int
-	JWTAccessExp   time.Duration
-	JWTRefreshExp  time.Duration
-	NotifURL       string
-	NotifToken     string
+	AppEnv        string
+	AppPort       string
+	AppSecretKey  string
+	DB            DBConfig
+	NIKEncryptKey string
+	BcryptCost    int
+	JWTAccessExp  time.Duration
+	JWTRefreshExp time.Duration
+	NotifURL      string
+	NotifToken    string
 }
 
 type DBConfig struct {
@@ -36,7 +38,11 @@ func (d *DBConfig) DSN() string {
 	)
 }
 
+// Load membaca konfigurasi dari file .env dan environment variables
 func Load() (*Config, error) {
+	// Baca file .env jika ada
+	_ = godotenv.Load()
+
 	dbMaxConns, _ := strconv.Atoi(getEnv("DB_MAX_CONNS", "20"))
 	dbMinConns, _ := strconv.Atoi(getEnv("DB_MIN_CONNS", "2"))
 	bcryptCost, _ := strconv.Atoi(getEnv("BCRYPT_COST", "12"))
@@ -53,7 +59,7 @@ func Load() (*Config, error) {
 
 	return &Config{
 		AppEnv:        getEnv("APP_ENV", "development"),
-		AppPort:       getEnv("APP_PORT", "8080"),
+		AppPort:       getEnv("APP_PORT", "8081"), // fallback ke 8081
 		AppSecretKey:  getEnv("APP_SECRET_KEY", "default-secret-key-min-32-chars!"),
 		NIKEncryptKey: getEnv("NIK_ENCRYPTION_KEY", ""),
 		BcryptCost:    bcryptCost,
