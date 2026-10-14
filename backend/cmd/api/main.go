@@ -35,7 +35,7 @@ func main() {
 
 	// ── 2. Setup Structured Logger ──────────────────────────
 	var logHandler slog.Handler
-	if cfg.App.Env == "production" {
+	if cfg.AppEnv == "production" {
 		logHandler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	} else {
 		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
@@ -44,7 +44,7 @@ func main() {
 
 	// ── 3. Database Connection ──────────────────────────────
 	ctx := context.Background()
-	pool, err := repository.NewPostgresPool(ctx, cfg.DB)
+	pool, err := repository.NewDBPool(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -56,16 +56,16 @@ func main() {
 	seedDefaultFacility(ctx, facilityRepo)
 
 	// ── 4. NIK Crypto ───────────────────────────────────────
-	nikCrypto, err := crypto.NewNIKCrypto(cfg.Security.NIKEncryptionKey)
+	nikCrypto, err := crypto.NewNIKCrypto(cfg.NIKEncryptKey)
 	if err != nil {
 		log.Fatalf("failed to init NIK crypto: %v", err)
 	}
 
 	// ── 5. JWT Manager ──────────────────────────────────────
-	jwtManager := jwt.NewManager(cfg.App.SecretKey, cfg.JWT.AccessExpire, cfg.JWT.RefreshExpire)
+	jwtManager := jwt.NewManager(cfg.AppSecretKey, cfg.JWTAccessExp, cfg.JWTRefreshExp)
 
 	// ── 6. Gin Engine ───────────────────────────────────────
-	if cfg.App.Env == "production" {
+	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.New()
@@ -77,18 +77,19 @@ func main() {
 	notifWorker := worker.NewNotificationWorker(200)
 	notifWorker.Start(ctx)
 
-	// ── 8. Session Rate Limiter (3 reqs per session + timeout) ──
-	rateLimiter := middleware.NewSessionRateLimiter(cfg.RateLimit.MaxRequests, cfg.RateLimit.Timeout)
+	// ── 8. Session Rate Limiter ─────────────────────────────
+	rateLimiter := middleware.NewSessionRateLimiter(5, 5*time.Minute)
 
-	// ── 9. Default Facility ID from ENV ─────────────────────
-	defaultFacilityID, _ := uuid.Parse(cfg.App.DefaultFacilityID)
+	// ── 9. Default Facility ID ──────────────────────────────
+	defFac, _ := facilityRepo.GetFirst(ctx)
+	defaultFacilityID := defFac.ID
 
 	// ── 10. Routes ───────────────────────────────────────────
 	router.Setup(engine, pool, jwtManager, nikCrypto, wsHub, notifWorker, defaultFacilityID, rateLimiter)
 
 	// ── 11. HTTP Server with Graceful Shutdown ───────────────
 	srv := &http.Server{
-		Addr:         ":" + cfg.App.Port,
+		Addr:         ":" + cfg.AppPort,
 		Handler:      engine,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -101,7 +102,7 @@ func main() {
 				slog.Error("server listener panic recovered", "panic", r)
 			}
 		}()
-		slog.Info("server starting", "port", cfg.App.Port, "env", cfg.App.Env)
+		slog.Info("server starting", "port", cfg.AppPort, "env", cfg.AppEnv)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
@@ -123,7 +124,6 @@ func main() {
 	slog.Info("server exited")
 }
 
-// seedDefaultFacility ensures database has at least one Puskesmas facility
 func seedDefaultFacility(ctx context.Context, repo domainRepo.FacilityRepository) {
 	_, err := repo.GetFirst(ctx)
 	if err != nil {

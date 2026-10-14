@@ -17,7 +17,9 @@ type AppointmentRepository interface {
 	FindByQRToken(ctx context.Context, qrToken uuid.UUID) (*entity.Appointment, error)
 	FindByPatientPolyDate(ctx context.Context, patientID, polyclinicID uuid.UUID, date time.Time) (*entity.Appointment, error)
 	FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
+	FindToday(ctx context.Context, facilityID uuid.UUID, polyclinicID *uuid.UUID, date string) ([]entity.Appointment, error)
 	Create(ctx context.Context, a *entity.Appointment) error
 	CreateTx(ctx context.Context, tx pgx.Tx, a *entity.Appointment) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
+	Cancel(ctx context.Context, id uuid.UUID) error
 }

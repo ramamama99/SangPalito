@@ -42,6 +42,7 @@ func Setup(
 	doctorRepo := postgres.NewDoctorRepo(pool)
 	facilityRepo := postgres.NewFacilityRepo(pool)
 	visitRepo := postgres.NewVisitRepo(pool)
+	preRepo := postgres.NewPreAnamnesisRepo(pool)
 
 	// ── Services ─────────────────────────────────────────────
 	authService := service.NewAuthService(userRepo, auditLogRepo, jwtManager)
@@ -50,6 +51,7 @@ func Setup(
 	publicService := service.NewPublicService(pool, patientRepo, appointmentRepo, queueRepo, scheduleRepo, polyclinicRepo, nikCrypto)
 	userService := service.NewUserService(userRepo)
 	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
+	apptService := service.NewAppointmentService(appointmentRepo, preRepo, polyclinicRepo, facilityRepo)
 
 	// ── Handlers ─────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authService, validate, defaultFacilityID)
@@ -58,6 +60,7 @@ func Setup(
 	publicHandler := handler.NewPublicHandler(publicService, validate, defaultFacilityID)
 	userHandler := handler.NewUserHandler(userService, validate)
 	masterHandler := handler.NewMasterHandler(masterService)
+	apptHandler := handler.NewAppointmentHandler(apptService, masterService)
 
 	// ── Global Middleware ────────────────────────────────────
 	r.Use(middleware.Recover())
@@ -122,6 +125,16 @@ func Setup(
 			master.POST("/doctors", masterHandler.CreateDoctor)
 			master.POST("/schedules", masterHandler.CreateSchedule)
 			master.DELETE("/schedules/:id", masterHandler.DeleteSchedule)
+		}
+
+		// Appointments & Pre-anamnesis (Registrar, Medic)
+		appointments := authenticated.Group("/appointments")
+		{
+			appointments.GET("", apptHandler.GetAppointments)
+			appointments.POST("", apptHandler.CreateWalkIn)
+			appointments.DELETE("/:id", apptHandler.CancelAppointment)
+			appointments.GET("/:id/pre-anamnesis", apptHandler.GetPreAnamnesis)
+			appointments.PATCH("/:id/pre-anamnesis", apptHandler.UpdatePreAnamnesis)
 		}
 
 		// Patients (registrar, medic)
