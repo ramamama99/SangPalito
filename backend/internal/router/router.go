@@ -1,53 +1,155 @@
-﻿package router
+package router
 
 import (
-	"sangpalito/backend/internal/handler"
-	"sangpalito/backend/internal/middleware"
-	"sangpalito/backend/pkg/response"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"sangpalito/backend/internal/handler"
+	"sangpalito/backend/internal/middleware"
+	"sangpalito/backend/internal/repository/postgres"
+	"sangpalito/backend/internal/service"
+	"sangpalito/backend/internal/websocket"
+	"sangpalito/backend/internal/worker"
+	"sangpalito/backend/pkg/crypto"
+	"sangpalito/backend/pkg/jwt"
+	"sangpalito/backend/pkg/response"
 )
 
-type HandlerRegistry struct {
-	MasterHandler *handler.MasterHandler
-}
+// Setup initializes all routes, handlers, services, and repositories.
+func Setup(
+	r *gin.Engine,
+	pool *pgxpool.Pool,
+	jwtManager *jwt.Manager,
+	nikCrypto *crypto.NIKCrypto,
+	hub *websocket.Hub,
+	notifWorker *worker.NotificationWorker,
+	defaultFacilityID uuid.UUID,
+	rateLimiter *middleware.SessionRateLimiter,
+) {
+	validate := validator.New()
 
-func Setup(reg *HandlerRegistry) *gin.Engine {
-	r := gin.New()
+	// ── Repositories ─────────────────────────────────────────
+	userRepo := postgres.NewUserRepo(pool)
+	patientRepo := postgres.NewPatientRepo(pool)
+	queueRepo := postgres.NewQueueRepo(pool)
+	appointmentRepo := postgres.NewAppointmentRepo(pool)
+	auditLogRepo := postgres.NewAuditLogRepo(pool)
+	scheduleRepo := postgres.NewScheduleRepo(pool)
+	polyclinicRepo := postgres.NewPolyclinicRepo(pool)
+	doctorRepo := postgres.NewDoctorRepo(pool)
+	facilityRepo := postgres.NewFacilityRepo(pool)
+	visitRepo := postgres.NewVisitRepo(pool)
 
-	// Middleware bawaan
-	r.Use(gin.Recovery())
+	// ── Services ─────────────────────────────────────────────
+	authService := service.NewAuthService(userRepo, auditLogRepo, jwtManager)
+	patientService := service.NewPatientService(patientRepo, visitRepo, auditLogRepo, nikCrypto)
+	queueService := service.NewQueueService(queueRepo, auditLogRepo, hub, notifWorker)
+	publicService := service.NewPublicService(pool, patientRepo, appointmentRepo, queueRepo, scheduleRepo, polyclinicRepo, nikCrypto)
+	userService := service.NewUserService(userRepo)
+	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
+
+	// ── Handlers ─────────────────────────────────────────────
+	authHandler := handler.NewAuthHandler(authService, validate, defaultFacilityID)
+	patientHandler := handler.NewPatientHandler(patientService, validate)
+	queueHandler := handler.NewQueueHandler(queueService, validate)
+	publicHandler := handler.NewPublicHandler(publicService, validate, defaultFacilityID)
+	userHandler := handler.NewUserHandler(userService, validate)
+	masterHandler := handler.NewMasterHandler(masterService)
+
+	// ── Global Middleware ────────────────────────────────────
+	r.Use(middleware.Recover())
 	r.Use(cors.Default())
+	r.Use(middleware.RequestLogger())
+	if rateLimiter != nil {
+		r.Use(rateLimiter.Middleware())
+	}
 	r.Use(middleware.ErrorHandler())
 
-	// Endpoint Health Check
+	// ── Health Check ─────────────────────────────────────────
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, response.OK(gin.H{
 			"status": "healthy",
-			"app":    "AntriSehat API",
+			"app":    "SangPalito AntriSehat API",
 		}))
 	})
 
-	v1 := r.Group("/api/v1")
+	// ── WebSocket ────────────────────────────────────────────
+	r.GET("/ws/queues", func(c *gin.Context) {
+		websocket.ServeWS(hub, c.Writer, c.Request)
+	})
+
+	api := r.Group("/api/v1")
+
+	// ── Master Data Routes (Public / Read) ────────────────────
+	api.GET("/facilities", masterHandler.GetFacilities)
+	api.GET("/polyclinics", masterHandler.GetPolyclinics)
+	api.GET("/doctors", masterHandler.GetDoctors)
+	api.GET("/schedules", masterHandler.GetSchedules)
+
+	// ── Public Routes (no auth) ─────────────────────────────
+	auth := api.Group("/auth")
 	{
-		// Fasilitas
-		v1.GET("/facilities", reg.MasterHandler.GetFacilities)
-
-		// Poliklinik
-		v1.GET("/polyclinics", reg.MasterHandler.GetPolyclinics)
-		v1.POST("/polyclinics", reg.MasterHandler.CreatePolyclinic)
-		v1.PATCH("/polyclinics/:id", reg.MasterHandler.UpdatePolyclinic)
-
-		// Dokter
-		v1.GET("/doctors", reg.MasterHandler.GetDoctors)
-		v1.POST("/doctors", reg.MasterHandler.CreateDoctor)
-
-		// Jadwal & Kuota
-		v1.GET("/schedules", reg.MasterHandler.GetSchedules)
-		v1.POST("/schedules", reg.MasterHandler.CreateSchedule)
-		v1.DELETE("/schedules/:id", reg.MasterHandler.DeleteSchedule)
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/refresh", authHandler.Refresh)
 	}
 
-	return r
+	public := api.Group("/public")
+	{
+		public.GET("/polyclinics", publicHandler.ListPolyclinics)
+		public.GET("/schedules", publicHandler.ListSchedules)
+		public.POST("/appointments", publicHandler.CreateAppointment)
+		public.GET("/appointments/:token", publicHandler.GetAppointmentStatus)
+		public.POST("/queues/checkin", publicHandler.CheckIn)
+		public.GET("/queues/:id/estimate", publicHandler.GetQueueEstimate)
+	}
+
+	// ── Authenticated Routes ────────────────────────────────
+	authenticated := api.Group("")
+	authenticated.Use(middleware.Auth(jwtManager))
+	{
+		// Auth
+		authenticated.POST("/auth/logout", authHandler.Logout)
+
+		// Master Data Management (Admin / Staff)
+		master := authenticated.Group("")
+		master.Use(middleware.RequireRoles("admin"))
+		{
+			master.POST("/polyclinics", masterHandler.CreatePolyclinic)
+			master.PATCH("/polyclinics/:id", masterHandler.UpdatePolyclinic)
+			master.POST("/doctors", masterHandler.CreateDoctor)
+			master.POST("/schedules", masterHandler.CreateSchedule)
+			master.DELETE("/schedules/:id", masterHandler.DeleteSchedule)
+		}
+
+		// Patients (registrar, medic)
+		patients := authenticated.Group("/patients")
+		{
+			patients.POST("", middleware.RequireRoles("registrar"), patientHandler.Create)
+			patients.GET("", middleware.RequireRoles("registrar", "medic"), patientHandler.Search)
+			patients.GET("/:id", middleware.RequireRoles("registrar", "medic"), patientHandler.Get)
+			patients.PATCH("/:id", middleware.RequireRoles("registrar"), patientHandler.Update)
+			patients.DELETE("/:id", middleware.RequireRoles("admin"), patientHandler.Delete)
+			patients.GET("/:id/visits", middleware.RequireRoles("medic"), patientHandler.Visits)
+		}
+
+		// Queues (staff)
+		queues := authenticated.Group("/queues")
+		{
+			queues.GET("", middleware.RequireRoles("registrar", "medic"), queueHandler.List)
+			queues.PATCH("/:id/status", middleware.RequireRoles("medic", "registrar"), queueHandler.UpdateStatus)
+		}
+
+		// Users (admin only)
+		users := authenticated.Group("/users")
+		users.Use(middleware.RequireRoles("admin"))
+		{
+			users.GET("", userHandler.List)
+			users.POST("", userHandler.Create)
+			users.PATCH("/:id", userHandler.Update)
+			users.PATCH("/:id/password", userHandler.ResetPassword)
+		}
+	}
 }

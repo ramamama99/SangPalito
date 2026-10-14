@@ -209,3 +209,8 @@ CREATE TABLE audit_logs (
 );
 
 CREATE INDEX idx_audit_entity ON audit_logs (entity, entity_id, created_at DESC);
+
+-- Default Facility Seed
+INSERT INTO facilities (id, name, type, code, address, phone)
+VALUES ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Puskesmas SangPalito', 'puskesmas', 'PSK-SANGPALITO', 'Jl. Kesehatan No. 1', '08123456789')
+ON CONFLICT (id) DO NOTHING;

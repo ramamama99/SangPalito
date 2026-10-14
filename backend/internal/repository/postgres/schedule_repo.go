@@ -1,4 +1,4 @@
-﻿package postgres
+package postgres
 
 import (
 	"context"
@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"sangpalito/backend/internal/apperror"
-	"sangpalito/backend/internal/domain/entity"
-	"sangpalito/backend/internal/domain/repository"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"sangpalito/backend/internal/apperror"
+	"sangpalito/backend/internal/domain/entity"
+	"sangpalito/backend/internal/domain/repository"
 )
 
 type scheduleRepo struct {
@@ -24,7 +24,6 @@ func NewScheduleRepo(pool *pgxpool.Pool) repository.ScheduleRepository {
 }
 
 func (r *scheduleRepo) FindWithRemainingSlot(ctx context.Context, polyclinicID uuid.UUID, date time.Time, dayOfWeek int) ([]entity.Schedule, error) {
-	// Menghitung sisa kuota hari itu: Quota dikurangi jumlah antrean yang belum dibatalkan
 	query := `
 		SELECT 
 			s.id, s.polyclinic_id, s.doctor_id, s.day_of_week,
@@ -60,13 +59,17 @@ func (r *scheduleRepo) FindWithRemainingSlot(ctx context.Context, polyclinicID u
 
 func (r *scheduleRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Schedule, error) {
 	query := `
-		SELECT id, polyclinic_id, doctor_id, day_of_week, start_time::text, end_time::text, quota
-		FROM schedules
-		WHERE id = $1
+		SELECT s.id, s.polyclinic_id, s.doctor_id, s.day_of_week, s.start_time::text, s.end_time::text, s.quota,
+		       d.full_name AS doctor_name, p.name AS polyclinic_name
+		FROM schedules s
+		JOIN doctors d ON d.id = s.doctor_id
+		JOIN polyclinics p ON p.id = s.polyclinic_id
+		WHERE s.id = $1
 	`
 	var s entity.Schedule
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&s.ID, &s.PolyclinicID, &s.DoctorID, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Quota,
+		&s.DoctorName, &s.PolyclinicName,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -75,6 +78,102 @@ func (r *scheduleRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Sche
 		return nil, fmt.Errorf("scheduleRepo.FindByID: %w", err)
 	}
 	return &s, nil
+}
+
+func (r *scheduleRepo) FindByPolyclinic(ctx context.Context, polyclinicID uuid.UUID) ([]*entity.Schedule, error) {
+	query := `
+		SELECT s.id, s.polyclinic_id, s.doctor_id, s.day_of_week, s.start_time::text, s.end_time::text, s.quota,
+		       d.full_name AS doctor_name, p.name AS polyclinic_name
+		FROM schedules s
+		JOIN doctors d ON d.id = s.doctor_id
+		JOIN polyclinics p ON p.id = s.polyclinic_id
+		WHERE s.polyclinic_id = $1
+		ORDER BY s.day_of_week, s.start_time
+	`
+	rows, err := r.pool.Query(ctx, query, polyclinicID)
+	if err != nil {
+		return nil, fmt.Errorf("scheduleRepo.FindByPolyclinic: %w", err)
+	}
+	defer rows.Close()
+
+	var list []*entity.Schedule
+	for rows.Next() {
+		sc := &entity.Schedule{}
+		if err := rows.Scan(
+			&sc.ID, &sc.PolyclinicID, &sc.DoctorID, &sc.DayOfWeek,
+			&sc.StartTime, &sc.EndTime, &sc.Quota,
+			&sc.DoctorName, &sc.PolyclinicName,
+		); err != nil {
+			return nil, fmt.Errorf("scheduleRepo.FindByPolyclinic scan: %w", err)
+		}
+		list = append(list, sc)
+	}
+	return list, nil
+}
+
+func (r *scheduleRepo) FindByPolyclinicAndDay(ctx context.Context, polyclinicID uuid.UUID, dayOfWeek int) ([]*entity.Schedule, error) {
+	// Support 1=Mon..7=Sun or 0=Sun..6=Sat mapping
+	mappedDay := dayOfWeek
+	if mappedDay == 0 {
+		mappedDay = 7
+	}
+
+	query := `
+		SELECT s.id, s.polyclinic_id, s.doctor_id, s.day_of_week, s.start_time::text, s.end_time::text, s.quota,
+		       d.full_name AS doctor_name, p.name AS polyclinic_name
+		FROM schedules s
+		JOIN doctors d ON d.id = s.doctor_id
+		JOIN polyclinics p ON p.id = s.polyclinic_id
+		WHERE s.polyclinic_id = $1 AND (s.day_of_week = $2 OR s.day_of_week = $3)
+		ORDER BY s.start_time
+	`
+	rows, err := r.pool.Query(ctx, query, polyclinicID, dayOfWeek, mappedDay)
+	if err != nil {
+		return nil, fmt.Errorf("scheduleRepo.FindByPolyclinicAndDay: %w", err)
+	}
+	defer rows.Close()
+
+	var list []*entity.Schedule
+	for rows.Next() {
+		sc := &entity.Schedule{}
+		if err := rows.Scan(
+			&sc.ID, &sc.PolyclinicID, &sc.DoctorID, &sc.DayOfWeek,
+			&sc.StartTime, &sc.EndTime, &sc.Quota,
+			&sc.DoctorName, &sc.PolyclinicName,
+		); err != nil {
+			return nil, fmt.Errorf("scheduleRepo.FindByPolyclinicAndDay scan: %w", err)
+		}
+		list = append(list, sc)
+	}
+	return list, nil
+}
+
+func (r *scheduleRepo) GetRemainingQuota(ctx context.Context, tx pgx.Tx, scheduleID uuid.UUID, date time.Time) (int, error) {
+	var quota int
+	quotaQuery := `SELECT quota FROM schedules WHERE id = $1 FOR UPDATE`
+	if err := tx.QueryRow(ctx, quotaQuery, scheduleID).Scan(&quota); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, apperror.NotFound("Jadwal", err)
+		}
+		return 0, fmt.Errorf("scheduleRepo.GetRemainingQuota (quota): %w", err)
+	}
+
+	var booked int
+	countQuery := `
+		SELECT COUNT(*) 
+		FROM appointments a
+		LEFT JOIN queues q ON q.appointment_id = a.id
+		WHERE a.schedule_id = $1 AND a.visit_date = $2 AND (q.status IS NULL OR q.status != 'cancelled')
+	`
+	if err := tx.QueryRow(ctx, countQuery, scheduleID, date).Scan(&booked); err != nil {
+		return 0, fmt.Errorf("scheduleRepo.GetRemainingQuota (count): %w", err)
+	}
+
+	remaining := quota - booked
+	if remaining < 0 {
+		remaining = 0
+	}
+	return remaining, nil
 }
 
 func (r *scheduleRepo) Create(ctx context.Context, s *entity.Schedule) error {
