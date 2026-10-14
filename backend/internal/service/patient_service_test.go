@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"sangpalito/backend/internal/apperror"
 	"sangpalito/backend/internal/domain/entity"
@@ -56,7 +57,7 @@ func (m *mockPatientRepo) Create(ctx context.Context, p *entity.Patient) error {
 	return nil
 }
 
-func (m *mockPatientRepo) CreateTx(ctx context.Context, tx any, p *entity.Patient) error {
+func (m *mockPatientRepo) CreateTx(ctx context.Context, tx pgx.Tx, p *entity.Patient) error {
 	return m.Create(ctx, p)
 }
 
@@ -80,7 +81,7 @@ func (m *mockPatientRepo) GenerateMedicalRecordNo(ctx context.Context, date time
 	return "20261014-0001", nil
 }
 
-func (m *mockPatientRepo) GenerateMedicalRecordNoTx(ctx context.Context, tx any, date time.Time) (string, error) {
+func (m *mockPatientRepo) GenerateMedicalRecordNoTx(ctx context.Context, tx pgx.Tx, date time.Time) (string, error) {
 	return m.GenerateMedicalRecordNo(ctx, date)
 }
 

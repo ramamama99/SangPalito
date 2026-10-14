@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"sangpalito/backend/internal/apperror"
 	"sangpalito/backend/internal/domain/entity"
@@ -43,7 +44,7 @@ func (m *mockQueueRepo) Create(ctx context.Context, q *entity.Queue) error {
 	return nil
 }
 
-func (m *mockQueueRepo) CreateTx(ctx context.Context, tx any, q *entity.Queue) error {
+func (m *mockQueueRepo) CreateTx(ctx context.Context, tx pgx.Tx, q *entity.Queue) error {
 	return m.Create(ctx, q)
 }
 
@@ -52,7 +53,7 @@ func (m *mockQueueRepo) UpdateStatus(ctx context.Context, q *entity.Queue) error
 	return nil
 }
 
-func (m *mockQueueRepo) GetNextQueueNumber(ctx context.Context, tx any, polyclinicID uuid.UUID, date time.Time) (int, error) {
+func (m *mockQueueRepo) GetNextQueueNumber(ctx context.Context, tx pgx.Tx, polyclinicID uuid.UUID, date time.Time) (int, error) {
 	return len(m.queues) + 1, nil
 }
 

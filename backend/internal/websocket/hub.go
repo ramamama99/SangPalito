@@ -3,8 +3,17 @@ package websocket
 import (
 	"encoding/json"
 	"log/slog"
+	"net/http"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 // Hub maintains the set of active clients and broadcasts messages to them.
 type Hub struct {
@@ -73,5 +82,29 @@ func (h *Hub) Broadcast(payload any) {
 	case h.broadcast <- data:
 	default:
 		slog.Warn("websocket broadcast channel full, dropping message")
+	}
+}
+
+// ServeWS upgrades the HTTP connection to WebSocket and registers the client to Hub.
+func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		slog.Error("websocket upgrade error", "err", err)
+		return
+	}
+
+	clientChan := make(chan []byte, 64)
+	hub.register <- clientChan
+
+	defer func() {
+		hub.unregister <- clientChan
+		_ = conn.Close()
+	}()
+
+	// Write pump
+	for msg := range clientChan {
+		if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+			break
+		}
 	}
 }
