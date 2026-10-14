@@ -111,6 +111,10 @@ func (m *mockAuditLogRepo) Create(ctx context.Context, log *entity.AuditLog) err
 	return nil
 }
 
+func (m *mockAuditLogRepo) Find(ctx context.Context, entityName string, entityID *uuid.UUID, page, limit int) ([]*entity.AuditLog, int, error) {
+	return m.logs, len(m.logs), nil
+}
+
 func (m *mockAuditLogRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, page, limit int) ([]*entity.AuditLog, int, error) {
 	return m.logs, len(m.logs), nil
 }

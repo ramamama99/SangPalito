@@ -2,14 +2,14 @@ package repository
 
 import (
 	"context"
+	"sangpalito/backend/internal/domain/entity"
 
 	"github.com/google/uuid"
-
-	"sangpalito/backend/internal/domain/entity"
 )
 
-// VisitRepository defines the contract for visit data access.
 type VisitRepository interface {
+	Create(ctx context.Context, visit *entity.Visit, diagnoses []entity.Diagnosis) error
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.Visit, []entity.Diagnosis, error)
 	FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Visit, error)
-	Create(ctx context.Context, v *entity.Visit) error
+	Update(ctx context.Context, visit *entity.Visit) error
 }

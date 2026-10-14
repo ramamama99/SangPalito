@@ -91,7 +91,13 @@ type mockVisitRepo struct{}
 func (m *mockVisitRepo) FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Visit, error) {
 	return nil, nil
 }
-func (m *mockVisitRepo) Create(ctx context.Context, v *entity.Visit) error {
+func (m *mockVisitRepo) Create(ctx context.Context, v *entity.Visit, diagnoses []entity.Diagnosis) error {
+	return nil
+}
+func (m *mockVisitRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Visit, []entity.Diagnosis, error) {
+	return nil, nil, nil
+}
+func (m *mockVisitRepo) Update(ctx context.Context, v *entity.Visit) error {
 	return nil
 }
 

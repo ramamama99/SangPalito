@@ -1,6 +1,8 @@
 package router
 
 import (
+	"context"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -8,10 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"sangpalito/backend/internal/handler"
+	"sangpalito/backend/internal/hub"
 	"sangpalito/backend/internal/middleware"
 	"sangpalito/backend/internal/repository/postgres"
 	"sangpalito/backend/internal/service"
-	"sangpalito/backend/internal/websocket"
 	"sangpalito/backend/internal/worker"
 	"sangpalito/backend/pkg/crypto"
 	"sangpalito/backend/pkg/jwt"
@@ -24,7 +26,7 @@ func Setup(
 	pool *pgxpool.Pool,
 	jwtManager *jwt.Manager,
 	nikCrypto *crypto.NIKCrypto,
-	hub *websocket.Hub,
+	hub *hub.Hub,
 	notifWorker *worker.NotificationWorker,
 	defaultFacilityID uuid.UUID,
 	rateLimiter *middleware.SessionRateLimiter,
@@ -43,6 +45,12 @@ func Setup(
 	facilityRepo := postgres.NewFacilityRepo(pool)
 	visitRepo := postgres.NewVisitRepo(pool)
 	preRepo := postgres.NewPreAnamnesisRepo(pool)
+	icd10Repo := postgres.NewICD10Repository(pool)
+
+	// Auto-seed Puskesmas common ICD-10 codes in background
+	go func() {
+		_ = icd10Repo.SeedCommonCodes(context.Background())
+	}()
 
 	// ── Services ─────────────────────────────────────────────
 	authService := service.NewAuthService(userRepo, auditLogRepo, jwtManager)
@@ -52,6 +60,8 @@ func Setup(
 	userService := service.NewUserService(userRepo)
 	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
 	apptService := service.NewAppointmentService(appointmentRepo, preRepo, polyclinicRepo, facilityRepo)
+	visitService := service.NewVisitService(visitRepo, icd10Repo)
+	analyticsService := service.NewAnalyticsService(pool)
 
 	// ── Handlers ─────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authService, validate, defaultFacilityID)
@@ -61,6 +71,10 @@ func Setup(
 	userHandler := handler.NewUserHandler(userService, validate)
 	masterHandler := handler.NewMasterHandler(masterService)
 	apptHandler := handler.NewAppointmentHandler(apptService, masterService)
+	visitHandler := handler.NewVisitHandler(visitService)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsService, defaultFacilityID)
+	wsHandler := handler.NewWSHandler(hub, pool)
+	auditLogHandler := handler.NewAuditLogHandler(auditLogRepo)
 
 	// ── Global Middleware ────────────────────────────────────
 	r.Use(middleware.Recover())
@@ -79,10 +93,9 @@ func Setup(
 		}))
 	})
 
-	// ── WebSocket ────────────────────────────────────────────
-	r.GET("/ws/queues", func(c *gin.Context) {
-		websocket.ServeWS(hub, c.Writer, c.Request)
-	})
+	// ── WebSocket (Real-time Queues Stream) ───────────────────
+	r.GET("/ws/queues", wsHandler.ServeWS)
+	r.GET("/ws/queues/:id", wsHandler.ServeWS)
 
 	api := r.Group("/api/v1")
 
@@ -91,6 +104,7 @@ func Setup(
 	api.GET("/polyclinics", masterHandler.GetPolyclinics)
 	api.GET("/doctors", masterHandler.GetDoctors)
 	api.GET("/schedules", masterHandler.GetSchedules)
+	api.GET("/icd10", visitHandler.SearchICD10)
 
 	// ── Public Routes (no auth) ─────────────────────────────
 	auth := api.Group("/auth")
@@ -107,6 +121,7 @@ func Setup(
 		public.GET("/appointments/:token", publicHandler.GetAppointmentStatus)
 		public.POST("/queues/checkin", publicHandler.CheckIn)
 		public.GET("/queues/:id/estimate", publicHandler.GetQueueEstimate)
+		public.GET("/queues/:id/display", wsHandler.GetPolyclinicDisplay)
 	}
 
 	// ── Authenticated Routes ────────────────────────────────
@@ -155,6 +170,14 @@ func Setup(
 			queues.PATCH("/:id/status", middleware.RequireRoles("medic", "registrar"), queueHandler.UpdateStatus)
 		}
 
+		// Clinical Visits / Rekam Medis SOAP (medic, admin)
+		visits := authenticated.Group("/visits")
+		{
+			visits.POST("", middleware.RequireRoles("medic", "admin"), visitHandler.CreateVisit)
+			visits.GET("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.GetVisitByID)
+			visits.PATCH("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.UpdateVisit)
+		}
+
 		// Users (admin only)
 		users := authenticated.Group("/users")
 		users.Use(middleware.RequireRoles("admin"))
@@ -164,5 +187,17 @@ func Setup(
 			users.PATCH("/:id", userHandler.Update)
 			users.PATCH("/:id/password", userHandler.ResetPassword)
 		}
+
+		// Analytics Dashboard (head, admin)
+		analytics := authenticated.Group("/analytics")
+		analytics.Use(middleware.RequireRoles("head", "admin"))
+		{
+			analytics.GET("/summary", analyticsHandler.GetSummary)
+			analytics.GET("/busy-hours", analyticsHandler.GetBusyHours)
+			analytics.GET("/top-diagnoses", analyticsHandler.GetTopDiagnoses)
+		}
+
+		// Audit Logs (admin only - F-12)
+		authenticated.GET("/audit-logs", middleware.RequireRoles("admin"), auditLogHandler.List)
 	}
-}
+}

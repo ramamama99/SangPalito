@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"sangpalito/backend/internal/domain/entity"
@@ -34,4 +35,61 @@ func (r *auditLogRepo) Create(ctx context.Context, log *entity.AuditLog) error {
 		return fmt.Errorf("auditLogRepo.Create: %w", err)
 	}
 	return nil
+}
+
+// Find retrieves paginated audit logs filtered by entity and/or entity_id.
+func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uuid.UUID, page, limit int) ([]*entity.AuditLog, int, error) {
+	offset := (page - 1) * limit
+
+	whereClause := "WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if entityName != "" {
+		whereClause += fmt.Sprintf(" AND entity = $%d", argIdx)
+		args = append(args, entityName)
+		argIdx++
+	}
+	if entityID != nil {
+		whereClause += fmt.Sprintf(" AND entity_id = $%d", argIdx)
+		args = append(args, *entityID)
+		argIdx++
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM audit_logs %s", whereClause)
+	var total int
+	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("auditLogRepo.Find count: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT id, user_id, action, entity, entity_id, ip_address, meta, created_at
+		FROM audit_logs
+		%s
+		ORDER BY created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, whereClause, argIdx, argIdx+1)
+
+	args = append(args, limit, offset)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("auditLogRepo.Find query: %w", err)
+	}
+	defer rows.Close()
+
+	logs := make([]*entity.AuditLog, 0)
+	for rows.Next() {
+		var l entity.AuditLog
+		var metaJSON []byte
+		if err := rows.Scan(&l.ID, &l.UserID, &l.Action, &l.Entity, &l.EntityID, &l.IPAddress, &metaJSON, &l.CreatedAt); err != nil {
+			return nil, 0, fmt.Errorf("auditLogRepo.Find scan: %w", err)
+		}
+		if len(metaJSON) > 0 {
+			_ = json.Unmarshal(metaJSON, &l.Meta)
+		}
+		logs = append(logs, &l)
+	}
+
+	return logs, total, nil
 }

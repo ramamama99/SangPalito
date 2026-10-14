@@ -29,13 +29,17 @@ const appointmentCols = `id, facility_id, patient_id, polyclinic_id, schedule_id
 func scanAppointment(row pgx.Row) (*entity.Appointment, error) {
 	a := &entity.Appointment{}
 	var qrTokenStr string
+	var schedID *uuid.UUID
 	err := row.Scan(
-		&a.ID, &a.FacilityID, &a.PatientID, &a.PolyclinicID, &a.ScheduleID,
+		&a.ID, &a.FacilityID, &a.PatientID, &a.PolyclinicID, &schedID,
 		&a.VisitDate, &a.Source, &a.Priority, &a.AppointmentToken, &qrTokenStr,
 		&a.RegisteredBy, &a.CreatedAt,
 	)
 	if err == nil {
 		a.QRToken, _ = uuid.Parse(qrTokenStr)
+		if schedID != nil {
+			a.ScheduleID = *schedID
+		}
 	}
 	return a, err
 }
@@ -135,13 +139,17 @@ func (r *appointmentRepo) FindToday(ctx context.Context, facilityID uuid.UUID, p
 	for rows.Next() {
 		var a entity.Appointment
 		var qrStr string
+		var schedID *uuid.UUID
 		err := rows.Scan(
-			&a.ID, &a.FacilityID, &a.PatientID, &a.PolyclinicID, &a.ScheduleID,
+			&a.ID, &a.FacilityID, &a.PatientID, &a.PolyclinicID, &schedID,
 			&a.VisitDate, &a.Source, &a.Priority, &a.AppointmentToken, &qrStr, &a.RegisteredBy, &a.CreatedAt,
 			&a.PatientFullName, &a.PolyclinicName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("appointmentRepo.FindToday scan: %w", err)
+		}
+		if schedID != nil {
+			a.ScheduleID = *schedID
 		}
 		a.QRToken, _ = uuid.Parse(qrStr)
 		list = append(list, a)
@@ -180,6 +188,11 @@ func (r *appointmentRepo) createWith(ctx context.Context, exec interface{}, a *e
 		priority = a.Priority
 	}
 
+	var schedID *uuid.UUID
+	if a.ScheduleID != uuid.Nil {
+		schedID = &a.ScheduleID
+	}
+
 	query := `
 		INSERT INTO appointments (
 			id, facility_id, patient_id, polyclinic_id, schedule_id, visit_date, 
@@ -191,12 +204,12 @@ func (r *appointmentRepo) createWith(ctx context.Context, exec interface{}, a *e
 	switch e := exec.(type) {
 	case *pgxpool.Pool:
 		_, err = e.Exec(ctx, query,
-			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, a.ScheduleID, a.VisitDate,
+			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, schedID, a.VisitDate,
 			source, priority, a.AppointmentToken, a.QRToken.String(), a.RegisteredBy, a.CreatedAt,
 		)
 	case pgx.Tx:
 		_, err = e.Exec(ctx, query,
-			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, a.ScheduleID, a.VisitDate,
+			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, schedID, a.VisitDate,
 			source, priority, a.AppointmentToken, a.QRToken.String(), a.RegisteredBy, a.CreatedAt,
 		)
 	default:

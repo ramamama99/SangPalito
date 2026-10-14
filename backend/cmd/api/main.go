@@ -12,15 +12,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"sangpalito/backend/internal/config"
 	"sangpalito/backend/internal/domain/entity"
 	domainRepo "sangpalito/backend/internal/domain/repository"
+	"sangpalito/backend/internal/hub"
 	"sangpalito/backend/internal/middleware"
 	"sangpalito/backend/internal/repository"
 	"sangpalito/backend/internal/repository/postgres"
 	"sangpalito/backend/internal/router"
-	"sangpalito/backend/internal/websocket"
 	"sangpalito/backend/internal/worker"
 	"sangpalito/backend/pkg/crypto"
 	"sangpalito/backend/pkg/jwt"
@@ -71,7 +72,7 @@ func main() {
 	engine := gin.New()
 
 	// ── 7. Realtime & Background Workers ────────────────────
-	wsHub := websocket.NewHub()
+	wsHub := hub.NewHub()
 	go wsHub.Run()
 
 	notifWorker := worker.NewNotificationWorker(200)
@@ -80,9 +81,19 @@ func main() {
 	// ── 8. Session Rate Limiter ─────────────────────────────
 	rateLimiter := middleware.NewSessionRateLimiter(5, 5*time.Minute)
 
-	// ── 9. Default Facility ID ──────────────────────────────
+	// ── 9. Default Facility ID & Test Data ─────────────────
 	defFac, _ := facilityRepo.GetFirst(ctx)
 	defaultFacilityID := defFac.ID
+	seedTestingData(ctx, pool, defaultFacilityID)
+
+	// ── Generate Dev Bearer Token for Postman Testing ────────
+	devToken, _, _ := jwtManager.GenerateAccessToken(
+		"b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+		defaultFacilityID.String(),
+		"admin",
+		"dr. Rama (Dev)",
+	)
+	slog.Info("🔑 DEV TOKEN FOR POSTMAN (Bearer Token):", "token", devToken)
 
 	// ── 10. Routes ───────────────────────────────────────────
 	router.Setup(engine, pool, jwtManager, nikCrypto, wsHub, notifWorker, defaultFacilityID, rateLimiter)
@@ -143,3 +154,53 @@ func seedDefaultFacility(ctx context.Context, repo domainRepo.FacilityRepository
 		}
 	}
 }
+
+func seedTestingData(ctx context.Context, pool *pgxpool.Pool, facID uuid.UUID) {
+	var polyID, docID, patientID uuid.UUID
+
+	// 1. Ambil atau Buat Poliklinik
+	err := pool.QueryRow(ctx, `SELECT id FROM polyclinics WHERE facility_id = $1 LIMIT 1`, facID).Scan(&polyID)
+	if err != nil {
+		polyID = uuid.MustParse("11111111-1111-1111-1111-111111111111")
+		_, _ = pool.Exec(ctx, `
+			INSERT INTO polyclinics (id, facility_id, name, queue_prefix, avg_service_min, is_active)
+			VALUES ($1, $2, 'Poli Umum', 'PU', 10, true)
+			ON CONFLICT DO NOTHING`, polyID, facID)
+	}
+
+	// 2. Ambil atau Buat Dokter
+	err = pool.QueryRow(ctx, `SELECT id FROM doctors WHERE facility_id = $1 LIMIT 1`, facID).Scan(&docID)
+	if err != nil {
+		docID = uuid.MustParse("22222222-2222-2222-2222-222222222222")
+		_, _ = pool.Exec(ctx, `
+			INSERT INTO doctors (id, facility_id, full_name, specialty, str_no, is_active)
+			VALUES ($1, $2, 'dr. Rama Palito', 'Dokter Umum', 'STR-12345/DINKES/2026', true)
+			ON CONFLICT DO NOTHING`, docID, facID)
+	}
+
+	// 3. Ambil atau Buat Pasien
+	err = pool.QueryRow(ctx, `SELECT id FROM patients WHERE facility_id = $1 LIMIT 1`, facID).Scan(&patientID)
+	if err != nil {
+		patientID = uuid.MustParse("33333333-3333-3333-3333-333333333333")
+		_, _ = pool.Exec(ctx, `
+			INSERT INTO patients (id, facility_id, medical_record_no, full_name, birth_date, gender, phone, address, guarantor)
+			VALUES ($1, $2, 'RM-2026-0001', 'Budi Santoso', '1990-05-15', 'male', '081298765432', 'Jl. Merdeka No. 10', 'umum')
+			ON CONFLICT DO NOTHING`, patientID, facID)
+	}
+
+	// 4. Seed Dev User agar Token valid di FK users
+	devUserID := "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e"
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO users (id, facility_id, full_name, email, password_hash, is_active)
+		VALUES ($1, $2, 'dr. Rama (Dev)', 'rama@antrisehat.id', '$2a$12$dummyhashforpostmantestingonly', true)
+		ON CONFLICT DO NOTHING`, devUserID, facID)
+
+	slog.Info("📋 TEST DATA UUIDs FOR POSTMAN:",
+		"patient_id", patientID.String(),
+		"polyclinic_id", polyID.String(),
+		"doctor_id", docID.String(),
+	)
+}
+
+
+
