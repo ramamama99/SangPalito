@@ -1,0 +1,31 @@
+# Go build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+*.out
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# Air (live reload)
+tmp/
+
+# Environment
+.env
+*.env.local
+
+# Markdown planning files (gunakan root .gitignore juga)
+*.md
+# Kecuali agent.md — ini adalah rules wajib yang harus di-commit
+!agent.md
+
+# OS
+.DS_Store
+Thumbs.db
