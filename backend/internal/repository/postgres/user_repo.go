@@ -23,11 +23,18 @@ func NewUserRepo(pool *pgxpool.Pool) *userRepo {
 	return &userRepo{pool: pool}
 }
 
+const userSelectQuery = `
+	SELECT u.id, u.facility_id, u.email, u.password_hash, u.full_name,
+	       COALESCE(r.name, 'registrar') AS role,
+	       u.is_active, u.last_login_at, u.refresh_token_hash, u.created_at, u.created_at AS updated_at
+	FROM users u
+	LEFT JOIN user_roles ur ON ur.user_id = u.id
+	LEFT JOIN roles r ON r.id = ur.role_id
+`
+
 // FindByID retrieves a user by their UUID.
 func (r *userRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	query := `SELECT id, facility_id, email, password_hash, full_name, role, is_active,
-	           last_login_at, refresh_token_hash, created_at, updated_at
-	           FROM users WHERE id = $1`
+	query := userSelectQuery + ` WHERE u.id = $1`
 
 	u := &entity.User{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -45,9 +52,7 @@ func (r *userRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, er
 
 // FindByEmail retrieves a user by email within a facility.
 func (r *userRepo) FindByEmail(ctx context.Context, email string, facilityID uuid.UUID) (*entity.User, error) {
-	query := `SELECT id, facility_id, email, password_hash, full_name, role, is_active,
-	           last_login_at, refresh_token_hash, created_at, updated_at
-	           FROM users WHERE email = $1 AND facility_id = $2`
+	query := userSelectQuery + ` WHERE u.email = $1 AND u.facility_id = $2`
 
 	u := &entity.User{}
 	err := r.pool.QueryRow(ctx, query, email, facilityID).Scan(
@@ -72,9 +77,7 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 	}
 
 	offset := (page - 1) * limit
-	query := `SELECT id, facility_id, email, password_hash, full_name, role, is_active,
-	           last_login_at, refresh_token_hash, created_at, updated_at
-	           FROM users WHERE facility_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := userSelectQuery + ` WHERE u.facility_id = $1 ORDER BY u.created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, facilityID, limit, offset)
 	if err != nil {
@@ -98,8 +101,8 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 
 // Create inserts a new user into the database.
 func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, role, is_active, created_at, updated_at)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, is_active, created_at)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	now := time.Now()
 	user.ID = uuid.New()
@@ -108,31 +111,46 @@ func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.FacilityID, user.Email, user.PasswordHash, user.FullName,
-		user.Role, user.IsActive, user.CreatedAt, user.UpdatedAt,
+		user.IsActive, user.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("userRepo.Create: %w", err)
 	}
+
+	if user.Role != "" {
+		roleQuery := `INSERT INTO user_roles (user_id, role_id)
+		              SELECT $1, id FROM roles WHERE name = $2
+		              ON CONFLICT DO NOTHING`
+		_, _ = r.pool.Exec(ctx, roleQuery, user.ID, user.Role)
+	}
+
 	return nil
 }
 
 // Update modifies an existing user's data.
 func (r *userRepo) Update(ctx context.Context, user *entity.User) error {
-	query := `UPDATE users SET full_name = $1, role = $2, is_active = $3, updated_at = $4 WHERE id = $5`
+	query := `UPDATE users SET full_name = $1, is_active = $2 WHERE id = $3`
 	user.UpdatedAt = time.Now()
 
-	_, err := r.pool.Exec(ctx, query, user.FullName, user.Role, user.IsActive, user.UpdatedAt, user.ID)
+	_, err := r.pool.Exec(ctx, query, user.FullName, user.IsActive, user.ID)
 	if err != nil {
 		return fmt.Errorf("userRepo.Update: %w", err)
 	}
+
+	if user.Role != "" {
+		_, _ = r.pool.Exec(ctx, `DELETE FROM user_roles WHERE user_id = $1`, user.ID)
+		roleQuery := `INSERT INTO user_roles (user_id, role_id)
+		              SELECT $1, id FROM roles WHERE name = $2
+		              ON CONFLICT DO NOTHING`
+		_, _ = r.pool.Exec(ctx, roleQuery, user.ID, user.Role)
+	}
+
 	return nil
 }
 
 // FindByRefreshTokenHash retrieves an active user matching the given refresh token SHA-256 hash.
 func (r *userRepo) FindByRefreshTokenHash(ctx context.Context, tokenHash string) (*entity.User, error) {
-	query := `SELECT id, facility_id, email, password_hash, full_name, role, is_active,
-	           last_login_at, refresh_token_hash, created_at, updated_at
-	           FROM users WHERE refresh_token_hash = $1 AND is_active = true`
+	query := userSelectQuery + ` WHERE u.refresh_token_hash = $1 AND u.is_active = true`
 
 	u := &entity.User{}
 	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(
@@ -150,8 +168,8 @@ func (r *userRepo) FindByRefreshTokenHash(ctx context.Context, tokenHash string)
 
 // UpdateRefreshToken updates the refresh token hash for a user (nil clears it on logout).
 func (r *userRepo) UpdateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash *string) error {
-	query := `UPDATE users SET refresh_token_hash = $1, updated_at = $2 WHERE id = $3`
-	_, err := r.pool.Exec(ctx, query, tokenHash, time.Now(), userID)
+	query := `UPDATE users SET refresh_token_hash = $1 WHERE id = $2`
+	_, err := r.pool.Exec(ctx, query, tokenHash, userID)
 	if err != nil {
 		return fmt.Errorf("userRepo.UpdateRefreshToken: %w", err)
 	}
@@ -170,8 +188,8 @@ func (r *userRepo) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error 
 
 // UpdatePassword updates a user's password hash.
 func (r *userRepo) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
-	query := `UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3`
-	_, err := r.pool.Exec(ctx, query, passwordHash, time.Now(), userID)
+	query := `UPDATE users SET password_hash = $1 WHERE id = $2`
+	_, err := r.pool.Exec(ctx, query, passwordHash, userID)
 	if err != nil {
 		return fmt.Errorf("userRepo.UpdatePassword: %w", err)
 	}

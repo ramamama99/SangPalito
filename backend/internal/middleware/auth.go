@@ -1,9 +1,12 @@
 package middleware
 
 import (
+	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	golangJwt "github.com/golang-jwt/jwt/v5"
 
 	"sangpalito/backend/internal/apperror"
 	"sangpalito/backend/pkg/jwt"
@@ -37,7 +40,11 @@ func Auth(jwtManager *jwt.Manager) gin.HandlerFunc {
 
 		claims, err := jwtManager.ParseAccessToken(parts[1])
 		if err != nil {
-			_ = c.Error(apperror.Unauthorized(err))
+			if errors.Is(err, golangJwt.ErrTokenExpired) {
+				_ = c.Error(apperror.New(http.StatusUnauthorized, "TOKEN_EXPIRED", "Sesi login telah kedaluwarsa karena lama tidak aktif. Silakan login kembali.", err))
+			} else {
+				_ = c.Error(apperror.Unauthorized(err))
+			}
 			c.Abort()
 			return
 		}

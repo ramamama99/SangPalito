@@ -70,11 +70,37 @@ const getHeaders = () => {
   return headers
 }
 
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = { ...getHeaders(), ...(options.headers as Record<string, string> || {}) }
+  let res = await fetch(url, { ...options, headers })
+
+  // Jika token expired / 401 karena inaktivitas, coba refresh secara otomatis
+  if (res.status === 401) {
+    const newToken = await api.refreshToken()
+    if (newToken) {
+      const retryHeaders = {
+        ...getHeaders(),
+        ...(options.headers as Record<string, string> || {}),
+        'Authorization': `Bearer ${newToken}`,
+      }
+      res = await fetch(url, { ...options, headers: retryHeaders })
+    } else {
+      api.clearSession()
+      // Jika berada di halaman staff, arahkan ke login
+      if (window.location.pathname.startsWith('/staff')) {
+        window.location.href = '/login'
+      }
+    }
+  }
+
+  return res
+}
+
 export const api = {
   // ── 1. Antrean (Queues) ──────────────────────────────────
   async getQueuesToday(): Promise<ApiQueueItem[]> {
     try {
-      const res = await fetch(`${BASE_URL}/queues`, { headers: getHeaders() })
+      const res = await authFetch(`${BASE_URL}/queues`)
       if (!res.ok) return []
       const json = await res.json()
       return json.data || []
@@ -85,9 +111,8 @@ export const api = {
 
   async updateQueueStatus(queueId: string, status: string): Promise<boolean> {
     try {
-      const res = await fetch(`${BASE_URL}/queues/${queueId}/status`, {
+      const res = await authFetch(`${BASE_URL}/queues/${queueId}/status`, {
         method: 'PATCH',
-        headers: getHeaders(),
         body: JSON.stringify({ status }),
       })
       return res.ok
@@ -180,9 +205,7 @@ export const api = {
   // ── 3. Rekam Medis (Visits & Clinical) ────────────────────
   async getPatientVisits(patientId: string): Promise<ApiVisitItem[]> {
     try {
-      const res = await fetch(`${BASE_URL}/patients/${patientId}/visits`, {
-        headers: getHeaders(),
-      })
+      const res = await authFetch(`${BASE_URL}/patients/${patientId}/visits`)
       if (!res.ok) return []
       const json = await res.json()
       return json.data || []
@@ -207,9 +230,8 @@ export const api = {
     }>
   }) {
     try {
-      const res = await fetch(`${BASE_URL}/visits`, {
+      const res = await authFetch(`${BASE_URL}/visits`, {
         method: 'POST',
-        headers: getHeaders(),
         body: JSON.stringify(payload),
       })
       return await res.json()
@@ -221,9 +243,7 @@ export const api = {
 
   async searchICD10(query: string, limit = 20) {
     try {
-      const res = await fetch(`${BASE_URL}/icd10?q=${encodeURIComponent(query)}&limit=${limit}`, {
-        headers: getHeaders(),
-      })
+      const res = await authFetch(`${BASE_URL}/icd10?q=${encodeURIComponent(query)}&limit=${limit}`)
       if (!res.ok) return []
       const json = await res.json()
       return json.data || []
@@ -243,6 +263,9 @@ export const api = {
       const json = await res.json()
       if (res.ok && json.data?.access_token) {
         localStorage.setItem('antrisehat-token', json.data.access_token)
+        if (json.data.refresh_token) {
+          localStorage.setItem('antrisehat-refresh-token', json.data.refresh_token)
+        }
         localStorage.setItem('antrisehat-user', JSON.stringify(json.data.user || {}))
       }
       return json
@@ -250,5 +273,62 @@ export const api = {
       console.error('Login error:', err)
       return { success: false, error: 'Koneksi ke backend gagal' }
     }
+  },
+
+  async refreshToken(): Promise<string | null> {
+    const refreshToken = localStorage.getItem('antrisehat-refresh-token')
+    if (!refreshToken) return null
+    try {
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+      if (!res.ok) {
+        this.clearSession()
+        return null
+      }
+      const json = await res.json()
+      if (json.data?.access_token) {
+        localStorage.setItem('antrisehat-token', json.data.access_token)
+        return json.data.access_token
+      }
+      return null
+    } catch (err) {
+      console.error('Refresh token error:', err)
+      return null
+    }
+  },
+
+  async logout() {
+    try {
+      await fetch(`${BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      this.clearSession()
+    }
+  },
+
+  clearSession() {
+    localStorage.removeItem('antrisehat-token')
+    localStorage.removeItem('antrisehat-refresh-token')
+    localStorage.removeItem('antrisehat-user')
+  },
+
+  getCurrentUser() {
+    try {
+      const str = localStorage.getItem('antrisehat-user')
+      return str ? JSON.parse(str) : null
+    } catch {
+      return null
+    }
+  },
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('antrisehat-token')
   },
 }

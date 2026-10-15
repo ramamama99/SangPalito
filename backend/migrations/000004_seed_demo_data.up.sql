@@ -24,13 +24,13 @@ INSERT INTO roles (id, name) VALUES
 (4, 'head')
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
--- 3. AKUN PENGGUNA (USERS) - Password default: password123 ($2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy)
+-- 3. AKUN PENGGUNA (USERS) - Password default: password123 ($2a$12$CTqJY92PEYtNokRy84lYfey60f4rlLlr009A2ksRUtE4cRj/2.S4K)
 INSERT INTO users (id, facility_id, full_name, email, password_hash, is_active) VALUES
-('b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Administrator Sistem', 'admin@antrisehat.id', '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', true),
-('b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'dr. Rama Palito', 'rama@antrisehat.id', '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', true),
-('b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Petugas Loket 1', 'loket@antrisehat.id', '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', true),
-('b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'dr. Hendra (Kepala Puskesmas)', 'kepala@antrisehat.id', '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', true)
-ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name;
+('b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Administrator Sistem', 'admin@antrisehat.id', '$2a$12$CTqJY92PEYtNokRy84lYfey60f4rlLlr009A2ksRUtE4cRj/2.S4K', true),
+('b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'dr. Rama Palito', 'rama@antrisehat.id', '$2a$12$CTqJY92PEYtNokRy84lYfey60f4rlLlr009A2ksRUtE4cRj/2.S4K', true),
+('b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Petugas Loket 1', 'loket@antrisehat.id', '$2a$12$CTqJY92PEYtNokRy84lYfey60f4rlLlr009A2ksRUtE4cRj/2.S4K', true),
+('b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'dr. Hendra (Kepala Puskesmas)', 'kepala@antrisehat.id', '$2a$12$CTqJY92PEYtNokRy84lYfey60f4rlLlr009A2ksRUtE4cRj/2.S4K', true)
+ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name, password_hash = EXCLUDED.password_hash;
 
 -- 4. ROLE MAPPINGS
 INSERT INTO user_roles (user_id, role_id) VALUES
