@@ -445,9 +445,11 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 
 	for _, q := range queues {
 		if q.AppointmentID == appointment.ID {
-			if q.Status == entity.StatusCheckedIn {
-				// Already checked in: gracefully return current status
-				return toQueueResponse(q), nil
+			if q.Status == entity.StatusCheckedIn || q.Status == entity.StatusCalled || q.Status == entity.StatusInService || q.Status == entity.StatusDone {
+				// Already checked in: do NOT double check-in! Return response with AlreadyCheckedIn = true
+				resp := toQueueResponse(q)
+				resp.AlreadyCheckedIn = true
+				return resp, nil
 			}
 			if !q.Status.CanTransitionTo(entity.StatusCheckedIn) {
 				return nil, apperror.BadRequest(fmt.Sprintf("Status antrean '%s' tidak dapat di-check-in (hanya antrean dengan status 'waiting' yang dapat check-in)", q.Status), nil)
@@ -458,7 +460,9 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 			if err := s.queueRepo.UpdateStatus(ctx, q); err != nil {
 				return nil, apperror.Internal(fmt.Errorf("publicService.CheckIn: update queue: %w", err))
 			}
-			return toQueueResponse(q), nil
+			resp := toQueueResponse(q)
+			resp.AlreadyCheckedIn = false
+			return resp, nil
 		}
 	}
 
@@ -468,14 +472,18 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 		&q.ID, &q.AppointmentID, &q.PolyclinicID, &q.QueueNumber, &q.QueueCode, &q.Status, &q.QueueDate, &q.CheckedInAt, &q.CallCount,
 	)
 	if errQueue == nil {
-		if q.Status == entity.StatusCheckedIn {
-			return toQueueResponse(&q), nil
+		if q.Status == entity.StatusCheckedIn || q.Status == entity.StatusCalled || q.Status == entity.StatusInService || q.Status == entity.StatusDone {
+			resp := toQueueResponse(&q)
+			resp.AlreadyCheckedIn = true
+			return resp, nil
 		}
 		now := time.Now()
 		q.Status = entity.StatusCheckedIn
 		q.CheckedInAt = &now
 		_ = s.queueRepo.UpdateStatus(ctx, &q)
-		return toQueueResponse(&q), nil
+		resp := toQueueResponse(&q)
+		resp.AlreadyCheckedIn = false
+		return resp, nil
 	}
 
 	// If appointment had no queue record yet, create one now and check it in!

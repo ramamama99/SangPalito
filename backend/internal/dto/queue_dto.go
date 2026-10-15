@@ -15,8 +15,9 @@ type QueueResponse struct {
 	PolyclinicID  string     `json:"polyclinic_id"`
 	QueueNumber   int        `json:"queue_number"`
 	QueueCode     string     `json:"queue_code,omitempty"`
-	Status        string     `json:"status"`
-	CheckedInAt   *time.Time `json:"checked_in_at,omitempty"`
+	Status           string     `json:"status"`
+	AlreadyCheckedIn bool       `json:"already_checked_in"`
+	CheckedInAt      *time.Time `json:"checked_in_at,omitempty"`
 	CallCount     int        `json:"call_count"`
 	CalledAt      *time.Time `json:"called_at,omitempty"`
 	ServiceStart  *time.Time `json:"service_start,omitempty"`
