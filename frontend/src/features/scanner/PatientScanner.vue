@@ -141,29 +141,38 @@
 
             <!-- Camera Controls & Device Picker -->
             <div class="space-y-3">
-              <div v-if="cameraDevices.length > 1" class="flex items-center gap-2">
-                <label for="camera-select" class="text-xs font-semibold text-slate-700 whitespace-nowrap">
-                  Pilih Perangkat:
+              <div v-if="cameraDevices.length > 0" class="flex items-center gap-2">
+                <label for="camera-select" class="text-xs font-semibold text-slate-700 whitespace-nowrap flex items-center gap-1.5">
+                  <Camera :size="14" class="text-slate-500" /> Pilih Kamera:
                 </label>
                 <select
                   id="camera-select"
                   v-model="selectedCameraId"
-                  :disabled="isCameraActive"
-                  class="flex-1 rounded-lg border border-slate-300 py-1.5 px-3 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  :disabled="isCameraActive || cameraLoading"
+                  class="flex-1 rounded-lg border border-slate-300 py-1.5 px-3 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                  @change="onCameraChange"
                 >
                   <option v-for="dev in cameraDevices" :key="dev.id" :value="dev.id">
                     {{ dev.label || `Kamera ${dev.id}` }}
                   </option>
                 </select>
+                <button
+                  type="button"
+                  title="Muat ulang daftar kamera"
+                  class="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-600 transition-colors"
+                  @click="refreshCameras"
+                >
+                  <RefreshCw :size="14" />
+                </button>
               </div>
 
               <div class="flex items-center gap-3">
                 <button
                   type="button"
-                  class="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all"
+                  class="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all shadow-md"
                   :class="isCameraActive
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'"
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'"
                   :disabled="cameraLoading"
                   @click="toggleCamera"
                 >
@@ -174,9 +183,61 @@
                 </button>
               </div>
 
-              <p v-if="cameraError" class="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200 flex items-center gap-1.5">
-                <AlertCircle :size="16" class="shrink-0" /> {{ cameraError }}
-              </p>
+              <!-- Camera Error & Intelligent Troubleshooting Card -->
+              <div v-if="cameraError" class="rounded-xl border p-3.5 text-xs space-y-2.5 transition-all"
+                :class="isDeviceInUseError ? 'bg-amber-50/90 border-amber-300 text-amber-950' : 'bg-rose-50 border-rose-200 text-rose-900'"
+              >
+                <div class="flex items-start gap-2.5">
+                  <AlertTriangle v-if="isDeviceInUseError" :size="18" class="text-amber-600 shrink-0 mt-0.5" />
+                  <AlertCircle v-else :size="18" class="text-rose-600 shrink-0 mt-0.5" />
+                  <div class="space-y-1">
+                    <p class="font-bold text-xs uppercase tracking-wide" :class="isDeviceInUseError ? 'text-amber-800' : 'text-rose-800'">
+                      {{ isDeviceInUseError ? 'Perangkat Kamera Sedang Digunakan (Device In Use)' : 'Kendala Akses Kamera' }}
+                    </p>
+                    <p class="leading-relaxed text-slate-700">
+                      {{ cameraError }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Guidance specifically for Device in Use -->
+                <div v-if="isDeviceInUseError" class="pt-2 border-t border-amber-200/80 space-y-1.5 text-[11px] text-slate-700">
+                  <p class="font-semibold text-amber-900">💡 Cara Mengatasi:</p>
+                  <ul class="list-disc list-inside space-y-1 pl-1 text-slate-600">
+                    <li>Tutup aplikasi rapat/webcam (<strong>Zoom, Google Meet, Teams, Discord, OBS, Camera Windows</strong>).</li>
+                    <li>Periksa apakah tab browser lain sedang mengakses webcam.</li>
+                    <li>Jika ada webcam lain (misal USB webcam), pilih dari dropdown di atas.</li>
+                  </ul>
+                </div>
+
+                <!-- Helpful immediate action buttons -->
+                <div class="flex flex-wrap items-center gap-2 pt-1.5">
+                  <button
+                    type="button"
+                    class="py-1 px-2.5 rounded-lg font-semibold text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-1 shadow-sm"
+                    @click="forceResetCamera"
+                  >
+                    <RotateCcw :size="13" /> Reset & Coba Lagi
+                  </button>
+
+                  <button
+                    v-if="cameraDevices.length > 1"
+                    type="button"
+                    class="py-1 px-2.5 rounded-lg font-semibold text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-1 shadow-sm"
+                    @click="cycleNextCamera"
+                  >
+                    <RefreshCw :size="13" /> Coba Kamera Lain
+                  </button>
+
+                  <button
+                    type="button"
+                    class="py-1 px-2.5 rounded-lg font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1 shadow-sm ml-auto"
+                    @click="switchTab('upload')"
+                  >
+                    <FileImage :size="13" /> Gunakan Tab Upload Gambar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -644,7 +705,7 @@ import {
   Keyboard, Activity, CheckCircle2, XCircle, Code, History,
   Volume2, VolumeX, ChevronLeft, ChevronDown, Check, X,
   RotateCcw, RefreshCw, Play, Square, Loader2, Users,
-  AlertCircle, ScanLine
+  AlertCircle, AlertTriangle, ScanLine
 } from "lucide-vue-next";
 import { api } from "../../services/api";
 
@@ -663,6 +724,7 @@ const activeTab = ref("demo");
 const isCameraActive = ref(false);
 const cameraLoading = ref(false);
 const cameraError = ref("");
+const isDeviceInUseError = ref(false);
 const selectedCameraId = ref("");
 const cameraDevices = ref<Array<{ id: string; label: string }>>([]);
 let html5QrCode: Html5Qrcode | null = null;
@@ -867,58 +929,205 @@ function resetLastResult() {
 }
 
 // ── Tab 1: Live Camera Scanner ──────────────────────────────
+async function refreshCameras() {
+  try {
+    const devices = await Html5Qrcode.getCameras();
+    if (devices && devices.length > 0) {
+      cameraDevices.value = devices;
+      if (!selectedCameraId.value) {
+        // Prefer regular webcams over IR or virtual devices
+        const preferred = devices.find(
+          (d) =>
+            !d.label.toLowerCase().includes("ir") &&
+            !d.label.toLowerCase().includes("virtual") &&
+            !d.label.toLowerCase().includes("hello"),
+        );
+        selectedCameraId.value = preferred ? preferred.id : devices[0].id;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not list camera devices:", err);
+  }
+}
+
+async function cycleNextCamera() {
+  if (cameraDevices.value.length < 2) return;
+  const currIndex = cameraDevices.value.findIndex(
+    (d) => d.id === selectedCameraId.value,
+  );
+  const nextIndex = (currIndex + 1) % cameraDevices.value.length;
+  selectedCameraId.value = cameraDevices.value[nextIndex].id;
+  await forceResetCamera();
+}
+
+async function onCameraChange() {
+  if (isCameraActive.value) {
+    await forceResetCamera();
+  }
+}
+
+async function forceResetCamera() {
+  await stopCamera();
+  await initCamera();
+}
+
+async function stopCamera() {
+  cameraLoading.value = false;
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+      await html5QrCode.clear();
+    } catch (e) {
+      console.warn("Failed to clean up html5QrCode instance:", e);
+    }
+    html5QrCode = null;
+  }
+
+  // Explicitly release any dangling video tracks in the document
+  try {
+    const videos = document.querySelectorAll("video");
+    videos.forEach((video) => {
+      if (video.srcObject && (video.srcObject as MediaStream).getTracks) {
+        (video.srcObject as MediaStream).getTracks().forEach((track) => {
+          track.stop();
+        });
+        video.srcObject = null;
+      }
+    });
+  } catch (_) {}
+
+  isCameraActive.value = false;
+}
+
 async function initCamera() {
   try {
     cameraLoading.value = true;
     cameraError.value = "";
+    isDeviceInUseError.value = false;
 
-    const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length) {
-      cameraDevices.value = devices;
-      if (!selectedCameraId.value) {
-        selectedCameraId.value = devices[0].id;
+    // 1. Thoroughly release any previous camera session
+    await stopCamera();
+
+    // 2. Refresh device list
+    await refreshCameras();
+
+    // 3. Create fresh HTML5-QRCode instance attached to container
+    html5QrCode = new Html5Qrcode("qr-camera-reader");
+
+    const qrConfig = {
+      fps: 15,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0,
+    };
+
+    const onScanSuccess = (decodedText: string) => {
+      if (!verifyingToken.value) {
+        handleCheckIn(decodedText, "Kamera Scanner");
+      }
+    };
+
+    const onScanFailure = () => {
+      // frame ignored
+    };
+
+    // Build candidate configurations to try in sequence
+    const candidateConfigs: Array<{ target: any; label: string }> = [];
+
+    if (selectedCameraId.value) {
+      candidateConfigs.push({
+        target: selectedCameraId.value,
+        label: `Kamera Terpilih (${selectedCameraId.value.slice(0, 8)}...)`,
+      });
+    }
+
+    // Add other devices as fallbacks
+    for (const dev of cameraDevices.value) {
+      if (dev.id !== selectedCameraId.value) {
+        candidateConfigs.push({
+          target: dev.id,
+          label: dev.label || `Kamera ${dev.id.slice(0, 8)}`,
+        });
       }
     }
 
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode("qr-camera-reader");
-    }
+    // Generic facing mode fallbacks (essential for laptops where facingMode is not back)
+    candidateConfigs.push({
+      target: { facingMode: "user" },
+      label: "Kamera Depan (User)",
+    });
+    candidateConfigs.push({
+      target: { facingMode: "environment" },
+      label: "Kamera Belakang (Environment)",
+    });
 
-    const cameraId = selectedCameraId.value || { facingMode: "environment" };
+    let isStarted = false;
+    let finalError: any = null;
 
-    await html5QrCode.start(
-      cameraId,
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-      },
-      (decodedText) => {
-        if (!verifyingToken.value) {
-          handleCheckIn(decodedText, "Kamera Scanner");
+    for (const candidate of candidateConfigs) {
+      try {
+        await html5QrCode.start(
+          candidate.target,
+          qrConfig,
+          onScanSuccess,
+          onScanFailure,
+        );
+        isStarted = true;
+        isCameraActive.value = true;
+        if (typeof candidate.target === "string") {
+          selectedCameraId.value = candidate.target;
         }
-      },
-      () => {
-        // Ignored frame error
+        break;
+      } catch (err: any) {
+        finalError = err;
+        console.warn(`Gagal memulai ${candidate.label}:`, err);
+        try {
+          if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop();
+          }
+        } catch (_) {}
       }
-    );
+    }
 
-    isCameraActive.value = true;
+    if (!isStarted && finalError) {
+      throw finalError;
+    }
   } catch (err: any) {
-    cameraError.value = err?.message || "Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.";
     isCameraActive.value = false;
+    const msg = String(err?.message || err || "");
+    const name = String(err?.name || "");
+
+    if (
+      name === "NotReadableError" ||
+      msg.toLowerCase().includes("in use") ||
+      msg.toLowerCase().includes("could not start video source") ||
+      msg.toLowerCase().includes("not readable")
+    ) {
+      isDeviceInUseError.value = true;
+      cameraError.value =
+        "Perangkat kamera sedang dikunci atau digunakan oleh aplikasi lain di laptop/komputer Anda.";
+    } else if (
+      name === "NotAllowedError" ||
+      msg.toLowerCase().includes("permission") ||
+      msg.toLowerCase().includes("denied")
+    ) {
+      cameraError.value =
+        "Izin akses kamera ditolak. Silakan klik ikon gembok/pengaturan situs di address bar browser dan ubah izin Kamera menjadi 'Izinkan' (Allow).";
+    } else if (
+      name === "NotFoundError" ||
+      msg.toLowerCase().includes("no camera") ||
+      msg.toLowerCase().includes("not found")
+    ) {
+      cameraError.value =
+        "Tidak ditemukan perangkat kamera yang terpasang pada komputer ini.";
+    } else {
+      cameraError.value =
+        err?.message ||
+        "Tidak dapat mengaktifkan kamera. Silakan periksa izin kamera atau coba gunakan tab Upload Gambar QR.";
+    }
   } finally {
     cameraLoading.value = false;
-  }
-}
-
-async function stopCamera() {
-  if (html5QrCode && isCameraActive.value) {
-    try {
-      await html5QrCode.stop();
-    } catch {
-      // ignore
-    }
-    isCameraActive.value = false;
   }
 }
 
@@ -1022,6 +1231,7 @@ function switchTab(tabId: string) {
 
 onMounted(async () => {
   await loadDemoQueues();
+  await refreshCameras();
 
   // If token or checkin query parameter is present in URL, auto verify
   const params = new URLSearchParams(window.location.search);
