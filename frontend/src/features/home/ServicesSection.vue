@@ -38,7 +38,7 @@
         </button>
       </div>
       <p class="section-footnote">
-        <MapPin :size="14" /> Puskesmas Sehat Bersama · Senin – Sabtu{" "}
+        <MapPin :size="14" /> Klinik Buah Batu · Senin – Sabtu{" "}
         <span>*Target efisiensi pelayanan AntriSehat</span>
       </p>
     </div>

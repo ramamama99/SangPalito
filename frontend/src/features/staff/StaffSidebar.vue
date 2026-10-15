@@ -71,6 +71,17 @@
       <button
         type="button"
         class="nav-link"
+        :class="{ active: queueStore.role === 'shift_dokter' }"
+        :title="collapsed ? 'Shift & Jadwal Dokter' : undefined"
+        @click="selectRole('shift_dokter')"
+      >
+        <CalendarClock :size="19" class="nav-icon" />
+        <span v-if="!collapsed" class="nav-text">Shift Dokter (3 Shift)</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-link"
         :class="{ active: queueStore.role === 'database_pasien' }"
         :title="collapsed ? 'Database Master Pasien' : undefined"
         @click="selectRole('database_pasien')"
@@ -121,7 +132,7 @@
           {{ userInitials }}
         </div>
         <div class="profile-meta">
-          <strong class="doctor-title">{{ doctorName || "dr. Maya Putri" }}</strong>
+          <strong class="doctor-title">{{ staffDisplayName }}</strong>
           <span class="role-badge-label">{{ currentRoleBadge }}</span>
         </div>
       </div>
@@ -152,9 +163,12 @@ import {
   QrCode,
   LogOut,
   Activity,
+  CalendarClock,
 } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
 import { todayDate } from "../../constants/initialData";
+import { isSameDate } from "../../utils/dateHelper";
+import { api } from "../../services/api";
 
 const props = withDefaults(
   defineProps<{
@@ -181,20 +195,32 @@ function toggleCollapse() {
   emit("toggle");
 }
 
-function selectRole(role: "loket" | "medis" | "database_pasien" | "database_obat") {
+function selectRole(role: "loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter") {
   queueStore.role = role;
   if (typeof window !== "undefined" && window.innerWidth < 768) {
     emit("update:collapsed", true);
   }
 }
 
-const userInitials = computed(() => {
-  const name = props.doctorName || "dr. Maya Putri";
-  const parts = name.replace(/^dr\.\s*/i, "").trim().split(" ");
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
+const staffDisplayName = computed(() => {
+  const currentUser = api.getCurrentUser();
+  if (currentUser?.full_name) {
+    return currentUser.full_name;
   }
-  return name.slice(0, 2).toUpperCase();
+  switch (queueStore.role) {
+    case "loket":
+      return "Siti Rahmawati, A.Md.Kes";
+    case "medis":
+      return props.doctorName || "dr. Maya Putri, Sp.PD";
+    case "database_pasien":
+      return "Budi Pratama, A.Md.RMIK";
+    case "database_obat":
+      return "apt. Dimas Prasetyo, S.Farm";
+    case "shift_dokter":
+      return "dr. Hendra (Koordinator Medis)";
+    default:
+      return "Petugas Klinik";
+  }
 });
 
 const currentRoleBadge = computed(() => {
@@ -202,20 +228,36 @@ const currentRoleBadge = computed(() => {
     case "loket":
       return "Petugas Loket";
     case "medis":
-      return `${queueStore.staffPoli}`;
+      return `Dokter · ${queueStore.staffPoli}`;
     case "database_pasien":
       return "Admin Rekam Medis";
     case "database_obat":
-      return "Farmasi / Apoteker";
+      return "Farmasi & Apoteker";
+    case "shift_dokter":
+      return "Admin Shift & SDM";
     default:
-      return "Staff Medis";
+      return "Staff Klinik";
   }
 });
+
+const userInitials = computed(() => {
+  const name = staffDisplayName.value;
+  const parts = name.replace(/^(dr\.|apt\.)\s*/i, "").trim().split(" ");
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+});
+
+function isMatchingToday(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  return isSameDate(dateStr, todayDate);
+}
 
 const pendingVerificationCount = computed(() => {
   return queueStore.patients.filter(
     (p) =>
-      p.date === todayDate &&
+      isMatchingToday(p.date) &&
       ["Terdaftar", "Menunggu verifikasi"].includes(p.status),
   ).length;
 });
@@ -224,7 +266,7 @@ const activePoliQueueCount = computed(() => {
   return queueStore.patients.filter(
     (p) =>
       p.poli === queueStore.staffPoli &&
-      p.date === todayDate &&
+      isMatchingToday(p.date) &&
       ["Hadir", "Dipanggil"].includes(p.status),
   ).length;
 });

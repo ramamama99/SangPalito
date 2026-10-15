@@ -4,7 +4,16 @@ import type { Patient, RegistrationForm, SoapData } from "../types";
 import {
   initialPatients,
   blankRegistrationForm,
+  todayDate,
 } from "../constants/initialData";
+import {
+  loadDoctorShifts,
+  saveDoctorShifts,
+  SHIFT_TIMES,
+  calculateEstimatedArrival,
+  calculateRecommendedArrivalTime,
+  type DoctorShift,
+} from "../constants/doctorShifts";
 import { generateQrDataUrl } from "../utils/qr";
 import { speakQueueCall } from "../utils/speech";
 import { downloadTicketImage } from "../utils/ticketCanvas";
@@ -18,7 +27,12 @@ export const useQueueStore = defineStore("queue", () => {
         const parsed = JSON.parse(stored);
         const hasOtherPoli = parsed.some((p: Patient) => p.poli && p.poli !== "Poli Umum");
         if (hasOtherPoli) {
-          return parsed;
+          return parsed.map((p: Patient) => {
+            if (p.id && p.id.startsWith("demo-")) {
+              return { ...p, date: todayDate };
+            }
+            return p;
+          });
         }
       }
       return initialPatients;
@@ -43,7 +57,7 @@ export const useQueueStore = defineStore("queue", () => {
   const notice = ref<string>("");
   let noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const role = ref<"loket" | "medis" | "database_pasien" | "database_obat">("loket");
+  const role = ref<"loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter">("loket");
   const selected = ref<string>("demo-1");
   const verify = ref<Patient | null>(null);
   const search = ref<string>("");
@@ -68,7 +82,17 @@ export const useQueueStore = defineStore("queue", () => {
     pulse: "",
   });
 
+  // Doctor Shifts Management State (3 shifts per polyclinic)
+  const doctorShifts = ref<DoctorShift[]>(loadDoctorShifts());
+
   // Watchers for persistence
+  watch(
+    doctorShifts,
+    (newVal) => {
+      saveDoctorShifts(newVal);
+    },
+    { deep: true },
+  );
   watch(
     patients,
     (newVal) => {
@@ -191,7 +215,7 @@ export const useQueueStore = defineStore("queue", () => {
           gender: "Laki-laki",
           insurance: "Umum",
           bpjs: "",
-          date: q.queue_date || new Date().toISOString().slice(0, 10),
+          date: q.queue_date || todayDate,
           poli: q.polyclinic?.name || "Poli Umum",
           complaint: "",
           allergy: "",
@@ -255,6 +279,73 @@ export const useQueueStore = defineStore("queue", () => {
     "Poli Lansia / Geriatri": "44444444-4444-4444-4444-444444444444",
   };
 
+  function getPoliCode(poliName: string): string {
+    if (!poliName) return "A";
+    if (poliName.includes("Gigi")) return "B";
+    if (poliName.includes("KIA") || poliName.includes("Anak")) return "C";
+    if (poliName.includes("Lansia") || poliName.includes("Geriatri")) return "D";
+    return "A";
+  }
+
+  function getShiftQuotaInfo(
+    poliName: string,
+    shiftId: "pagi" | "siang" | "sore" | string,
+    targetDate?: string,
+  ) {
+    const checkDate = targetDate || form.value.date || todayDate;
+    const code = getPoliCode(poliName);
+
+    // Find configured doctor shift
+    const shiftConfig = doctorShifts.value.find(
+      (s) => (s.poliCode === code || s.poliName === poliName) && s.shiftId === shiftId,
+    );
+
+    const maxQuota = shiftConfig ? shiftConfig.fixedQuota : 24;
+    const smartAvg = shiftConfig ? shiftConfig.smartAvgServiceMin : 10;
+    const doctorName = shiftConfig ? shiftConfig.doctorName : "Dokter Bertugas";
+    const doctorSpecialty = shiftConfig ? shiftConfig.doctorSpecialty : "";
+    const room = shiftConfig ? shiftConfig.room : "Ruang 01";
+
+    // Count currently booked patients in this shift for that polyclinic and date
+    const bookedCount = patients.value.filter((p) => {
+      const pCode = getPoliCode(p.poli);
+      const matchesPoli = pCode === code;
+      const pShift = p.shift || "pagi";
+      const pDate = p.date || todayDate;
+      const isNotCancelled = p.status !== "Batal" && p.status !== "cancelled";
+      return matchesPoli && pShift === shiftId && pDate === checkDate && isNotCancelled;
+    }).length;
+
+    const remainingQuota = Math.max(0, maxQuota - bookedCount);
+    const isFull = remainingQuota <= 0;
+    const nextQueueOrder = bookedCount + 1;
+    const estimatedArrival = calculateEstimatedArrival(shiftId, smartAvg, nextQueueOrder);
+    const recommendedArrival = calculateRecommendedArrivalTime(estimatedArrival);
+    const shiftTimeInfo = SHIFT_TIMES[shiftId as "pagi" | "siang" | "sore"] || SHIFT_TIMES.pagi;
+
+    return {
+      shiftConfig,
+      shiftTimeInfo,
+      maxQuota,
+      bookedCount,
+      remainingQuota,
+      isFull,
+      doctorName,
+      doctorSpecialty,
+      room,
+      smartAvg,
+      nextQueueOrder,
+      estimatedArrival,
+      recommendedArrival,
+    };
+  }
+
+  function updateDoctorShift(updated: DoctorShift) {
+    doctorShifts.value = doctorShifts.value.map((s) => (s.id === updated.id ? { ...updated } : s));
+    saveDoctorShifts(doctorShifts.value);
+    setNotice(`Jadwal shift ${updated.doctorName} (${updated.poliName}) berhasil diperbarui.`);
+  }
+
   async function registerPatient() {
     isRegistering.value = true;
     let id: string = crypto.randomUUID();
@@ -271,7 +362,7 @@ export const useQueueStore = defineStore("queue", () => {
           ? "asuransi"
           : "umum";
     const gender = form.value.gender === "Perempuan" ? "female" : "male";
-    const visitDate = form.value.date || new Date().toISOString().slice(0, 10);
+    const visitDate = form.value.date || todayDate;
     const birthDate = form.value.birth || "1995-01-01";
 
     try {
@@ -327,6 +418,16 @@ export const useQueueStore = defineStore("queue", () => {
       qrToken = id;
     }
 
+    const selectedShift = form.value.shift || "pagi";
+    const quotaInfo = getShiftQuotaInfo(form.value.poli, selectedShift, form.value.date);
+    const estimatedArrival = quotaInfo.estimatedArrival;
+    const doctorName = quotaInfo.doctorName;
+    const shiftTimeInfo = SHIFT_TIMES[selectedShift as "pagi" | "siang" | "sore"] || SHIFT_TIMES.pagi;
+    const shiftLabel = `Shift ${shiftTimeInfo.label}`;
+
+    form.value.estimatedArrival = estimatedArrival;
+    form.value.shiftLabel = shiftLabel;
+
     const newPatient: Patient = {
       ...form.value,
       id,
@@ -335,6 +436,10 @@ export const useQueueStore = defineStore("queue", () => {
       appointment_token: appointmentToken,
       source: walkin.value ? "Langsung" : "Online",
       status: walkin.value ? "Hadir" : "Terdaftar",
+      shift: selectedShift,
+      shiftLabel,
+      doctorName,
+      estimatedArrival,
     };
 
     patients.value.push(newPatient);
@@ -377,6 +482,7 @@ export const useQueueStore = defineStore("queue", () => {
     step,
     human,
     soap,
+    doctorShifts,
     currentTicket,
     active,
     chosen,
@@ -390,5 +496,8 @@ export const useQueueStore = defineStore("queue", () => {
     isRegistering,
     downloadTicket,
     fetchQueuesFromApi,
+    getShiftQuotaInfo,
+    updateDoctorShift,
+    getPoliCode,
   };
 });

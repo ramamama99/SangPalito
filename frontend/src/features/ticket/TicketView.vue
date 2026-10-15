@@ -17,10 +17,20 @@
       </Transition>
       <div class="ticket-layout">
         <div class="ticket-card">
-          <Brand />
-          <p>E-TIKET ANTREAN</p>
-          <h1>{{ queueStore.currentTicket.number }}</h1>
-          <span class="badge">{{ queueStore.currentTicket.status }}</span>
+          <!-- Header Tiket: Brand & Badge E-Tiket -->
+          <div class="ticket-header-bar">
+            <Brand />
+            <div class="ticket-type-pill">
+              <Ticket :size="13" />
+              <span>E-Tiket Antrean</span>
+            </div>
+          </div>
+
+          <div class="ticket-queue-section">
+            <span class="ticket-queue-label">Nomor Antrean Anda</span>
+            <h1 class="ticket-queue-number">{{ queueStore.currentTicket.number }}</h1>
+            <span class="badge">{{ queueStore.currentTicket.status }}</span>
+          </div>
           <img
             v-if="queueStore.qr"
             class="qr"
@@ -55,7 +65,7 @@
             <code class="text-emerald-700 font-mono font-bold text-[11px] break-all select-all">{{ queueStore.currentTicket.qr_token }}</code>
           </div>
           <h3>{{ queueStore.currentTicket.name }}</h3>
-          <p>{{ queueStore.currentTicket.poli }} · Puskesmas Sehat Bersama</p>
+          <p>{{ queueStore.currentTicket.poli }} · Klinik Buah Batu</p>
           <div class="ticket-details">
             <span>
               Tanggal kunjungan
@@ -64,11 +74,28 @@
               </strong>
             </span>
             <span>
-              Estimasi waktu tunggu
+              Sesi Pelayanan
               <strong>
-                {{ estimatedWaitTime }}
+                {{ ticketShiftLabel }}
               </strong>
             </span>
+            <span class="full-detail-span">
+              Estimasi Kedatangan
+              <strong class="highlight-time">
+                {{ ticketEstimatedArrival }}
+              </strong>
+            </span>
+          </div>
+
+          <!-- Peringatan Datang 15 Menit Sebelum Estimasi Kedatangan -->
+          <div class="ticket-warning-box">
+            <div class="warning-title">
+              <Clock :size="16" />
+              <span>Wajib Hadir 15 Menit Lebih Awal</span>
+            </div>
+            <p class="warning-text">
+              Harap hadir paling lambat pukul <strong class="time-highlight">{{ recommendedArrivalTime }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
+            </p>
           </div>
         </div>
         <div class="ticket-instructions">
@@ -123,7 +150,7 @@
             </div>
 
             <p class="text-[11px] text-slate-500 mt-2">
-              Tunjukkan nomor e-resep ini ke loket Farmasi / Pengambilan Obat puskesmas.
+              Tunjukkan nomor e-resep ini ke loket Farmasi / Pengambilan Obat klinik.
             </p>
           </div>
 
@@ -186,11 +213,17 @@ import {
   Clock,
   AlertCircle,
   Pill,
+  Ticket,
 } from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
 import { api } from "../../services/api";
 import type { Prescription, PrescriptionItem } from "../../types";
+import {
+  calculateEstimatedArrival,
+  calculateRecommendedArrivalTime,
+  SHIFT_TIMES,
+} from "../../constants/doctorShifts";
 
 const router = useRouter();
 const queueStore = useQueueStore();
@@ -260,7 +293,7 @@ const instructions = [
     desc: "Unduh atau screenshot tiket ini agar mudah ditemukan.",
   },
   {
-    title: "Datang ke puskesmas",
+    title: "Datang ke klinik",
     desc: "Bawa KTP dan kartu BPJS / asuransi sesuai penjamin.",
   },
   {
@@ -306,6 +339,28 @@ const isPastTicket = computed(() => {
   const t = queueStore.currentTicket;
   if (!t || !t.date) return false;
   return t.date < todayDateStr.value;
+});
+
+const ticketShiftLabel = computed(() => {
+  const t = queueStore.currentTicket;
+  if (!t) return "Shift Pagi";
+  const shiftKey = (t.shift as "pagi" | "siang" | "sore") || "pagi";
+  const info = SHIFT_TIMES[shiftKey] || SHIFT_TIMES.pagi;
+  return `Shift ${info.label}`;
+});
+
+const ticketEstimatedArrival = computed(() => {
+  const t = queueStore.currentTicket;
+  if (!t) return "07.00 WIB";
+  if (t.estimatedArrival) return t.estimatedArrival;
+  const shiftKey = (t.shift as "pagi" | "siang" | "sore") || "pagi";
+  const numPart = parseInt(t.number.replace(/\D/g, ""), 10) || 1;
+  const smartAvg = t.poli.includes("Gigi") ? 15 : t.poli.includes("KIA") ? 12 : t.poli.includes("Lansia") ? 15 : 10;
+  return calculateEstimatedArrival(shiftKey, smartAvg, numPart);
+});
+
+const recommendedArrivalTime = computed(() => {
+  return calculateRecommendedArrivalTime(ticketEstimatedArrival.value);
 });
 
 const estimatedWaitTime = computed(() => {
@@ -477,5 +532,116 @@ function handleNewRegistration() {
 .popup-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-80px);
+}
+
+.full-detail-span {
+  grid-column: 1 / -1;
+  background: #f0fdf4;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.highlight-time {
+  font-size: 16px !important;
+  color: #047857 !important;
+  font-weight: 800 !important;
+}
+
+.ticket-warning-box {
+  margin-top: 14px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+}
+
+.warning-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 5px;
+}
+
+.warning-text {
+  font-size: 12px !important;
+  color: #78350f !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+}
+
+.time-highlight {
+  color: #b45309;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+/* Header Tiket Modern & Rapi */
+.ticket-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1.5px dashed #cbd5e1;
+}
+
+.ticket-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #ccfbf1;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 750;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.ticket-queue-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.ticket-queue-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.ticket-queue-number {
+  font-size: 84px !important;
+  letter-spacing: -3px !important;
+  margin: 0 0 8px 0 !important;
+  color: #0f766e !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 400px) {
+  .ticket-header-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
 }
 </style>

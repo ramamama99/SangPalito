@@ -1,7 +1,7 @@
 <template>
   <footer class="container">
     <Brand />
-    <p>Puskesmas Sehat Bersama · Sistem Antrean Digital Terpadu</p>
+    <p>Klinik Buah Batu · Sistem Antrean Digital Terpadu</p>
     <span
       >© {{ new Date().getFullYear() }} AntriSehat. Hak Cipta Dilindungi.</span
     >

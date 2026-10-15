@@ -175,6 +175,7 @@ import {
 } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
 import { todayDate } from "../../constants/initialData";
+import { getCurrentShiftId } from "../../constants/doctorShifts";
 
 const queueStore = useQueueStore();
 
@@ -229,7 +230,14 @@ const polyclinicsConfig = [
 
 // Reactive mapping for the 4 polyclinics side by side
 const polyclinics = computed(() => {
+  const currentShiftId = getCurrentShiftId();
   return polyclinicsConfig.map((config) => {
+    const activeDoctorShift = queueStore.doctorShifts.find(
+      (s) => s.poliCode === config.code && s.shiftId === currentShiftId,
+    );
+    const resolvedDoctorName = activeDoctorShift?.doctorName || config.doctorName;
+    const resolvedRoom = activeDoctorShift?.room || config.room;
+
     const poliPatients = queueStore.patients.filter((p) => {
       const matchDate = p.date === todayDate;
       const matchPoli = p.poli && p.poli.toLowerCase().includes(config.name.toLowerCase().slice(0, 6));
@@ -247,6 +255,8 @@ const polyclinics = computed(() => {
 
     return {
       ...config,
+      doctorName: resolvedDoctorName,
+      room: resolvedRoom,
       currentPatient,
       nextPatients,
       totalToday: poliPatients.length,

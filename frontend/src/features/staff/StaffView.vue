@@ -17,7 +17,7 @@
     <div class="dashboard-body">
       <div class="dashboard-heading">
         <div>
-          <div class="section-label">PUSKESMAS SEHAT BERSAMA</div>
+          <div class="section-label">KLINIK BUAH BATU</div>
           <h2>
             {{
               queueStore.role === "loket"
@@ -26,7 +26,9 @@
                 ? "Ruang Pemeriksaan"
                 : queueStore.role === "database_pasien"
                 ? "Database Master Pasien"
-                : "Database Katalog Obat & Farmasi"
+                : queueStore.role === "database_obat"
+                ? "Database Katalog Obat & Farmasi"
+                : "Manajemen Shift & Jadwal Dokter"
             }}
           </h2>
           <p>
@@ -39,78 +41,90 @@
       </div>
 
       <!-- Stats Grid (Role-Aware) -->
-      <div v-if="queueStore.role === 'database_pasien'" class="stats-grid">
+      <div v-if="queueStore.role === 'shift_dokter'" class="stats-grid">
+        <div class="stat-card">
+          <span>Total Sesi Shift Aktif</span>
+          <strong>{{ queueStore.doctorShifts.filter(s => s.isActive).length }} / {{ queueStore.doctorShifts.length }} Shift</strong>
+        </div>
+        <div class="stat-card">
+          <span>Total Kuota Pasien / Hari</span>
+          <strong>{{ totalDailyFixedQuota }} Pasien</strong>
+        </div>
+        <div class="stat-card">
+          <span>Layanan Pasien Efektif</span>
+          <strong>4 Jam / Shift</strong>
+        </div>
+        <div class="stat-card">
+          <span>Buffer Klinis Dokter</span>
+          <strong>1 Jam / Shift</strong>
+        </div>
+      </div>
+      <div v-else-if="queueStore.role === 'database_pasien'" class="stats-grid">
         <div class="stat-card">
           <span>Total Pasien Terdaftar</span>
           <strong>{{ queueStore.patients.length }}</strong>
-          <Users :size="22" />
         </div>
         <div class="stat-card">
           <span>Pasien BPJS Kesehatan</span>
           <strong>{{ queueStore.patients.filter(p => p.insurance === 'BPJS').length }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Pasien Umum</span>
           <strong>{{ queueStore.patients.filter(p => p.insurance !== 'BPJS').length }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Catatan Riwayat Alergi</span>
           <strong>{{ queueStore.patients.filter(p => p.allergy && !/^(tidak ada|tidak|-)$/i.test(p.allergy)).length }}</strong>
-          <Activity :size="22" />
         </div>
       </div>
       <div v-else-if="queueStore.role === 'database_obat'" class="stats-grid">
         <div class="stat-card">
           <span>Total Katalog Obat</span>
           <strong>{{ medications.length }}</strong>
-          <Pill :size="22" />
         </div>
         <div class="stat-card">
           <span>Sediaan Oral (Minum/Kunyah)</span>
           <strong>{{ medications.filter(m => m.route?.includes('oral') || m.route?.includes('sirup')).length }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Topikal, Tetes & Kumur</span>
           <strong>{{ medications.filter(m => m.route?.includes('topikal') || m.route?.includes('tetes') || m.route?.includes('kumur')).length }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Total Stok Fisik Obat</span>
           <strong>{{ medications.reduce((acc, m) => acc + (m.stock || 0), 0) }}</strong>
-          <Activity :size="22" />
         </div>
       </div>
       <div v-else class="stats-grid">
         <div class="stat-card">
-          <span>Pendaftaran hari ini</span>
-          <strong>{{ todayRegistrationsCount }}</strong>
-          <Activity :size="22" />
+          <span>Pendaftaran {{ loketDateLabel }}</span>
+          <strong>{{ activeDateRegistrationsCount }}</strong>
         </div>
         <div class="stat-card">
           <span>Menunggu verifikasi</span>
           <strong>{{ pendingVerificationCount }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Siap dilayani</span>
           <strong>{{ readyToServeCount }}</strong>
-          <Activity :size="22" />
         </div>
         <div class="stat-card">
           <span>Kunjungan selesai</span>
           <strong>{{ finishedCount }}</strong>
-          <Activity :size="22" />
         </div>
       </div>
 
       <!-- Role: Loket View -->
       <section v-if="queueStore.role === 'loket'" class="dashboard-panel">
         <div class="panel-heading">
-          <h3>Antrean hari ini</h3>
-          <div style="display: flex; gap: 8px">
+          <div class="loket-heading-left">
+            <h3>Antrean Pasien</h3>
+            <span class="loket-count-badge">
+              {{ filteredLoketPatients.length }} Pasien
+            </span>
+          </div>
+
+          <div class="loket-quick-actions">
             <RouterLink
               to="/register"
               class="button outline small"
@@ -123,26 +137,72 @@
             </RouterLink>
           </div>
         </div>
-        <div class="search-field">
-          <Search :size="18" />
-          <input
-            placeholder="Cari nama, NIK, atau nomor antrean..."
-            v-model="queueStore.search"
-          />
+
+        <!-- Filter & Search Toolbar (Persis Database Pasien & Obat) -->
+        <div class="crud-toolbar">
+          <div class="search-input-box">
+            <Search :size="16" class="search-icon" />
+            <input
+              v-model="queueStore.search"
+              placeholder="Cari nama pasien, NIK, nomor antrean, poli..."
+              class="toolbar-search-input"
+            />
+          </div>
+          <div class="toolbar-filter-group">
+            <select v-model="loketDateFilter" class="toolbar-select">
+              <option value="today">Hari Ini ({{ dateTodayLabel }})</option>
+              <option value="tomorrow">Besok ({{ dateTomorrowLabel }})</option>
+              <option value="day_after">Lusa ({{ dateDayAfterLabel }})</option>
+              <option value="all">Semua Tanggal</option>
+            </select>
+            <select v-model="loketPoliFilter" class="toolbar-select">
+              <option value="all">Semua Poli</option>
+              <option value="Poli Umum">Poli Umum</option>
+              <option value="Poli Gigi">Poli Gigi</option>
+              <option value="Poli KIA">Poli KIA / Anak</option>
+              <option value="Poli Lansia">Poli Lansia</option>
+            </select>
+            <select v-model="loketShiftFilter" class="toolbar-select">
+              <option value="all">Semua Shift</option>
+              <option value="pagi">Shift Pagi</option>
+              <option value="siang">Shift Siang</option>
+              <option value="sore">Shift Sore</option>
+            </select>
+          </div>
         </div>
+
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
                 <th>Antrean</th>
                 <th>Pasien</th>
-                <th>Poli</th>
+                <th>Poli & Sesi Shift</th>
+                <th>Estimasi / Tanggal</th>
                 <th>Pendaftaran</th>
                 <th>Status</th>
                 <th>Tindakan</th>
               </tr>
             </thead>
             <tbody>
+              <tr v-if="filteredLoketPatients.length === 0">
+                <td colspan="7" class="loket-empty-row">
+                  <div class="loket-empty-content">
+                    <Search :size="30" class="text-slate-300" />
+                    <strong>Tidak ada data antrean yang cocok</strong>
+                    <p>Silakan sesuaikan kata kunci pencarian, pilihan poli, atau jadwal shift.</p>
+                    <button
+                      v-if="isLoketFiltered"
+                      type="button"
+                      class="button outline small"
+                      style="margin-top: 8px;"
+                      @click="resetLoketFilters"
+                    >
+                      <RotateCcw :size="14" /> Reset Semua Filter
+                    </button>
+                  </div>
+                </td>
+              </tr>
               <tr v-for="p in filteredLoketPatients" :key="p.id">
                 <td>
                   <strong class="queue-number">
@@ -153,7 +213,20 @@
                   <strong>{{ p.name }}</strong>
                   <small>{{ p.nik }}</small>
                 </td>
-                <td>{{ p.poli }}</td>
+                <td>
+                  <div class="poli-shift-cell">
+                    <strong>{{ p.poli }}</strong>
+                    <span class="shift-mini-badge" :class="p.shift || 'pagi'">
+                      {{ formatShiftBadge(p.shift || p.shiftLabel) }}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="arrival-time-cell">
+                    <strong class="text-teal-800">{{ p.estimatedArrival || '07.00 WIB' }}</strong>
+                    <small class="text-slate-500">{{ formatDate(p.date) }}</small>
+                  </div>
+                </td>
                 <td>
                   <span :class="['badge', { coral: p.source !== 'Online' }]">
                     {{ p.source }}
@@ -861,6 +934,177 @@
           </div>
         </div>
       </section>
+
+      <!-- Role: Shift & Jadwal Dokter Panel -->
+      <section v-else-if="queueStore.role === 'shift_dokter'" class="dashboard-panel shift-management-panel">
+        <div class="panel-heading shift-panel-header">
+          <div>
+            <h3>Jadwal & Shift Dokter Poliklinik (3 Sesi Shift)</h3>
+          </div>
+          <div class="shift-action-btns">
+            <button
+              type="button"
+              class="button outline small"
+              @click="resetAllShiftsToDefault"
+              title="Kembalikan semua jadwal dokter ke pengaturan default sistem"
+            >
+              <RotateCcw :size="16" /> Reset Jadwal Default
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Poli Tabs Toolbar -->
+        <div class="shift-toolbar-wrap">
+          <div class="shift-filter-tabs">
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: selectedShiftPoli === 'all' }"
+              @click="selectedShiftPoli = 'all'"
+            >
+              Semua Poli
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: selectedShiftPoli === 'Poli Umum' }"
+              @click="selectedShiftPoli = 'Poli Umum'"
+            >
+              Poli Umum
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: selectedShiftPoli === 'Poli Gigi' }"
+              @click="selectedShiftPoli = 'Poli Gigi'"
+            >
+              Poli Gigi
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: selectedShiftPoli === 'Poli KIA' }"
+              @click="selectedShiftPoli = 'Poli KIA'"
+            >
+              Poli KIA / Anak
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: selectedShiftPoli === 'Poli Lansia' }"
+              @click="selectedShiftPoli = 'Poli Lansia'"
+            >
+              Poli Lansia
+            </button>
+          </div>
+
+          <div class="shift-stats-pill">
+            <span class="dot-indicator"></span>
+            <span>Menampilkan <strong>{{ filteredDoctorShifts.length }} Sesi Shift</strong></span>
+          </div>
+        </div>
+
+        <!-- Grid of Shift Cards -->
+        <div class="admin-shifts-grid">
+          <div
+            v-for="shift in filteredDoctorShifts"
+            :key="shift.id"
+            class="admin-shift-card"
+            :class="[shift.shiftId, { inactive: !shift.isActive }]"
+          >
+            <!-- Card Header: Shift pill + Status dot -->
+            <div class="card-top-bar">
+              <div class="shift-title-block">
+                <span class="shift-type-pill" :class="shift.shiftId">
+                  <span class="shift-dot"></span>
+                  {{ shift.shiftId === 'pagi' ? 'Shift Pagi' : shift.shiftId === 'siang' ? 'Shift Siang' : 'Shift Sore' }}
+                </span>
+              </div>
+              <div class="status-badge-switch">
+                <span v-if="shift.isActive" class="badge-active-dot">
+                  <span class="status-indicator active"></span> Aktif Bertugas
+                </span>
+                <span v-else class="badge-inactive-dot">
+                  <span class="status-indicator inactive"></span> Cuti / Off
+                </span>
+              </div>
+            </div>
+
+            <!-- Poli & Room -->
+            <div class="card-poli-heading">
+              <h4 class="poli-title-text">{{ shift.poliName }}</h4>
+              <span class="room-pill">{{ shift.room }}</span>
+            </div>
+
+            <!-- Doctor Profile Box -->
+            <div class="doctor-profile-box">
+              <div class="doctor-avatar-box">
+                <Stethoscope :size="20" class="text-teal-700" />
+              </div>
+              <div class="doctor-name-info">
+                <strong class="doctor-main-name">{{ shift.doctorName }}</strong>
+                <span class="doctor-spec-text">{{ shift.doctorSpecialty }}</span>
+              </div>
+            </div>
+
+            <!-- Operating Hours Details -->
+            <div class="time-specs-box">
+              <div class="time-spec-row">
+                <span class="label">Jam Siaga Dokter</span>
+                <strong class="val doctor-val">
+                  {{ shift.shiftId === 'pagi' ? '07.00 – 12.00' : shift.shiftId === 'siang' ? '12.00 – 17.00' : '17.00 – 22.00' }} WIB
+                </strong>
+              </div>
+              <div class="time-spec-row">
+                <span class="label">Layanan Pasien</span>
+                <strong class="val patient-val">
+                  {{ shift.shiftId === 'pagi' ? '07.00 – 11.00' : shift.shiftId === 'siang' ? '12.00 – 16.00' : '17.00 – 21.00' }} WIB
+                </strong>
+              </div>
+              <div class="time-spec-row">
+                <span class="label">Buffer Tindakan</span>
+                <span class="val buffer-val">60 Menit (1 Jam Akhir)</span>
+              </div>
+            </div>
+
+            <!-- Live Booking Counter Today -->
+            <div class="shift-live-status">
+              <div class="live-progress-info">
+                <span>Kuota Pasien:</span>
+                <strong>
+                  {{ getShiftBookedCount(shift.poliName, shift.shiftId) }} / {{ shift.fixedQuota }} Pasien
+                </strong>
+              </div>
+              <div class="progress-bar-wrap">
+                <div
+                  class="progress-bar-fill"
+                  :style="{
+                    width: `${Math.min(100, (getShiftBookedCount(shift.poliName, shift.shiftId) / shift.fixedQuota) * 100)}%`
+                  }"
+                  :class="{ full: getShiftBookedCount(shift.poliName, shift.shiftId) >= shift.fixedQuota }"
+                />
+              </div>
+            </div>
+
+            <!-- Notes as Clinical Focus Callout -->
+            <div v-if="shift.notes" class="shift-note-bubble">
+              <span class="note-tag">Fokus:</span>
+              <span class="note-text">{{ shift.notes }}</span>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="card-actions">
+              <button
+                type="button"
+                class="btn-edit-shift"
+                @click="openEditShiftModal(shift)"
+              >
+                <Edit3 :size="14" /> Atur Dokter & Shift
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Modals -->
@@ -1150,6 +1394,95 @@
         </form>
       </div>
     </div>
+
+    <!-- MODAL EDIT SHIFT & DOKTER -->
+    <div v-if="isShiftModalOpen && editingShift" class="modal-backdrop" @click.self="closeEditShiftModal">
+      <div class="modal-card edit-shift-modal">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <CalendarClock :size="20" class="text-teal-700" />
+            <h3 class="font-bold text-base">Edit Jadwal & Dokter Shift</h3>
+          </div>
+          <button type="button" class="btn-close" @click="closeEditShiftModal"><X :size="18" /></button>
+        </div>
+
+        <form @submit.prevent="saveShiftSubmit" class="modal-body space-y-4">
+          <!-- Shift Overview Header -->
+          <div class="modal-shift-info-bar">
+            <div>
+              <span class="badge" :class="editingShift.shiftId">
+                {{ editingShift.shiftId === 'pagi' ? 'Shift Pagi (07.00 - 12.00)' : editingShift.shiftId === 'siang' ? 'Shift Siang (12.00 - 17.00)' : 'Shift Sore (17.00 - 22.00)' }}
+              </span>
+              <strong class="block text-sm font-bold text-slate-800 mt-1">{{ editingShift.poliName }}</strong>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-500 font-semibold block">Kuota Tetap Pasien</span>
+              <strong class="text-emerald-700 font-mono text-base font-bold">{{ editingShift.fixedQuota }} Pasien</strong>
+            </div>
+          </div>
+
+          <div class="crud-form-group">
+            <label>
+              Nama Dokter Bertugas *
+              <input required v-model="editingShiftForm.doctorName" placeholder="Contoh: dr. Rama Palito" />
+            </label>
+          </div>
+
+          <div class="crud-form-grid-2">
+            <label>
+              Gelar / Spesialisasi Dokter *
+              <input required v-model="editingShiftForm.doctorSpecialty" placeholder="Contoh: Dokter Umum / Spesialis Anak" />
+            </label>
+            <label>
+              Ruang Praktik / Poliklinik *
+              <input required v-model="editingShiftForm.room" placeholder="Contoh: Ruang 01 / Poli Umum Lt. 1" />
+            </label>
+          </div>
+
+          <div class="crud-form-grid-2">
+            <label>
+              Status Kehadiran / Shift *
+              <select v-model="editingShiftForm.isActive">
+                <option :value="true">Aktif Bertugas</option>
+                <option :value="false">Cuti / Sedang Tidak Bertugas</option>
+              </select>
+            </label>
+            <label>
+              Rata-rata Waktu Layanan (Menit) *
+              <input
+                type="number"
+                min="5"
+                max="60"
+                required
+                v-model.number="editingShiftForm.smartAvgServiceMin"
+                @input="editingShiftForm.fixedQuota = Math.floor(240 / (editingShiftForm.smartAvgServiceMin || 10))"
+              />
+            </label>
+          </div>
+
+          <div class="crud-form-group">
+            <label>
+              Catatan Khusus Shift / Pesan Pasien
+              <textarea rows="2" v-model="editingShiftForm.notes" placeholder="Contoh: Fokus pada pemeriksaan anak, penanganan rujukan, atau penanganan darurat..." />
+            </label>
+          </div>
+
+          <div class="shift-modal-notice">
+            <Clock :size="16" class="text-amber-600 shrink-0 mt-0.5" />
+            <p class="text-xs text-amber-900 leading-relaxed m-0">
+              <strong>Ketentuan Kuota Pasien:</strong> Kapasitas dihitung otomatis dari durasi layanan pasien 240 menit (4 jam) dibagi rata-rata layanan ({{ editingShiftForm.smartAvgServiceMin }} menit) = <strong>{{ Math.floor(240 / (editingShiftForm.smartAvgServiceMin || 10)) }} kuota</strong>. Sisa 1 jam terakhir adalah buffer dokter untuk menyelesaikan tindakan pasien.
+            </p>
+          </div>
+
+          <div class="modal-footer flex items-center justify-end gap-2 pt-3 border-t border-[var(--line)]">
+            <button type="button" class="button outline small" @click="closeEditShiftModal">Batal</button>
+            <button type="submit" class="button primary small">
+              <CheckCircle2 :size="16" /> Simpan Perubahan Shift
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -1179,9 +1512,24 @@ import {
   Database,
   Edit2,
   ExternalLink,
+  CalendarClock,
+  Clock,
+  ShieldAlert,
+  UserCheck,
+  RotateCcw,
+  Edit3,
 } from "lucide-vue-next";
 import { services } from "../../constants/services";
 import { todayDate, initialMedications } from "../../constants/initialData";
+import {
+  getRelativeDateStr,
+  formatShortIndoDate,
+  isSameDate,
+} from "../../utils/dateHelper";
+import {
+  type DoctorShift,
+  initialDoctorShifts,
+} from "../../constants/doctorShifts";
 import { useQueueStore } from "../../stores/queue";
 import type { Patient, Medication, PrescriptionItem, Prescription } from "../../types";
 import VerifyModal from "./VerifyModal.vue";
@@ -1197,6 +1545,8 @@ onMounted(() => {
     queueStore.role = "database_obat";
   } else if (route.path === "/database-pasien" || route.query.tab === "pasien") {
     queueStore.role = "database_pasien";
+  } else if (route.path === "/shift-dokter" || route.query.tab === "shift") {
+    queueStore.role = "shift_dokter";
   }
 });
 
@@ -1207,9 +1557,83 @@ watch(
       queueStore.role = "database_obat";
     } else if (newPath === "/database-pasien") {
       queueStore.role = "database_pasien";
+    } else if (newPath === "/shift-dokter") {
+      queueStore.role = "shift_dokter";
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────
+// MANAJEMEN SHIFT & JADWAL DOKTER (3 SHIFT PER POLI)
+// ─────────────────────────────────────────────────────────────
+const selectedShiftPoli = ref<string>("all");
+
+const filteredDoctorShifts = computed(() => {
+  if (selectedShiftPoli.value === "all") {
+    return queueStore.doctorShifts;
+  }
+  return queueStore.doctorShifts.filter((s) => s.poliName === selectedShiftPoli.value);
+});
+
+const totalDailyFixedQuota = computed(() => {
+  return queueStore.doctorShifts.reduce((acc, s) => acc + s.fixedQuota, 0);
+});
+
+function getShiftBookedCount(poliName: string, shiftId: string) {
+  const code = queueStore.getPoliCode(poliName);
+  return queueStore.patients.filter((p) => {
+    const pCode = queueStore.getPoliCode(p.poli);
+    const matchesPoli = pCode === code;
+    const pShift = p.shift || "pagi";
+    const pDate = p.date || todayDate;
+    const isNotCancelled = p.status !== "Batal" && p.status !== "cancelled";
+    return matchesPoli && pShift === shiftId && pDate === todayDate && isNotCancelled;
+  }).length;
+}
+
+const isShiftModalOpen = ref(false);
+const editingShift = ref<DoctorShift | null>(null);
+const editingShiftForm = ref<DoctorShift>({
+  id: "",
+  poliId: "",
+  poliName: "",
+  poliCode: "",
+  shiftId: "pagi",
+  doctorName: "",
+  doctorSpecialty: "",
+  room: "",
+  smartAvgServiceMin: 10,
+  fixedQuota: 24,
+  isActive: true,
+  notes: "",
+});
+
+function openEditShiftModal(shift: DoctorShift) {
+  editingShift.value = shift;
+  editingShiftForm.value = { ...shift };
+  isShiftModalOpen.value = true;
+}
+
+function closeEditShiftModal() {
+  isShiftModalOpen.value = false;
+  editingShift.value = null;
+}
+
+function saveShiftSubmit() {
+  if (!editingShiftForm.value.id) return;
+  // Recalculate fixedQuota strictly from 240 / smartAvgServiceMin
+  const avg = editingShiftForm.value.smartAvgServiceMin || 10;
+  editingShiftForm.value.fixedQuota = Math.floor(240 / avg);
+  queueStore.updateDoctorShift(editingShiftForm.value);
+  closeEditShiftModal();
+}
+
+function resetAllShiftsToDefault() {
+  if (window.confirm("Kembalikan seluruh 12 shift dokter ke pengaturan default sistem?")) {
+    queueStore.doctorShifts = JSON.parse(JSON.stringify(initialDoctorShifts));
+    queueStore.setNotice("Seluruh jadwal shift dokter berhasil direset ke standar default.");
+  }
+}
 
 const currentUser = api.getCurrentUser();
 const doctorName = ref(
@@ -1418,15 +1842,88 @@ const currentFormattedDate = computed(() =>
   new Date().toLocaleDateString("id-ID", { dateStyle: "full" }),
 );
 
-const todayRegistrationsCount = computed(
-  () => queueStore.patients.filter((p) => p.date === todayDate).length,
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  try {
+    return new Date(dateStr).toLocaleDateString("id-ID", { dateStyle: "medium" });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatShiftBadge(shift?: string): string {
+  if (!shift) return "Shift Pagi";
+  const s = shift.toLowerCase();
+  if (s.includes("siang")) return "Shift Siang";
+  if (s.includes("sore")) return "Shift Sore";
+  return "Shift Pagi";
+}
+
+const dateToday = getRelativeDateStr(0);
+const dateTomorrow = getRelativeDateStr(1);
+const dateDayAfter = getRelativeDateStr(2);
+
+const dateTodayLabel = formatShortIndoDate(dateToday);
+const dateTomorrowLabel = formatShortIndoDate(dateTomorrow);
+const dateDayAfterLabel = formatShortIndoDate(dateDayAfter);
+
+function isMatchingToday(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  return isSameDate(dateStr, dateToday);
+}
+
+// 'today' | 'tomorrow' | 'day_after' | 'all'
+const loketDateFilter = ref<string>("today");
+const loketPoliFilter = ref<string>("all");
+const loketShiftFilter = ref<string>("all");
+
+function isMatchingLoketDate(patientDate?: string): boolean {
+  if (loketDateFilter.value === "all") return true;
+  if (!patientDate) return false;
+  if (loketDateFilter.value === "today") {
+    return isSameDate(patientDate, dateToday) || isMatchingToday(patientDate);
+  }
+  if (loketDateFilter.value === "tomorrow") {
+    return isSameDate(patientDate, dateTomorrow);
+  }
+  if (loketDateFilter.value === "day_after") {
+    return isSameDate(patientDate, dateDayAfter);
+  }
+  return true;
+}
+
+const loketDateLabel = computed(() => {
+  if (loketDateFilter.value === "today") return `hari ini (${dateTodayLabel})`;
+  if (loketDateFilter.value === "tomorrow") return `besok (${dateTomorrowLabel})`;
+  if (loketDateFilter.value === "day_after") return `lusa (${dateDayAfterLabel})`;
+  return "semua tanggal";
+});
+
+const isLoketFiltered = computed(() => {
+  return (
+    queueStore.search.trim() !== "" ||
+    loketDateFilter.value !== "today" ||
+    loketPoliFilter.value !== "all" ||
+    loketShiftFilter.value !== "all"
+  );
+});
+
+function resetLoketFilters() {
+  queueStore.search = "";
+  loketDateFilter.value = "today";
+  loketPoliFilter.value = "all";
+  loketShiftFilter.value = "all";
+}
+
+const activeDateRegistrationsCount = computed(
+  () => queueStore.patients.filter((p) => isMatchingLoketDate(p.date)).length,
 );
 
 const pendingVerificationCount = computed(
   () =>
     queueStore.patients.filter(
       (p) =>
-        p.date === todayDate &&
+        isMatchingLoketDate(p.date) &&
         ["Terdaftar", "Menunggu verifikasi"].includes(p.status),
     ).length,
 );
@@ -1434,32 +1931,58 @@ const pendingVerificationCount = computed(
 const readyToServeCount = computed(
   () =>
     queueStore.patients.filter(
-      (p) => p.date === todayDate && p.status === "Hadir",
+      (p) => isMatchingLoketDate(p.date) && p.status === "Hadir",
     ).length,
 );
 
 const finishedCount = computed(
   () =>
     queueStore.patients.filter(
-      (p) => p.date === todayDate && p.status === "Selesai",
+      (p) => isMatchingLoketDate(p.date) && p.status === "Selesai",
     ).length,
 );
 
 const filteredLoketPatients = computed(() =>
-  queueStore.patients.filter(
-    (p) =>
-      p.date === todayDate &&
-      `${p.name} ${p.nik} ${p.number}`
+  queueStore.patients.filter((p) => {
+    // 1. Filter Tanggal
+    if (!isMatchingLoketDate(p.date)) {
+      return false;
+    }
+
+    // 2. Filter Poli
+    if (loketPoliFilter.value !== "all") {
+      const targetPoli = loketPoliFilter.value.toLowerCase().replace("poli ", "").trim();
+      if (!p.poli || !p.poli.toLowerCase().includes(targetPoli)) {
+        return false;
+      }
+    }
+
+    // 3. Filter Shift
+    if (loketShiftFilter.value !== "all") {
+      const pShift = p.shift || "pagi";
+      if (pShift !== loketShiftFilter.value) {
+        return false;
+      }
+    }
+
+    // 4. Search Filter
+    if (queueStore.search.trim()) {
+      const q = queueStore.search.toLowerCase();
+      const match = `${p.name} ${p.nik} ${p.number} ${p.poli} ${p.shift || ''} ${p.date || ''}`
         .toLowerCase()
-        .includes(queueStore.search.toLowerCase()),
-  ),
+        .includes(q);
+      if (!match) return false;
+    }
+
+    return true;
+  }),
 );
 
 const poliPatients = computed(() =>
   queueStore.patients.filter(
     (p) =>
       p.poli === queueStore.staffPoli &&
-      p.date === todayDate &&
+      isMatchingToday(p.date) &&
       ["Hadir", "Dipanggil"].includes(p.status),
   ),
 );
@@ -2753,5 +3276,682 @@ function goToMedicalRecord() {
     justify-content: center;
     flex-wrap: wrap;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SHIFT MANAGEMENT ADMIN PANEL & CARDS
+   ───────────────────────────────────────────────────────────── */
+.shift-management-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shift-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 3px 0 0 0;
+}
+
+.shift-toolbar-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.shift-filter-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #0f766e;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.shift-stats-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shift-stats-pill .dot-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0d9488;
+}
+
+.shift-stats-pill strong {
+  color: #0f172a;
+}
+
+.admin-shifts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.admin-shift-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.admin-shift-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.07);
+  border-color: #cbd5e1;
+}
+
+.admin-shift-card.inactive {
+  opacity: 0.65;
+  background: #f8fafc;
+}
+
+.card-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shift-title-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shift-type-pill {
+  font-size: 11.5px;
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shift-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0d9488;
+}
+
+.shift-type-pill.siang .shift-dot {
+  background: #0284c7;
+}
+
+.shift-type-pill.sore .shift-dot {
+  background: #64748b;
+}
+
+.status-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.active {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-indicator.inactive {
+  background: #94a3b8;
+}
+
+.badge-active-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.badge-inactive-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.card-poli-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.poli-title-text {
+  font-size: 15.5px;
+  font-weight: 750;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.room-pill {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.doctor-profile-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.doctor-avatar-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.doctor-name-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.doctor-main-name {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-spec-text {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.time-specs-box {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.time-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.time-spec-row .label {
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.time-spec-row .doctor-val {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.time-spec-row .patient-val {
+  color: #0f766e;
+  font-weight: 750;
+}
+
+.time-spec-row .buffer-val {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.shift-live-status {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.live-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.live-progress-info strong {
+  color: #0f766e;
+  font-weight: 750;
+}
+
+.progress-bar-wrap {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #0d9488;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-fill.full {
+  background: #e11d48;
+}
+
+.shift-note-bubble {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #475569;
+  display: flex;
+  gap: 5px;
+}
+
+.note-tag {
+  font-weight: 700;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.btn-edit-shift {
+  width: 100%;
+  height: 38px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 12.5px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.btn-edit-shift:hover {
+  background: #f0fdfa;
+  color: #0f766e;
+  border-color: #0d9488;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.12);
+}
+
+.edit-shift-modal {
+  max-width: 540px;
+}
+
+.modal-shift-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.shift-modal-notice {
+  display: flex;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Loket Unified Search & Filter Toolbar */
+.loket-heading-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loket-count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.loket-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loket-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.loket-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.loket-search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+  width: 320px;
+  max-width: 100%;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.loket-search-container:focus-within {
+  border-color: #0f766e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.loket-search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.loket-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13px;
+  color: #1e293b;
+  padding: 0;
+}
+
+.loket-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.loket-clear-search {
+  border: none;
+  background: #e2e8f0;
+  color: #64748b;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.loket-clear-search:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.loket-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-pill-toggle {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 2px;
+  height: 38px;
+  border: 1px solid #e2e8f0;
+}
+
+.pill-btn {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pill-btn:hover {
+  color: #0f172a;
+}
+
+.pill-btn.active {
+  background: #ffffff;
+  color: #0f766e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+.loket-select-filter {
+  height: 38px;
+  padding: 0 32px 0 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 13px 13px;
+}
+
+.loket-select-filter:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  outline: none;
+}
+
+.btn-reset-filter {
+  height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-filter:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.loket-empty-row {
+  text-align: center;
+  padding: 44px 16px !important;
+}
+
+.loket-empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.loket-empty-content strong {
+  font-size: 14px;
+  color: #334155;
+}
+
+.loket-empty-content p {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.poli-shift-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.shift-mini-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.shift-mini-badge.pagi {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.shift-mini-badge.siang {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.shift-mini-badge.sore {
+  background: #ede9fe;
+  color: #6b21a8;
+}
+
+.arrival-time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arrival-time-cell strong {
+  font-size: 13px;
+}
+
+.arrival-time-cell small {
+  font-size: 11px;
 }
 </style>

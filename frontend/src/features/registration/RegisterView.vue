@@ -332,32 +332,60 @@
           <div class="form-title">
             <CalendarDays />
             <div>
-              <h3>Pilih layanan & jadwal</h3>
-              <p>Sesuaikan kunjungan dengan kebutuhan Anda.</p>
+              <h3>Pilih layanan, jadwal & shift dokter</h3>
+              <p>Pilih poli tujuan dan shift kedatangan yang sesuai dengan waktu Anda.</p>
             </div>
           </div>
-          <label>
-            Tanggal kunjungan *
-            <input
-              type="date"
-              required
-              :min="todayDate"
-              :value="queueStore.form.date"
-              @input="
-                queueStore.updateForm(
-                  'date',
-                  ($event.target as HTMLInputElement).value,
-                )
-              "
-            />
-          </label>
-          <p class="field-heading">Pilih poli *</p>
+          <div class="field-heading-row">
+            <p class="field-heading" style="margin: 0;">1. Pilih tanggal kunjungan *</p>
+            <span class="field-subtitle-note">Hingga {{ maxDateLabel }}</span>
+          </div>
+
+          <div class="date-quick-picker">
+            <button
+              v-for="d in allowedDates"
+              :key="d.dateStr"
+              type="button"
+              :class="[
+                'date-card',
+                { selected: queueStore.form.date === d.dateStr },
+              ]"
+              @click="queueStore.updateForm('date', d.dateStr)"
+            >
+              <span class="date-card-title">{{ d.title }}</span>
+              <strong class="date-card-day">{{ d.dayLabel }}</strong>
+              <CheckCircle2
+                v-if="queueStore.form.date === d.dateStr"
+                :size="16"
+                class="date-check-icon"
+              />
+            </button>
+          </div>
+
+          <div class="date-manual-input-wrap">
+            <label class="date-manual-label">
+              <span>Atau pilih via kalender:</span>
+              <input
+                type="date"
+                required
+                :min="minDate"
+                :max="maxDate"
+                :value="queueStore.form.date"
+                @input="handleDateChange"
+                class="date-input-control"
+              />
+            </label>
+            <small class="date-restriction-note">
+              * Pemilihan tanggal dibuka untuk hari saat mendaftar, besok, dan lusa.
+            </small>
+          </div>
+
+          <p class="field-heading">2. Pilih poli tujuan *</p>
           <div class="poli-grid">
             <button
               v-for="s in services"
               :key="s.name"
               type="button"
-              :disabled="getRemainingQuota(s) <= 0"
               :class="[
                 'poli-choice',
                 { selected: queueStore.form.poli === s.name },
@@ -366,14 +394,88 @@
             >
               <component :is="getPoliIcon(s.iconName)" :size="25" />
               <strong>{{ s.name }}</strong>
-              <small>08.00 – 14.00</small>
-              <span>{{ getRemainingQuota(s) }} kuota tersedia</span>
+              <small>3 Sesi Shift Dokter</small>
+              <span>{{ getTotalPoliRemainingQuota(s.name) }} kuota tersedia</span>
               <CheckCircle2 v-if="queueStore.form.poli === s.name" :size="19" />
             </button>
           </div>
-          <div class="info-note">
-            <Clock3 :size="18" /> Datang 15 menit sebelum estimasi pelayanan.
-            Jam pelayanan dapat berubah.
+
+          <!-- 3. Pilih Shift Kedatangan -->
+          <div class="shift-section">
+            <div class="shift-heading-row">
+              <p class="field-heading" style="margin: 0;">3. Pilih shift kedatangan Anda *</p>
+            </div>
+            <p class="shift-subtext">
+              Pilih waktu pelayanan yang sesuai dengan jadwal kunjungan Anda.
+            </p>
+
+            <div class="shift-grid">
+              <button
+                v-for="shift in shiftList"
+                :key="shift.id"
+                type="button"
+                :disabled="getShiftInfo(shift.id).isFull"
+                :class="[
+                  'shift-card',
+                  { selected: queueStore.form.shift === shift.id, full: getShiftInfo(shift.id).isFull }
+                ]"
+                @click="queueStore.updateForm('shift', shift.id)"
+              >
+                <div class="shift-card-top">
+                  <span class="shift-name-tag">{{ shift.label }}</span>
+                  <span v-if="getShiftInfo(shift.id).isFull" class="status-tag-full">
+                    Penuh
+                  </span>
+                  <span v-else class="status-tag-avail">
+                    Sisa {{ getShiftInfo(shift.id).remainingQuota }} kuota
+                  </span>
+                </div>
+
+                <div class="shift-time-main">
+                  <Clock3 :size="16" class="time-icon" />
+                  <strong>{{ shift.patientHours }} WIB</strong>
+                </div>
+
+                <div class="shift-doctor-line">
+                  <UserCheck :size="14" class="text-slate-400 shrink-0" />
+                  <span>{{ getShiftInfo(shift.id).doctorName }}</span>
+                </div>
+
+                <div class="shift-card-bottom">
+                  <span class="est-tag">
+                    Estimasi tiba: <strong>{{ getShiftInfo(shift.id).estimatedArrival }}</strong>
+                  </span>
+                  <CheckCircle2 v-if="queueStore.form.shift === shift.id" :size="17" class="check-icon" />
+                </div>
+              </button>
+            </div>
+
+            <!-- Detail Pilihan Shift & Ketentuan Waktu -->
+            <div v-if="selectedShiftInfo" class="shift-summary-box">
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="label">Dokter Bertugas</span>
+                  <strong class="val">{{ selectedShiftInfo.doctorName }}</strong>
+                  <small>{{ selectedShiftInfo.doctorSpecialty }} • {{ selectedShiftInfo.room }}</small>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Estimasi Pemeriksaan</span>
+                  <strong class="val highlight">{{ selectedShiftInfo.estimatedArrival }}</strong>
+                  <small>Antrean ke-{{ selectedShiftInfo.nextQueueOrder }} di sesi ini</small>
+                </div>
+                <div class="summary-item arrival-warning">
+                  <span class="label">Disarankan Hadir</span>
+                  <strong class="val early-val">{{ selectedShiftInfo.recommendedArrival }}</strong>
+                  <small>15 menit sebelum estimasi</small>
+                </div>
+              </div>
+              <div class="summary-notice-bar">
+                <Clock3 :size="15" class="notice-icon shrink-0" />
+                <span>
+                  Harap hadir paling lambat pukul <strong>{{ selectedShiftInfo.recommendedArrival }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
+                </span>
+              </div>
+            </div>
           </div>
         </template>
 
@@ -475,7 +577,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   Check,
@@ -489,9 +591,16 @@ import {
   Baby,
   Heart,
   Scan,
+  UserCheck,
+  AlertCircle,
 } from "lucide-vue-next";
 import { services } from "../../constants/services";
 import { todayDate } from "../../constants/initialData";
+import {
+  getRelativeDateStr,
+  formatShortIndoDate,
+  formatDayAndDate,
+} from "@/utils/dateHelper";
 import { useQueueStore } from "../../stores/queue";
 import type { Service } from "../../types";
 import KtpScanModal from "./components/KtpScanModal.vue";
@@ -505,6 +614,51 @@ import {
 const router = useRouter();
 const queueStore = useQueueStore();
 
+const dateToday = getRelativeDateStr(0);
+const dateTomorrow = getRelativeDateStr(1);
+const dateDayAfter = getRelativeDateStr(2);
+
+const minDate = computed(() => dateToday);
+const maxDate = computed(() => dateDayAfter);
+const maxDateLabel = computed(() => formatShortIndoDate(dateDayAfter));
+
+const allowedDates = computed(() => [
+  {
+    dateStr: dateToday,
+    title: "Hari Ini",
+    dayLabel: formatDayAndDate(dateToday),
+  },
+  {
+    dateStr: dateTomorrow,
+    title: "Besok",
+    dayLabel: formatDayAndDate(dateTomorrow),
+  },
+  {
+    dateStr: dateDayAfter,
+    title: "Lusa",
+    dayLabel: formatDayAndDate(dateDayAfter),
+  },
+]);
+
+function handleDateChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  let val = input.value;
+  if (!val) return;
+  if (val < minDate.value) val = minDate.value;
+  if (val > maxDate.value) val = maxDate.value;
+  input.value = val;
+  queueStore.updateForm("date", val);
+}
+
+// Ensure form.date is within allowed range [minDate, maxDate]
+if (
+  !queueStore.form.date ||
+  queueStore.form.date < dateToday ||
+  queueStore.form.date > dateDayAfter
+) {
+  queueStore.updateForm("date", dateToday);
+}
+
 const isKtpModalOpen = ref(false);
 const scanSuccessNotice = ref("");
 
@@ -517,6 +671,46 @@ const symptomList = [
   "Nyeri",
   "Sesak napas",
 ];
+
+const shiftList = [
+  {
+    id: "pagi" as const,
+    label: "Shift Pagi",
+    patientHours: "07.00 – 11.00",
+    doctorHours: "07.00 – 12.00",
+  },
+  {
+    id: "siang" as const,
+    label: "Shift Siang",
+    patientHours: "12.00 – 16.00",
+    doctorHours: "12.00 – 17.00",
+  },
+  {
+    id: "sore" as const,
+    label: "Shift Sore",
+    patientHours: "17.00 – 21.00",
+    doctorHours: "17.00 – 22.00",
+  },
+];
+
+function getShiftInfo(shiftId: "pagi" | "siang" | "sore") {
+  return queueStore.getShiftQuotaInfo(
+    queueStore.form.poli,
+    shiftId,
+    queueStore.form.date
+  );
+}
+
+const selectedShiftInfo = computed(() => {
+  return getShiftInfo((queueStore.form.shift as "pagi" | "siang" | "sore") || "pagi");
+});
+
+function getTotalPoliRemainingQuota(poliName: string) {
+  const pagi = queueStore.getShiftQuotaInfo(poliName, "pagi", queueStore.form.date).remainingQuota;
+  const siang = queueStore.getShiftQuotaInfo(poliName, "siang", queueStore.form.date).remainingQuota;
+  const sore = queueStore.getShiftQuotaInfo(poliName, "sore", queueStore.form.date).remainingQuota;
+  return pagi + siang + sore;
+}
 
 function getPoliIcon(name: string) {
   switch (name) {
@@ -732,5 +926,306 @@ async function handleSubmit() {
     justify-content: center;
     padding: 11px;
   }
+}
+
+/* Shift Section Styling - Clean, Professional Clinic UX */
+.shift-section {
+  margin-top: 24px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+}
+.shift-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.shift-subtext {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  line-height: 1.45;
+}
+.shift-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+@media (max-width: 820px) {
+  .shift-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.shift-card {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+.shift-card:hover:not(:disabled) {
+  border-color: #0f766e;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.08);
+  transform: translateY(-2px);
+}
+.shift-card.selected {
+  border-color: #0f766e;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #0f766e;
+}
+.shift-card.full,
+.shift-card:disabled {
+  opacity: 0.6;
+  background: #f1f5f9;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+.shift-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.shift-name-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+.status-tag-avail {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  background: #f0fdfa;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.status-tag-full {
+  font-size: 11px;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.shift-time-main {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  color: #0f172a;
+}
+.shift-time-main strong {
+  font-weight: 800;
+}
+.time-icon {
+  color: #0f766e;
+}
+.shift-doctor-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+}
+.shift-card-bottom {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.est-tag {
+  font-size: 11.5px;
+  color: #64748b;
+}
+.est-tag strong {
+  color: #0f766e;
+  font-weight: 700;
+}
+.check-icon {
+  color: #0f766e;
+}
+
+/* Appointment Summary Box */
+.shift-summary-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 680px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.summary-item .label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.summary-item .val {
+  font-size: 15px;
+  color: #0f172a;
+  font-weight: 700;
+}
+.summary-item .val.highlight {
+  color: #0f766e;
+  font-size: 16px;
+  font-weight: 800;
+}
+.summary-item.arrival-warning .early-val {
+  color: #b45309;
+  font-size: 16px;
+  font-weight: 800;
+}
+.summary-item small {
+  font-size: 11.5px;
+  color: #64748b;
+}
+.summary-notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.4;
+}
+.notice-icon {
+  color: #d97706;
+}
+
+/* Date Quick Picker & Restriction Styles */
+.field-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+.field-subtitle-note {
+  font-size: 12px;
+  color: #0f766e;
+  font-weight: 600;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.date-quick-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+@media (max-width: 640px) {
+  .date-quick-picker {
+    grid-template-columns: 1fr;
+  }
+}
+.date-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.date-card:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+.date-card.selected {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+}
+.date-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.date-card.selected .date-card-title {
+  color: #0f766e;
+}
+.date-card-day {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+.date-check-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: #0f766e;
+}
+.date-manual-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.date-manual-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+}
+.date-input-control {
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #ffffff;
+}
+.date-input-control:focus {
+  border-color: #0f766e;
+}
+.date-restriction-note {
+  font-size: 11.5px;
+  color: #64748b;
+  font-style: italic;
 }
 </style>

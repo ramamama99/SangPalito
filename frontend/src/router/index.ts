@@ -58,6 +58,11 @@ const router = createRouter({
       component: StaffView,
     },
     {
+      path: "/shift-dokter",
+      name: "shift-dokter",
+      component: StaffView,
+    },
+    {
       path: "/medical-record",
       name: "medical-record",
       component: MedicalRecordView,

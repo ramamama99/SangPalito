@@ -72,6 +72,10 @@ export type Patient = {
   symptoms: string[];
   status: string;
   source: string;
+  shift?: "pagi" | "siang" | "sore" | string;
+  shiftLabel?: string;
+  estimatedArrival?: string;
+  doctorName?: string;
   soap?: string;
   medication_plan?: string;
   prescription_no?: string;
@@ -86,6 +90,7 @@ export type Service = {
   desc: string;
   iconName: string;
   quota: number;
+  avgServiceMin?: number;
 };
 
 export type SoapData = {
@@ -119,6 +124,9 @@ export type RegistrationForm = {
   insuranceName?: string;
   date: string;
   poli: string;
+  shift: "pagi" | "siang" | "sore";
+  shiftLabel?: string;
+  estimatedArrival?: string;
   complaint: string;
   allergy: string;
   symptoms: string[];

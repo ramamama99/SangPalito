@@ -1,6 +1,12 @@
 import type { Patient, RegistrationForm, Medication } from "../types";
+import { getRelativeDateStr } from "../utils/dateHelper";
 
-export const todayDate = new Date().toISOString().slice(0, 10);
+export function getLocalDateString(offsetDays: number = 0): string {
+  return getRelativeDateStr(offsetDays);
+}
+
+export const todayDate = getLocalDateString(0);
+
 
 export const initialPatients: Patient[] = [
   // 1. Poli Umum (Prefix A)
@@ -246,6 +252,7 @@ export const blankRegistrationForm: RegistrationForm = {
   insuranceName: "",
   date: todayDate,
   poli: "Poli Umum",
+  shift: "pagi",
   complaint: "",
   allergy: "",
   symptoms: [],
