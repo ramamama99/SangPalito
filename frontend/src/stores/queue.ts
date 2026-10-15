@@ -14,7 +14,14 @@ export const useQueueStore = defineStore("queue", () => {
   function getStoredPatients(): Patient[] {
     try {
       const stored = localStorage.getItem("antrisehat-patients");
-      return stored ? JSON.parse(stored) : initialPatients;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const hasOtherPoli = parsed.some((p: Patient) => p.poli && p.poli !== "Poli Umum");
+        if (hasOtherPoli) {
+          return parsed;
+        }
+      }
+      return initialPatients;
     } catch {
       return initialPatients;
     }
