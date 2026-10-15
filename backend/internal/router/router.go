@@ -160,7 +160,8 @@ func Setup(
 			patients.GET("/:id", middleware.RequireRoles("registrar", "medic"), patientHandler.Get)
 			patients.PATCH("/:id", middleware.RequireRoles("registrar"), patientHandler.Update)
 			patients.DELETE("/:id", middleware.RequireRoles("admin"), patientHandler.Delete)
-			patients.GET("/:id/visits", middleware.RequireRoles("medic"), patientHandler.Visits)
+			patients.GET("/:id/visits", middleware.RequireRoles("medic", "registrar"), patientHandler.Visits)
+			patients.GET("/:id/medical-records", middleware.RequireRoles("medic", "registrar"), patientHandler.Visits)
 		}
 
 		// Queues (staff)
@@ -200,4 +201,4 @@ func Setup(
 		// Audit Logs (admin only - F-12)
 		authenticated.GET("/audit-logs", middleware.RequireRoles("admin"), auditLogHandler.List)
 	}
-}
+}

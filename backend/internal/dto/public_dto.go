@@ -15,6 +15,8 @@ type PublicAppointmentRequest struct {
 	ScheduleID     string           `json:"schedule_id"      validate:"required,uuid4"`
 	VisitDate      string           `json:"visit_date"       validate:"required,datetime=2006-01-02"`
 	ChiefComplaint string           `json:"chief_complaint"  validate:"omitempty,max=500"`
+	Symptoms       []string         `json:"symptoms,omitempty"`
+	DurationDays   int              `json:"duration_days,omitempty"`
 	Guardian       *GuardianRequest `json:"guardian"`
 }
 
@@ -29,6 +31,7 @@ type PublicAppointmentResponse struct {
 // QueueBrief is a minimal queue summary returned in appointment responses.
 type QueueBrief struct {
 	QueueNumber int    `json:"queue_number"`
+	QueueCode   string `json:"queue_code,omitempty"`
 	Status      string `json:"status"`
 	QueueDate   string `json:"queue_date"`
 }
@@ -80,11 +83,16 @@ type ScheduleResponse struct {
 
 // QueueEstimateResponse is returned for GET /api/v1/public/queues/:id/estimate.
 type QueueEstimateResponse struct {
-	QueueID        string `json:"queue_id"`
-	QueueNumber    int    `json:"queue_number"`
-	CurrentServing int    `json:"current_serving"`
-	AheadCount     int    `json:"ahead_count"`
-	EstimateMinutes int   `json:"estimate_minutes"`
+	QueueID                  string    `json:"queue_id"`
+	QueueNumber              int       `json:"queue_number"`
+	QueueCode                string    `json:"queue_code,omitempty"`
+	CurrentServing           int       `json:"current_serving"`
+	AheadCount               int       `json:"ahead_count"`
+	EstimateMinutes          int       `json:"estimate_minutes"`
+	EMAServiceDurationMinute float64   `json:"ema_service_duration_minutes"`
+	ComplexityFactor         float64   `json:"complexity_factor"`
+	ComplexityNotes          []string  `json:"complexity_notes,omitempty"`
+	EstimatedCallTime        time.Time `json:"estimated_call_time"`
 }
 
 // UserCreateRequest is the payload for POST /api/v1/users.
@@ -119,13 +127,36 @@ type UserResponse struct {
 	CreatedAt  time.Time  `json:"created_at"`
 }
 
+// VitalsDTO holds clinical vital signs measured during patient triage or exam.
+type VitalsDTO struct {
+	BPSys           *int     `json:"bp_sys,omitempty"`
+	BPDia           *int     `json:"bp_dia,omitempty"`
+	BloodPressure   string   `json:"blood_pressure,omitempty"`
+	HR              *int     `json:"hr,omitempty"`
+	HeartRate       *int     `json:"heart_rate,omitempty"`
+	RespiratoryRate *int     `json:"respiratory_rate,omitempty"`
+	Temp            *float64 `json:"temp,omitempty"`
+	Temperature     *float64 `json:"temperature,omitempty"`
+	SpO2            *int     `json:"spo2,omitempty"`
+	Weight          *float64 `json:"weight,omitempty"`
+	Height          *float64 `json:"height,omitempty"`
+}
+
 // VisitHistoryResponse is returned for GET /api/v1/patients/:id/visits.
 type VisitHistoryResponse struct {
-	ID            string `json:"id"`
-	VisitDate     string `json:"visit_date"`
-	Diagnosis     string `json:"diagnosis,omitempty"`
-	ICDCode       string `json:"icd_code,omitempty"`
-	TreatmentPlan string `json:"treatment_plan,omitempty"`
-	DoctorName    string `json:"doctor_name,omitempty"`
-	PolyclinicName string `json:"polyclinic_name,omitempty"`
+	ID              string              `json:"id"`
+	VisitDate       string              `json:"visit_date"`
+	DoctorName      string              `json:"doctor_name,omitempty"`
+	DoctorSpecialty string              `json:"doctor_specialty,omitempty"`
+	PolyclinicName  string              `json:"polyclinic_name,omitempty"`
+	Symptoms        string              `json:"symptoms,omitempty"`
+	Vitals          *VitalsDTO          `json:"vitals,omitempty"`
+	PhysicalExam    string              `json:"physical_exam,omitempty"`
+	Diagnosis       string              `json:"diagnosis,omitempty"`
+	ICDCode         string              `json:"icd_code,omitempty"`
+	Diagnoses       []DiagnosisResponse `json:"diagnoses,omitempty"`
+	TreatmentPlan   string              `json:"treatment_plan,omitempty"`
+	Prescription    string              `json:"prescription,omitempty"`
+	CreatedAt       time.Time           `json:"created_at"`
 }
+

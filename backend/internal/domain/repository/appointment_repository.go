@@ -14,7 +14,7 @@ import (
 type AppointmentRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Appointment, error)
 	FindByToken(ctx context.Context, token uuid.UUID) (*entity.Appointment, error)
-	FindByQRToken(ctx context.Context, qrToken uuid.UUID) (*entity.Appointment, error)
+	FindByQRToken(ctx context.Context, qrToken string) (*entity.Appointment, error)
 	FindByPatientPolyDate(ctx context.Context, patientID, polyclinicID uuid.UUID, date time.Time) (*entity.Appointment, error)
 	FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	FindToday(ctx context.Context, facilityID uuid.UUID, polyclinicID *uuid.UUID, date string) ([]entity.Appointment, error)

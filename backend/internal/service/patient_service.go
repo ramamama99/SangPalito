@@ -243,12 +243,59 @@ func (s *patientService) GetVisitHistory(ctx context.Context, patientID uuid.UUI
 
 	var results []*dto.VisitHistoryResponse
 	for _, v := range visits {
+		var vitalsDTO *dto.VitalsDTO
+		if v.Vitals != nil {
+			vitalsDTO = &dto.VitalsDTO{
+				BloodPressure:   v.Vitals.BloodPressure,
+				HeartRate:       v.Vitals.HeartRate,
+				RespiratoryRate: v.Vitals.RespiratoryRate,
+				Temperature:     v.Vitals.Temperature,
+				Weight:          v.Vitals.Weight,
+				Height:          v.Vitals.Height,
+			}
+		}
+
+		var diagnosesResp []dto.DiagnosisResponse
+		primaryICD := ""
+		for _, d := range v.Diagnoses {
+			if d.IsPrimary && primaryICD == "" {
+				primaryICD = d.ICD10Code
+			}
+			notes := ""
+			if d.Notes != nil {
+				notes = *d.Notes
+			}
+			desc := d.ICD10Description
+			if desc == "" && d.ICD10 != nil {
+				desc = d.ICD10.Description
+			}
+			diagnosesResp = append(diagnosesResp, dto.DiagnosisResponse{
+				ID:          d.ID,
+				ICD10Code:   d.ICD10Code,
+				Description: desc,
+				IsPrimary:   d.IsPrimary,
+				Notes:       notes,
+			})
+		}
+		if primaryICD == "" && len(v.Diagnoses) > 0 {
+			primaryICD = v.Diagnoses[0].ICD10Code
+		}
+
 		results = append(results, &dto.VisitHistoryResponse{
-			ID:            v.ID.String(),
-			VisitDate:     v.VisitDate.Format("2006-01-02"),
-			Diagnosis:     v.Diagnosis,
-			ICDCode:       v.ICDCode,
-			TreatmentPlan: v.TreatmentPlan,
+			ID:              v.ID.String(),
+			VisitDate:       v.VisitDate.Format("2006-01-02"),
+			DoctorName:      v.DoctorName,
+			DoctorSpecialty: v.DoctorSpecialty,
+			PolyclinicName:  v.PolyclinicName,
+			Symptoms:        v.Subjective,
+			Vitals:          vitalsDTO,
+			PhysicalExam:    v.Objective,
+			Diagnosis:       v.Assessment,
+			ICDCode:         primaryICD,
+			Diagnoses:       diagnosesResp,
+			TreatmentPlan:   v.Plan,
+			Prescription:    v.Prescription,
+			CreatedAt:       v.CreatedAt,
 		})
 	}
 	return results, nil

@@ -1,4 +1,4 @@
-﻿package postgres
+package postgres
 
 import (
 	"context"
@@ -60,6 +60,25 @@ func (r *doctorRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Doctor
 			return nil, apperror.NotFound("Dokter", err)
 		}
 		return nil, fmt.Errorf("doctorRepo.FindByID: %w", err)
+	}
+	return &d, nil
+}
+
+func (r *doctorRepo) FindByUserID(ctx context.Context, userID uuid.UUID) (*entity.Doctor, error) {
+	query := `
+		SELECT id, facility_id, user_id, full_name, specialty, str_no, is_active
+		FROM doctors
+		WHERE user_id = $1
+	`
+	var d entity.Doctor
+	err := r.pool.QueryRow(ctx, query, userID).Scan(
+		&d.ID, &d.FacilityID, &d.UserID, &d.FullName, &d.Specialty, &d.STRNo, &d.IsActive,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // not found is ok
+		}
+		return nil, fmt.Errorf("doctorRepo.FindByUserID: %w", err)
 	}
 	return &d, nil
 }

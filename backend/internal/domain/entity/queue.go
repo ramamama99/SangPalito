@@ -54,7 +54,9 @@ type Queue struct {
 	AppointmentID uuid.UUID
 	PolyclinicID  uuid.UUID
 	QueueNumber   int
+	QueueCode     string
 	Status        QueueStatus
+	CheckedInAt   *time.Time
 	CallCount     int
 	CalledAt      *time.Time
 	ServiceStart  *time.Time

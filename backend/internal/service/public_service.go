@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -230,17 +232,33 @@ func (s *publicService) CreatePublicAppointment(ctx context.Context, req dto.Pub
 			return apperror.Internal(fmt.Errorf("publicService: create appointment: %w", err))
 		}
 
+		if req.ChiefComplaint != "" || len(req.Symptoms) > 0 {
+			symptomsJSON, _ := json.Marshal(req.Symptoms)
+			_, _ = tx.Exec(ctx, `INSERT INTO pre_anamneses (id, appointment_id, chief_complaint, symptoms, duration_days, created_at)
+				VALUES (gen_random_uuid(), $1, $2, $3, $4, now())
+				ON CONFLICT (appointment_id) DO UPDATE SET chief_complaint = EXCLUDED.chief_complaint, symptoms = EXCLUDED.symptoms, duration_days = EXCLUDED.duration_days`,
+				appointment.ID, req.ChiefComplaint, symptomsJSON, req.DurationDays)
+		}
+
 		// Generate queue number
 		queueNum, err := s.queueRepo.GetNextQueueNumber(ctx, tx, polyclinicID, visitDate)
 		if err != nil {
 			return apperror.Internal(fmt.Errorf("publicService: next queue number: %w", err))
 		}
 
+		poly, _ := s.polyclinicRepo.FindByID(ctx, polyclinicID)
+		prefix := "A"
+		if poly != nil && poly.QueuePrefix != "" {
+			prefix = poly.QueuePrefix
+		}
+		queueCode := fmt.Sprintf("%s-%03d", prefix, queueNum)
+
 		queue := &entity.Queue{
 			FacilityID:    facilityID,
 			AppointmentID: appointment.ID,
 			PolyclinicID:  polyclinicID,
 			QueueNumber:   queueNum,
+			QueueCode:     queueCode,
 			Status:        entity.StatusWaiting,
 			QueueDate:     visitDate,
 		}
@@ -254,6 +272,7 @@ func (s *publicService) CreatePublicAppointment(ctx context.Context, req dto.Pub
 			QRToken:          appointment.QRToken.String(),
 			Queue: dto.QueueBrief{
 				QueueNumber: queueNum,
+				QueueCode:   queueCode,
 				Status:      string(entity.StatusWaiting),
 				QueueDate:   visitDate.Format("2006-01-02"),
 			},
@@ -290,7 +309,7 @@ func (s *publicService) GetAppointmentByToken(ctx context.Context, token uuid.UU
 
 // CheckIn processes a QR code check-in and advances the queue to checked_in.
 func (s *publicService) CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.QueueResponse, error) {
-	appointment, err := s.appointmentRepo.FindByQRToken(ctx, qrToken)
+	appointment, err := s.appointmentRepo.FindByQRToken(ctx, qrToken.String())
 	if err != nil {
 		return nil, err
 	}
@@ -322,40 +341,125 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.Qu
 	return nil, apperror.NotFound("Antrean untuk appointment ini", nil)
 }
 
-// GetQueueEstimate calculates estimated wait time based on ahead count in the same polyclinic.
+// GetQueueEstimate calculates estimated wait time using Exponential Moving Average (EMA) and Complexity Factors.
 func (s *publicService) GetQueueEstimate(ctx context.Context, queueID uuid.UUID) (*dto.QueueEstimateResponse, error) {
-	queue, err := s.queueRepo.FindByID(ctx, queueID)
+	// 1. Get target queue with its patient clinical context
+	targetQP, err := s.queueRepo.FindQueueWithPatientByID(ctx, queueID)
 	if err != nil {
 		return nil, err
 	}
+	targetQueue := targetQP.Queue
 
-	activeQueues, err := s.queueRepo.FindActiveByPolyclinic(ctx, queue.PolyclinicID, queue.QueueDate)
+	// 2. If target is already in service, wait time is 0
+	if targetQueue.Status == entity.StatusInService {
+		return &dto.QueueEstimateResponse{
+			QueueID:                  targetQueue.ID.String(),
+			QueueNumber:              targetQueue.QueueNumber,
+			QueueCode:                targetQueue.QueueCode,
+			CurrentServing:           targetQueue.QueueNumber,
+			AheadCount:               0,
+			EstimateMinutes:          0,
+			EMAServiceDurationMinute: 0,
+			ComplexityFactor:         1.0,
+			EstimatedCallTime:        time.Now(),
+		}, nil
+	}
+
+	// 3. Fetch polyclinic baseline service duration
+	baselineMinutes := 10.0
+	if poly, err := s.polyclinicRepo.FindByID(ctx, targetQueue.PolyclinicID); err == nil && poly != nil {
+		if poly.AvgServiceMin > 0 {
+			baselineMinutes = float64(poly.AvgServiceMin)
+		}
+	}
+
+	// 4. Retrieve today's completed visit durations to compute EMA
+	completedDurations, err := s.queueRepo.FindCompletedDurations(ctx, targetQueue.PolyclinicID, targetQueue.QueueDate)
+	if err != nil {
+		completedDurations = nil
+	}
+	emaDuration := entity.CalculateEMA(baselineMinutes, completedDurations, entity.DefaultEMASmoothingAlpha)
+
+	// 5. Fetch all active queues in polyclinic today with patient clinical info
+	activeDetails, err := s.queueRepo.FindActiveQueueDetails(ctx, targetQueue.PolyclinicID, targetQueue.QueueDate)
 	if err != nil {
 		return nil, apperror.Internal(fmt.Errorf("publicService.GetQueueEstimate: %w", err))
 	}
 
 	currentServing := 0
 	aheadCount := 0
+	totalWaitMinutes := 0.0
 
-	for _, q := range activeQueues {
+	// 6. Process currently serving and ahead queues
+	now := time.Now()
+	for _, qp := range activeDetails {
+		q := qp.Queue
+
+		// Track current serving queue
 		if q.Status == entity.StatusInService || q.Status == entity.StatusCalled {
 			if q.QueueNumber > currentServing {
 				currentServing = q.QueueNumber
 			}
 		}
-		if q.QueueNumber < queue.QueueNumber && (q.Status == entity.StatusWaiting || q.Status == entity.StatusCheckedIn || q.Status == entity.StatusCalled) {
+
+		// Calculate remaining time for the patient currently being served
+		if q.Status == entity.StatusInService && q.QueueNumber < targetQueue.QueueNumber {
+			factor, _ := entity.CalculateComplexityFactor(entity.PatientComplexityInput{
+				AgeYears:       qp.PatientAge,
+				Priority:       qp.Priority,
+				TriageFlag:     qp.TriageFlag,
+				ChiefComplaint: qp.ChiefComplaint,
+				Symptoms:       qp.Symptoms,
+			})
+			estimatedService := emaDuration * factor
+			var elapsedMinutes float64
+			if q.ServiceStart != nil {
+				elapsedMinutes = now.Sub(*q.ServiceStart).Minutes()
+			}
+			remaining := estimatedService - elapsedMinutes
+			if remaining < 1.0 {
+				remaining = 1.0 // At least 1 minute remaining
+			}
+			totalWaitMinutes += remaining
+		}
+
+		// For waiting/checked-in/called patients ahead in line
+		if q.QueueNumber < targetQueue.QueueNumber && (q.Status == entity.StatusWaiting || q.Status == entity.StatusCheckedIn || q.Status == entity.StatusCalled) {
 			aheadCount++
+			factor, _ := entity.CalculateComplexityFactor(entity.PatientComplexityInput{
+				AgeYears:       qp.PatientAge,
+				Priority:       qp.Priority,
+				TriageFlag:     qp.TriageFlag,
+				ChiefComplaint: qp.ChiefComplaint,
+				Symptoms:       qp.Symptoms,
+			})
+			totalWaitMinutes += emaDuration * factor
 		}
 	}
 
-	estimateMinutes := aheadCount * 10
+	// 7. Calculate target patient's own complexity factor
+	targetFactor, targetNotes := entity.CalculateComplexityFactor(entity.PatientComplexityInput{
+		AgeYears:       targetQP.PatientAge,
+		Priority:       targetQP.Priority,
+		TriageFlag:     targetQP.TriageFlag,
+		ChiefComplaint: targetQP.ChiefComplaint,
+		Symptoms:       targetQP.Symptoms,
+	})
+
+	roundedEstimate := int(math.Round(totalWaitMinutes))
+	estimatedCallTime := now.Add(time.Duration(roundedEstimate) * time.Minute)
 
 	return &dto.QueueEstimateResponse{
-		QueueID:         queue.ID.String(),
-		QueueNumber:     queue.QueueNumber,
-		CurrentServing:  currentServing,
-		AheadCount:      aheadCount,
-		EstimateMinutes: estimateMinutes,
+		QueueID:                  targetQueue.ID.String(),
+		QueueNumber:              targetQueue.QueueNumber,
+		QueueCode:                targetQueue.QueueCode,
+		CurrentServing:           currentServing,
+		AheadCount:               aheadCount,
+		EstimateMinutes:          roundedEstimate,
+		EMAServiceDurationMinute: emaDuration,
+		ComplexityFactor:         targetFactor,
+		ComplexityNotes:          targetNotes,
+		EstimatedCallTime:        estimatedCallTime,
 	}, nil
 }
 

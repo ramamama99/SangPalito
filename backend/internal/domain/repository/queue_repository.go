@@ -19,4 +19,7 @@ type QueueRepository interface {
 	UpdateStatus(ctx context.Context, q *entity.Queue) error
 	GetNextQueueNumber(ctx context.Context, tx pgx.Tx, polyclinicID uuid.UUID, date time.Time) (int, error)
 	CountByPolyclinicAndDate(ctx context.Context, polyclinicID uuid.UUID, date time.Time, status entity.QueueStatus) (int, error)
+	FindCompletedDurations(ctx context.Context, polyclinicID uuid.UUID, date time.Time) ([]float64, error)
+	FindActiveQueueDetails(ctx context.Context, polyclinicID uuid.UUID, date time.Time) ([]*entity.QueueWithPatient, error)
+	FindQueueWithPatientByID(ctx context.Context, queueID uuid.UUID) (*entity.QueueWithPatient, error)
 }

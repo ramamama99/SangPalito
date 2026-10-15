@@ -15,15 +15,16 @@ type Appointment struct {
 	ScheduleID       uuid.UUID  `json:"schedule_id"`
 	DoctorID         uuid.UUID  `json:"doctor_id"`
 	VisitDate        time.Time  `json:"visit_date"`
-	AppointmentToken uuid.UUID  `json:"appointment_token"`
-	QRToken          uuid.UUID  `json:"qr_token"`
-	ChiefComplaint   string     `json:"chief_complaint"`
-	Status           string     `json:"status"` // "registered", "checked_in", "completed", "cancelled"
-	RegisteredBy     *uuid.UUID `json:"registered_by,omitempty"`
-	Source           string     `json:"source,omitempty"`   // "online" | "walk_in"
-	Priority         string     `json:"priority,omitempty"` // "normal" | "elderly" | "pregnant" | "disabled" | "emergency"
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
+	AppointmentToken uuid.UUID     `json:"appointment_token"`
+	QRToken          uuid.UUID     `json:"qr_token"`
+	ChiefComplaint   string        `json:"chief_complaint,omitempty"`
+	Status           string        `json:"status"` // "registered", "checked_in", "completed", "cancelled"
+	RegisteredBy     *uuid.UUID    `json:"registered_by,omitempty"`
+	CreatedBy        *uuid.UUID    `json:"created_by,omitempty"`
+	Source           string        `json:"source,omitempty"`   // "online" | "walk_in"
+	Priority         string        `json:"priority,omitempty"` // "normal" | "elderly" | "pregnant" | "disabled" | "emergency"
+	CreatedAt        time.Time     `json:"created_at"`
+	UpdatedAt        time.Time     `json:"updated_at"`
 
 	// Relasi data tambahan
 	PatientFullName string        `json:"patient_full_name,omitempty"`

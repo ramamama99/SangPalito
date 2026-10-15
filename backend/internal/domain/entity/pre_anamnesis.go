@@ -1,4 +1,4 @@
-﻿package entity
+package entity
 
 import (
 	"strings"
@@ -38,5 +38,6 @@ func DetermineTriage(symptoms []string, durationDays int) string {
 		return "attention" // Kuning / Butuh perhatian khusus
 	}
 
-	return "normal" 
+	return "normal"
 }
+

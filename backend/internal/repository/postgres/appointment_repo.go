@@ -23,8 +23,9 @@ func NewAppointmentRepo(pool *pgxpool.Pool) repository.AppointmentRepository {
 	return &appointmentRepo{pool: pool}
 }
 
-const appointmentCols = `id, facility_id, patient_id, polyclinic_id, schedule_id,
-	visit_date, source, priority, appointment_token, qr_token, created_by, created_at`
+const appointmentBaseQuery = `SELECT a.id, a.facility_id, a.patient_id, a.polyclinic_id, a.schedule_id,
+	a.visit_date, a.source, a.priority, a.appointment_token, a.qr_token, a.created_by, a.created_at
+	FROM appointments a`
 
 func scanAppointment(row pgx.Row) (*entity.Appointment, error) {
 	a := &entity.Appointment{}
@@ -40,12 +41,13 @@ func scanAppointment(row pgx.Row) (*entity.Appointment, error) {
 		if schedID != nil {
 			a.ScheduleID = *schedID
 		}
+		a.CreatedBy = a.RegisteredBy
 	}
 	return a, err
 }
 
 func (r *appointmentRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Appointment, error) {
-	query := fmt.Sprintf("SELECT %s FROM appointments WHERE id = $1", appointmentCols)
+	query := fmt.Sprintf("%s WHERE a.id = $1", appointmentBaseQuery)
 	a, err := scanAppointment(r.pool.QueryRow(ctx, query, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -57,7 +59,7 @@ func (r *appointmentRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.A
 }
 
 func (r *appointmentRepo) FindByToken(ctx context.Context, token uuid.UUID) (*entity.Appointment, error) {
-	query := fmt.Sprintf("SELECT %s FROM appointments WHERE appointment_token = $1", appointmentCols)
+	query := fmt.Sprintf("%s WHERE a.appointment_token = $1", appointmentBaseQuery)
 	a, err := scanAppointment(r.pool.QueryRow(ctx, query, token))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -68,9 +70,10 @@ func (r *appointmentRepo) FindByToken(ctx context.Context, token uuid.UUID) (*en
 	return a, nil
 }
 
-func (r *appointmentRepo) FindByQRToken(ctx context.Context, qrToken uuid.UUID) (*entity.Appointment, error) {
-	query := fmt.Sprintf("SELECT %s FROM appointments WHERE qr_token = $1", appointmentCols)
-	a, err := scanAppointment(r.pool.QueryRow(ctx, query, qrToken.String()))
+// FindByQRToken retrieves an appointment by its QR token string.
+func (r *appointmentRepo) FindByQRToken(ctx context.Context, qrToken string) (*entity.Appointment, error) {
+	query := fmt.Sprintf("%s WHERE a.qr_token = $1", appointmentBaseQuery)
+	a, err := scanAppointment(r.pool.QueryRow(ctx, query, qrToken))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, apperror.NotFound("Appointment", err)
@@ -81,7 +84,7 @@ func (r *appointmentRepo) FindByQRToken(ctx context.Context, qrToken uuid.UUID) 
 }
 
 func (r *appointmentRepo) FindByPatientPolyDate(ctx context.Context, patientID, polyclinicID uuid.UUID, date time.Time) (*entity.Appointment, error) {
-	query := fmt.Sprintf("SELECT %s FROM appointments WHERE patient_id = $1 AND polyclinic_id = $2 AND visit_date = $3", appointmentCols)
+	query := fmt.Sprintf("%s WHERE a.patient_id = $1 AND a.polyclinic_id = $2 AND a.visit_date = $3", appointmentBaseQuery)
 	a, err := scanAppointment(r.pool.QueryRow(ctx, query, patientID, polyclinicID, date))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -93,7 +96,7 @@ func (r *appointmentRepo) FindByPatientPolyDate(ctx context.Context, patientID, 
 }
 
 func (r *appointmentRepo) FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error) {
-	query := fmt.Sprintf("SELECT %s FROM appointments WHERE patient_id = $1 ORDER BY visit_date DESC", appointmentCols)
+	query := fmt.Sprintf("%s WHERE a.patient_id = $1 ORDER BY a.visit_date DESC", appointmentBaseQuery)
 	rows, err := r.pool.Query(ctx, query, patientID)
 	if err != nil {
 		return nil, fmt.Errorf("appointmentRepo.FindByPatientID: %w", err)
@@ -193,6 +196,11 @@ func (r *appointmentRepo) createWith(ctx context.Context, exec interface{}, a *e
 		schedID = &a.ScheduleID
 	}
 
+	registeredBy := a.RegisteredBy
+	if registeredBy == nil && a.CreatedBy != nil {
+		registeredBy = a.CreatedBy
+	}
+
 	query := `
 		INSERT INTO appointments (
 			id, facility_id, patient_id, polyclinic_id, schedule_id, visit_date, 
@@ -205,12 +213,12 @@ func (r *appointmentRepo) createWith(ctx context.Context, exec interface{}, a *e
 	case *pgxpool.Pool:
 		_, err = e.Exec(ctx, query,
 			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, schedID, a.VisitDate,
-			source, priority, a.AppointmentToken, a.QRToken.String(), a.RegisteredBy, a.CreatedAt,
+			source, priority, a.AppointmentToken, a.QRToken.String(), registeredBy, a.CreatedAt,
 		)
 	case pgx.Tx:
 		_, err = e.Exec(ctx, query,
 			a.ID, a.FacilityID, a.PatientID, a.PolyclinicID, schedID, a.VisitDate,
-			source, priority, a.AppointmentToken, a.QRToken.String(), a.RegisteredBy, a.CreatedAt,
+			source, priority, a.AppointmentToken, a.QRToken.String(), registeredBy, a.CreatedAt,
 		)
 	default:
 		return fmt.Errorf("appointmentRepo.createWith: unsupported executor")

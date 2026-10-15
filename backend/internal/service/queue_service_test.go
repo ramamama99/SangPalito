@@ -67,6 +67,35 @@ func (m *mockQueueRepo) CountByPolyclinicAndDate(ctx context.Context, polyclinic
 	return count, nil
 }
 
+func (m *mockQueueRepo) FindCompletedDurations(ctx context.Context, polyclinicID uuid.UUID, date time.Time) ([]float64, error) {
+	return nil, nil
+}
+
+func (m *mockQueueRepo) FindActiveQueueDetails(ctx context.Context, polyclinicID uuid.UUID, date time.Time) ([]*entity.QueueWithPatient, error) {
+	var list []*entity.QueueWithPatient
+	for _, q := range m.queues {
+		if q.PolyclinicID == polyclinicID {
+			list = append(list, &entity.QueueWithPatient{
+				Queue:      q,
+				PatientAge: 30,
+				Priority:   "normal",
+			})
+		}
+	}
+	return list, nil
+}
+
+func (m *mockQueueRepo) FindQueueWithPatientByID(ctx context.Context, queueID uuid.UUID) (*entity.QueueWithPatient, error) {
+	if q, ok := m.queues[queueID]; ok {
+		return &entity.QueueWithPatient{
+			Queue:      q,
+			PatientAge: 30,
+			Priority:   "normal",
+		}, nil
+	}
+	return nil, apperror.NotFound("Queue", nil)
+}
+
 // mockBroadcaster records broadcasts for inspection in unit tests.
 type mockBroadcaster struct {
 	payloads []any
