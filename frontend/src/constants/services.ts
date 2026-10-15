@@ -1,36 +1,28 @@
-import { Stethoscope, Smile, Baby, Heart } from 'lucide-vue-next'
-import type { Component } from 'vue'
+import type { Service } from "../types";
 
-export type ServiceItem = {
-  name: string
-  desc: string
-  icon: Component
-  quota: number
-}
-
-export const services: ServiceItem[] = [
+export const services: Service[] = [
   {
-    name: 'Poli Umum',
-    desc: 'Pemeriksaan kesehatan & konsultasi umum',
-    icon: Stethoscope,
+    name: "Poli Umum",
+    desc: "Pemeriksaan kesehatan & konsultasi umum",
+    iconName: "Stethoscope",
     quota: 24,
   },
   {
-    name: 'Poli Gigi',
-    desc: 'Perawatan gigi dan kesehatan mulut',
-    icon: Smile,
+    name: "Poli Gigi",
+    desc: "Perawatan gigi dan kesehatan mulut",
+    iconName: "Smile",
     quota: 12,
   },
   {
-    name: 'Poli KIA',
-    desc: 'Kesehatan ibu, anak, dan tumbuh kembang',
-    icon: Baby,
+    name: "Poli KIA",
+    desc: "Kesehatan ibu, anak, dan tumbuh kembang",
+    iconName: "Baby",
     quota: 18,
   },
   {
-    name: 'Poli Lansia',
-    desc: 'Pelayanan khusus untuk usia lanjut',
-    icon: Heart,
+    name: "Poli Lansia",
+    desc: "Pelayanan khusus untuk usia lanjut",
+    iconName: "Heart",
     quota: 15,
   },
-]
+];
