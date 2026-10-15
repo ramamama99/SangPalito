@@ -1,163 +1,117 @@
 <template>
-  <main class="w-screen h-screen overflow-hidden flex flex-col justify-between bg-[#0b2225] text-slate-100 p-3 sm:p-4 lg:p-5 select-none font-sans">
-    <!-- 1. TV HEADER (Brand + Realtime UTC+7 Clock, No Dashboard Back Button) -->
-    <header class="flex items-center justify-between gap-4 pb-3 border-b border-white/10 shrink-0">
-      <div class="flex items-center gap-4">
+  <main class="w-full h-screen max-h-screen overflow-hidden px-4 sm:px-6 lg:px-8 py-3 flex flex-col justify-between select-none font-sans bg-[var(--bg)]">
+    <!-- Header TV: Brand + Jam Real-Time UTC+7 (Tanpa tombol kembali ke dashboard) -->
+    <header class="flex items-center justify-between gap-4 pb-2.5 border-b border-[var(--line)] shrink-0">
+      <div class="flex items-center gap-3">
         <Brand />
-        <div class="hidden sm:block border-l border-white/20 pl-4">
-          <h1 class="text-xs lg:text-sm font-black uppercase tracking-widest text-teal-300">
-            Layar Monitor Antrean Poliklinik
-          </h1>
-          <p class="text-[11px] text-teal-100/70">
-            Puskesmas Sehat Bersama · Sistem Terintegrasi
-          </p>
-        </div>
+        <span class="badge !py-1 !px-2.5 !text-xs !font-bold flex items-center gap-1.5">
+          <span class="live-dot" /> Layar TV Antrean
+        </span>
       </div>
 
       <!-- Real-time Clock Widget (UTC+7 / WIB) -->
-      <div class="flex items-center gap-3 sm:gap-4 bg-white/10 backdrop-blur-md px-3 sm:px-4 py-2 rounded-2xl border border-white/15 shadow-inner">
-        <!-- Live Pulse Indicator -->
-        <div class="flex items-center gap-2 pr-3 border-r border-white/20">
-          <span class="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500"></span>
-          </span>
-          <span class="text-[10px] sm:text-xs font-black tracking-widest text-emerald-400 uppercase">LIVE</span>
+      <div class="flex items-center gap-3 bg-white px-3.5 py-1.5 rounded-xl border border-[var(--line)] shadow-2xs">
+        <div class="flex items-center gap-1.5 text-xs text-[var(--muted)] font-medium">
+          <Calendar :size="14" />
+          <span>{{ currentDate }}</span>
         </div>
-
-        <!-- Clock & Date Display in UTC+7 (Asia/Jakarta) -->
-        <div class="text-right">
-          <div class="font-mono text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-none tabular-nums">
-            {{ currentTime || "00:00:00 WIB" }}
-          </div>
-          <div class="text-[10px] sm:text-xs font-semibold text-teal-200 mt-1">
-            {{ currentDate }}
-          </div>
+        <div class="h-4 w-px bg-[var(--line)]" />
+        <div class="flex items-center gap-1.5 font-mono font-bold text-sm sm:text-base text-[var(--deep)] tabular-nums">
+          <Clock :size="15" />
+          <span>{{ currentTime }}</span>
         </div>
       </div>
     </header>
 
-    <!-- 2. 4 COLUMNS SIDE BY SIDE (POLI UMUM, GIGI, KIA, LANSIA) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full h-full min-h-0 flex-1 items-stretch py-3">
+    <!-- 4 COLUMNS SIDE BY SIDE (Persis seperti di Antrean Live) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full h-full min-h-0 flex-1 items-stretch py-3">
       <section
         v-for="poli in polyclinics"
         :key="poli.id"
-        class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col justify-between h-full min-h-0 border transition-all duration-300"
-        :class="isPoliCalling(poli.name, poli.code)
-          ? 'border-amber-400 ring-4 ring-amber-400/50 shadow-2xl scale-[1.01]'
-          : 'border-slate-200/90'"
+        class="dashboard-panel !overflow-hidden !p-0 flex flex-col justify-between h-full min-h-0 transition-all duration-200"
+        :class="{ '!border-[var(--deep)] !shadow-xl !ring-2 !ring-[var(--deep)]/50': isPoliCalling(poli.name, poli.code) }"
         :aria-label="`Antrean ${poli.name}`"
       >
         <!-- Column Header with Poli Title & Badge -->
-        <div
-          class="flex items-center justify-between gap-2 px-4 py-3 text-white shrink-0 transition-colors"
-          :class="isPoliCalling(poli.name, poli.code) ? 'bg-amber-600' : 'bg-[#195a5f]'"
-        >
-          <span class="inline-flex items-center gap-2 font-bold text-sm lg:text-base truncate">
+        <div class="flex items-center justify-between gap-2 border-b border-[var(--line)] bg-[var(--deep)] px-4 py-3 text-white shrink-0">
+          <span class="inline-flex items-center gap-2.5 font-bold text-base truncate">
             <component :is="poli.icon" :size="20" aria-hidden="true" class="shrink-0" />
             <span class="truncate">{{ poli.name }}</span>
           </span>
-          <span class="rounded-lg bg-white/20 px-2.5 py-0.5 text-sm font-black font-mono tracking-wider shrink-0">
+          <span class="rounded-lg bg-white/20 px-2.5 py-1 text-sm font-black font-mono tracking-wider shrink-0">
             {{ poli.code }}
           </span>
         </div>
 
-        <!-- Main Body of Column -->
-        <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-3 min-h-0 overflow-hidden bg-slate-50/70">
-          <!-- Sedang Dipanggil / Dilayani Stage -->
-          <div
-            class="rounded-xl px-3 py-4 text-center shrink-0 border transition-all"
-            :class="poli.currentPatient?.status === 'Dipanggil'
-              ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/40'
-              : 'bg-teal-50/80 border-teal-200/80'"
-          >
-            <div class="flex items-center justify-center gap-1.5 mb-1">
-              <span
-                v-if="poli.currentPatient?.status === 'Dipanggil'"
-                class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-ping"
-              ></span>
-              <span
-                class="text-[11px] sm:text-xs uppercase font-extrabold tracking-widest"
-                :class="poli.currentPatient?.status === 'Dipanggil' ? 'text-amber-800' : 'text-teal-800'"
-              >
-                {{ poli.currentPatient?.status === "Dipanggil" ? "SEDANG DIPANGGIL" : "SEDANG DILAYANI" }}
-              </span>
-            </div>
+        <!-- Main Body of the Column -->
+        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4 min-h-0 overflow-hidden">
+          <!-- 1. Sedang Dilayani Box (Center Stage) -->
+          <div class="rounded-2xl bg-[var(--deep)]/5 px-4 py-5 text-center shrink-0 border border-[var(--deep)]/10 shadow-2xs">
+            <span class="text-xs sm:text-sm uppercase font-bold tracking-widest text-[var(--muted)]">
+              Sedang dilayani
+            </span>
 
-            <!-- Big Ticket Number -->
-            <strong
-              class="my-1 block text-5xl sm:text-6xl xl:text-7xl font-black tracking-tight tabular-nums leading-none"
-              :class="poli.currentPatient?.status === 'Dipanggil' ? 'text-amber-700 animate-pulse' : 'text-[#195a5f]'"
-            >
+            <strong class="my-2 block text-6xl sm:text-7xl xl:text-8xl font-black tracking-tight text-[var(--deep)] tabular-nums leading-none">
               {{ poli.currentPatient?.number || "—" }}
             </strong>
 
-            <!-- Patient Name -->
-            <div v-if="poli.currentPatient" class="mt-2">
-              <span class="inline-flex items-center justify-center rounded-full bg-white px-3.5 py-1 text-xs sm:text-sm font-bold text-slate-800 shadow-xs truncate max-w-[240px] border border-slate-200">
+            <div v-if="poli.currentPatient" class="mt-2.5">
+              <span class="inline-flex items-center justify-center rounded-full bg-white px-4 py-1.5 text-sm sm:text-base font-bold text-[var(--deep)] shadow-sm truncate max-w-[280px] border border-[var(--line)]">
                 <span class="truncate">{{ poli.currentPatient.name }}</span>
               </span>
             </div>
-            <p v-else class="text-xs text-slate-400 mt-2 font-medium">
-              Menunggu panggilan staf
+            <p v-else class="text-sm text-[var(--muted)] mt-2 font-medium">
+              Belum ada panggilan
             </p>
           </div>
 
-          <!-- Antrean Berikutnya List -->
-          <div class="space-y-1.5 flex-1 min-h-0 flex flex-col justify-start overflow-hidden">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-700 border-b border-slate-200 pb-1.5 shrink-0">
-              <span class="inline-flex items-center gap-1.5">
-                <Users :size="14" aria-hidden="true" class="text-teal-700" /> Antrean berikutnya
+          <!-- 2. Antrean Berikutnya List -->
+          <div class="space-y-2 flex-1 min-h-0 flex flex-col justify-start overflow-hidden">
+            <div class="flex items-center justify-between text-sm font-bold text-[var(--deep)] border-b border-[var(--line)] pb-2 shrink-0">
+              <span class="inline-flex items-center gap-2">
+                <Users :size="16" aria-hidden="true" /> Antrean berikutnya
               </span>
-              <span class="text-[11px] font-bold text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full">
-                {{ poli.nextPatients.length }} antre
-              </span>
+              <span class="badge !py-1 !px-2.5 !text-xs !font-bold">{{ poli.nextPatients.length }} menunggu</span>
             </div>
 
-            <div v-if="poli.nextPatients.length" class="space-y-1.5 overflow-y-auto pr-0.5 min-h-0 flex-1">
+            <div v-if="poli.nextPatients.length" class="space-y-2 overflow-y-auto pr-0.5 min-h-0 flex-1">
               <div
                 v-for="p in poli.nextPatients.slice(0, 5)"
                 :key="p.id"
-                class="flex items-center justify-between gap-2 border border-slate-200/80 bg-white py-1.5 px-2.5 text-xs rounded-lg shadow-2xs"
+                class="flex items-center justify-between gap-3 border-b border-[var(--line)] py-2.5 px-2 text-sm last:border-0 rounded-lg transition-colors hover:bg-slate-50"
               >
-                <strong class="rounded-md bg-teal-50 border border-teal-200 px-2 py-0.5 text-sm tabular-nums text-teal-900 font-black shrink-0 tracking-wide">
+                <strong class="rounded-lg bg-[var(--deep)]/10 px-3 py-1.5 text-base sm:text-lg tabular-nums text-[var(--deep)] font-black shrink-0 tracking-wide">
                   {{ p.number }}
                 </strong>
-                <span class="truncate text-slate-700 font-semibold text-right text-xs">
+                <span class="truncate text-slate-800 font-semibold text-right text-xs sm:text-sm">
                   {{ p.name }}
                 </span>
               </div>
             </div>
 
-            <div v-else class="text-xs text-slate-400 py-6 text-center italic font-medium">
+            <p v-else class="text-sm text-[var(--muted)] py-4 text-center font-medium">
               Belum ada antrean berikutnya.
-            </div>
+            </p>
           </div>
 
-          <!-- Doctor & Room Info -->
-          <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
-            <span class="truncate max-w-[150px] font-medium text-slate-700" :title="poli.doctorName">
+          <!-- 3. Doctor & Room Info -->
+          <div class="pt-2.5 border-t border-[var(--line)] flex items-center justify-between text-xs sm:text-sm text-[var(--muted)] shrink-0">
+            <span class="truncate max-w-[150px] font-semibold text-slate-600" :title="poli.doctorName">
               {{ poli.doctorName }}
             </span>
-            <span class="font-mono text-slate-800 shrink-0 font-bold bg-slate-200 px-2 py-0.5 rounded text-[11px]">
-              {{ poli.room }}
-            </span>
+            <span class="font-mono text-slate-600 shrink-0 font-bold bg-slate-100 px-2 py-0.5 rounded">{{ poli.room }}</span>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- 3. TV RUNNING TICKER FOOTER -->
-    <footer class="h-9 bg-white/10 backdrop-blur-md rounded-xl border border-white/15 overflow-hidden flex items-center px-3 shrink-0 text-xs">
-      <div class="flex items-center gap-1.5 font-bold text-teal-300 pr-3 border-r border-white/20 shrink-0">
-        <Clock3 :size="15" />
-        <span class="tracking-wide uppercase text-[11px]">INFO</span>
+    <!-- Footer TV Info Bar -->
+    <footer class="pt-2 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)] shrink-0">
+      <div class="flex items-center gap-2 font-medium">
+        <Clock3 :size="14" />
+        <span>Jam Pelayanan: 08.00 – 14.00 WIB (UTC+7)</span>
       </div>
-      <div class="overflow-hidden whitespace-nowrap flex-1 ml-3 text-slate-200">
-        <div class="ticker-content">
-          Selamat datang di Puskesmas Sehat Bersama · Jam Pelayanan: 08.00 – 14.00 WIB (UTC+7) · Mohon persiapkan KTP asli dan Kartu BPJS / Asuransi aktif · Perhatikan nomor tiket dan ruangan poli yang dipanggil · Demi kenyamanan bersama, mohon menjaga kebersihan dan ketertiban.
-        </div>
-      </div>
+      <span class="hidden sm:inline">Siapkan KTP dan kartu BPJS Anda · Jaga kebersihan dan kenyamanan bersama</span>
     </footer>
   </main>
 </template>
@@ -170,7 +124,9 @@ import {
   Baby,
   HeartPulse,
   Users,
+  Clock,
   Clock3,
+  Calendar,
 } from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
@@ -209,7 +165,7 @@ function updateUtc7Clock() {
   currentDate.value = dateFormatter.format(now);
 }
 
-// ── Polyclinics Configuration (4 Columns) ──
+// ── 4 Polyclinics Configuration (Identik dengan Antrean Live) ──
 const polyclinicsConfig = [
   {
     id: "poli-umum",
@@ -282,7 +238,10 @@ function isPoliCalling(poliName: string, code: string) {
   if (!queueStore.active) return false;
   const activePoli = (queueStore.active.poli || "").toLowerCase();
   const activeNum = (queueStore.active.number || "").toUpperCase();
-  return activePoli.includes(poliName.toLowerCase().slice(0, 6)) || activeNum.startsWith(code + "-");
+  return (
+    activePoli.includes(poliName.toLowerCase().slice(0, 6)) ||
+    activeNum.startsWith(code + "-")
+  );
 }
 
 onMounted(() => {
@@ -294,24 +253,3 @@ onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer);
 });
 </script>
-
-<style scoped>
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-.ticker-content {
-  display: inline-block;
-  white-space: nowrap;
-  animation: marquee 38s linear infinite;
-}
-
-.ticker-content:hover {
-  animation-play-state: paused;
-}
-</style>
