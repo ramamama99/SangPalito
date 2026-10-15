@@ -21,12 +21,16 @@
           dan nyaman untuk semua.
         </p>
         <div class="hero-actions">
-          <button class="button primary" @click="handleStart">
+          <RouterLink
+            to="/register"
+            class="button primary"
+            @click="queueStore.startRegistration('Poli Umum', false)"
+          >
             Ambil Antrean
             <span class="arrow-disc">
               <ArrowUpRight :size="20" />
             </span>
-          </button>
+          </RouterLink>
           <button class="button outline" @click="queueStore.lookupOpen = true">
             <Search :size="17" /> Cek Antrean Saya
           </button>

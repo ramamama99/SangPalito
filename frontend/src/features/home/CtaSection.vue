@@ -5,9 +5,13 @@
       <h2>Mulai langkah sehat Anda hari ini.</h2>
       <p>Ambil antrean dari rumah. Kami menantikan Anda.</p>
     </div>
-    <button class="button white" @click="handleStart">
+    <RouterLink
+      to="/register"
+      class="button white"
+      @click="queueStore.startRegistration('Poli Umum', false)"
+    >
       Daftar Sekarang <ArrowUpRight :size="20" />
-    </button>
+    </RouterLink>
   </section>
 </template>
 

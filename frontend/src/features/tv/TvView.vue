@@ -2,9 +2,9 @@
   <main class="tv-screen">
     <div class="tv-header">
       <Brand />
-      <button class="button outline small" @click="goToStaff">
+      <RouterLink to="/staff" class="button outline small">
         <ChevronRight :size="18" class="rotate-180" /> Kembali ke Dashboard Staf
-      </button>
+      </RouterLink>
     </div>
     <div class="tv-grid">
       <div class="tv-current">

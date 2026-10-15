@@ -1,8 +1,8 @@
 <template>
   <main class="form-page container">
-    <button class="back-link" @click="handleBack">
+    <RouterLink :to="queueStore.walkin ? '/staff' : '/'" class="back-link">
       ← {{ queueStore.walkin ? "Kembali ke dashboard" : "Kembali ke beranda" }}
-    </button>
+    </RouterLink>
     <div class="center-heading">
       <div class="section-label">
         PENDAFTARAN {{ queueStore.walkin ? "WALK-IN" : "ONLINE" }}

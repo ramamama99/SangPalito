@@ -31,26 +31,28 @@
         >
           FAQ
         </button>
-        <button
+        <RouterLink
+          to="/live"
           :class="{ 'nav-active': route.path === '/live' }"
-          @click="goToRoute('/live')"
+          @click="mobileMenuOpen = false"
         >
           <span class="live-dot" /> Antrean Live
-        </button>
-        <button
+        </RouterLink>
+        <RouterLink
+          to="/qr-test"
           :class="{ 'nav-active': route.path === '/qr-test' || route.path === '/scan' }"
-          @click="goToRoute('/qr-test')"
+          @click="mobileMenuOpen = false"
         >
           <QrCode :size="15" /> Uji Scan QR
-        </button>
+        </RouterLink>
       </nav>
       <div class="nav-actions">
-        <button class="staff-link" @click="goToRoute('/login')">
+        <RouterLink to="/login" class="staff-link" @click="mobileMenuOpen = false">
           <Users :size="16" /> Login Staf
-        </button>
-        <button class="button primary small" @click="handleRegister">
+        </RouterLink>
+        <RouterLink to="/register" class="button primary small" @click="mobileMenuOpen = false">
           Daftar Online <ArrowUpRight :size="17" />
-        </button>
+        </RouterLink>
         <button
           class="menu-button"
           @click="mobileMenuOpen = !mobileMenuOpen"
@@ -66,7 +68,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, RouterLink } from "vue-router";
 import { Users, ArrowUpRight, Menu, X, QrCode } from "lucide-vue-next";
 import Brand from "../common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";

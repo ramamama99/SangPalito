@@ -19,7 +19,7 @@
           Masuk ke Dashboard <ArrowRight :size="18" />
         </button>
       </form>
-      <button class="back-link" @click="goToHome">← Kembali ke beranda</button>
+      <RouterLink to="/" class="back-link">← Kembali ke beranda</RouterLink>
     </div>
   </main>
 </template>

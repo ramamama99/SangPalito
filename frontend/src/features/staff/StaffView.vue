@@ -31,9 +31,9 @@
       >
         <Stethoscope :size="20" /> Dashboard Poli
       </button>
-      <button @click="goToTv"><Monitor :size="20" /> Layar TV Publik</button>
+      <RouterLink to="/tv"><Monitor :size="20" /> Layar TV Publik</RouterLink>
       <div class="sidebar-bottom">
-        <button @click="goToHome"><LogOut :size="18" /> Keluar</button>
+        <RouterLink to="/"><LogOut :size="18" /> Keluar</RouterLink>
       </div>
     </aside>
 
@@ -86,15 +86,16 @@
         <div class="panel-heading">
           <h3>Antrean hari ini</h3>
           <div style="display: flex; gap: 8px">
-            <button
+            <RouterLink
+              to="/register"
               class="button outline small"
-              @click="handleWalkinRegistration"
+              @click="queueStore.startRegistration(queueStore.staffPoli || 'Poli Umum', true)"
             >
               + Pasien Walk-in
-            </button>
-            <button class="button primary small" @click="goToScan">
+            </RouterLink>
+            <RouterLink to="/scan" class="button primary small">
               <QrCode :size="17" /> Scan QR Pasien
-            </button>
+            </RouterLink>
           </div>
         </div>
         <div class="search-field">
@@ -226,16 +227,15 @@
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
+                  <RouterLink
+                    to="/medical-record"
                     class="button primary small record-trigger"
                     aria-label="Lihat Riwayat Rekam Medis"
                     title="Lihat Riwayat Rekam Medis"
-                    @click="goToMedicalRecord"
                   >
                     <Activity :size="17" aria-hidden="true" />
                     <span class="record-trigger-label">MEDICAL RECORD</span>
-                  </button>
+                  </RouterLink>
                 </div>
                 <div
                   v-if="patientAllergies.length"

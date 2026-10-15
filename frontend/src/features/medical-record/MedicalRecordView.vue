@@ -3,10 +3,10 @@
     <div class="medical-record-wrapper">
       <!-- Back Button -->
       <div class="record-top-nav">
-        <button type="button" class="back-button" @click="goToStaff">
+        <RouterLink to="/staff" class="back-button">
           <ChevronLeft :size="16" />
           <span>Kembali ke Pemeriksaan</span>
-        </button>
+        </RouterLink>
       </div>
 
       <div v-if="chosenPatient" class="record-content">

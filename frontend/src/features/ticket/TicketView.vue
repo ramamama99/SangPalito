@@ -83,9 +83,9 @@
           >
             Batalkan Antrean
           </button>
-          <button class="back-link" @click="goToHome">
+          <RouterLink to="/" class="back-link">
             Kembali ke beranda
-          </button>
+          </RouterLink>
         </div>
       </div>
     </template>
@@ -94,9 +94,9 @@
         <QrCode :size="50" />
         <h2>Tiket tidak ditemukan</h2>
         <p>Periksa nomor antrean atau mulai pendaftaran baru.</p>
-        <button class="button primary" @click="handleNewRegistration">
+        <RouterLink to="/register" class="button primary">
           Daftar Online
-        </button>
+        </RouterLink>
       </div>
     </template>
   </main>

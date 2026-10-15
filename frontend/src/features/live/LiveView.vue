@@ -1,13 +1,13 @@
 <template>
   <main class="container py-8 sm:py-12">
     <div class="mx-auto max-w-5xl">
-      <button
+      <RouterLink
+        to="/"
         class="back-link !inline-flex items-center gap-2 !text-[var(--deep)]"
-        @click="goToHome"
       >
         <ChevronRight :size="18" class="rotate-180" aria-hidden="true" />
         Kembali ke beranda
-      </button>
+      </RouterLink>
       <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="!text-3xl !tracking-tight sm:!text-4xl">Antrean Live</h2>

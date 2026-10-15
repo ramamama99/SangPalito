@@ -5,19 +5,19 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--line,#e2e8f0)] pb-5">
         <div>
           <div class="flex items-center gap-2 mb-1">
-            <button
+            <RouterLink
+              to="/staff"
               class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--ink-muted,#64748b)] hover:text-[var(--primary,#059669)] transition-colors"
-              @click="router.push('/staff')"
             >
               <ChevronLeft :size="16" /> Dashboard Staf
-            </button>
+            </RouterLink>
             <span class="text-xs text-slate-300">|</span>
-            <button
+            <RouterLink
+              to="/"
               class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--ink-muted,#64748b)] hover:text-[var(--primary,#059669)] transition-colors"
-              @click="router.push('/')"
             >
               Beranda Pasien
-            </button>
+            </RouterLink>
           </div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--ink,#0f172a)] flex items-center gap-2.5">
             <span class="inline-flex p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -508,13 +508,12 @@
               </div>
 
               <div class="flex gap-2">
-                <button
-                  type="button"
+                <RouterLink
+                  to="/staff"
                   class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center justify-center gap-1.5"
-                  @click="router.push('/staff')"
                 >
                   <Users :size="14" /> Buka di Dashboard Staf
-                </button>
+                </RouterLink>
                 <button
                   type="button"
                   class="py-2 px-3 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors"

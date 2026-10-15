@@ -148,10 +148,20 @@ p {
   align-items: center;
   font-size: 14px;
 }
-.nav button {
+.nav button,
+.nav a {
   padding: 15px 0;
   position: relative;
   color: #758181;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  font-size: inherit;
 }
 .nav .nav-active {
   color: var(--deep);
@@ -159,11 +169,6 @@ p {
 }
 .nav-active:after {
   content: none;
-}
-.nav button:last-child {
-  display: flex;
-  align-items: center;
-  gap: 7px;
 }
 .live-dot {
   display: inline-block;
@@ -1213,7 +1218,8 @@ label small {
   letter-spacing: 1px;
   padding: 0 12px 20px;
 }
-.sidebar > button {
+.sidebar > button,
+.sidebar > a {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1222,8 +1228,11 @@ label small {
   border-radius: 8px;
   text-align: left;
   margin-bottom: 7px;
+  text-decoration: none;
+  color: inherit;
 }
-.sidebar > button.selected {
+.sidebar > button.selected,
+.sidebar > a.selected {
   background: #edf6f1;
   color: var(--deep);
   font-weight: 600;
@@ -1246,12 +1255,15 @@ label small {
   font-size: 12px;
   color: #8b988f;
 }
-.sidebar-bottom button {
+.sidebar-bottom button,
+.sidebar-bottom a {
   display: flex;
   align-items: center;
   gap: 9px;
   font-size: 14px;
   margin-top: 14px;
+  text-decoration: none;
+  color: inherit;
 }
 .dashboard-body {
   flex: 1;
