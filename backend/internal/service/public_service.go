@@ -419,6 +419,24 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 		}
 	}
 
+	// Strict Date Validation: QR Code check-in is strictly valid ONLY on the appointment visit date!
+	loc := time.FixedZone("WIB", 7*3600)
+	todayStr := time.Now().In(loc).Format("2006-01-02")
+	visitDateStr := appointment.VisitDate.In(loc).Format("2006-01-02")
+
+	if visitDateStr != todayStr {
+		if visitDateStr > todayStr {
+			return nil, apperror.BadRequest(
+				fmt.Sprintf("QR Code hanya dapat digunakan untuk check-in pada hari kunjungan (tanggal %s). Hari ini tanggal %s. Silakan datang dan scan pada hari H kunjungan.", visitDateStr, todayStr),
+				nil,
+			)
+		}
+		return nil, apperror.BadRequest(
+			fmt.Sprintf("QR Code ini sudah kedaluwarsa. Tanggal kunjungan Anda (%s) telah lewat. Silakan lakukan pendaftaran baru untuk hari ini.", visitDateStr),
+			nil,
+		)
+	}
+
 	// Find the queue for this appointment and advance it
 	queues, err := s.queueRepo.FindActiveByPolyclinic(ctx, appointment.PolyclinicID, appointment.VisitDate)
 	if err != nil {

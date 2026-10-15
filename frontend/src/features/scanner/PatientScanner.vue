@@ -641,7 +641,14 @@
                   <span>Token yang Diuji:</span>
                   <span class="font-mono text-slate-900 truncate max-w-[200px]">{{ lastScannedToken }}</span>
                 </div>
-                <div class="pt-2 border-t border-slate-100 text-slate-500 text-[11px] leading-relaxed">
+                <div v-if="lastResult.message?.includes('hari kunjungan') || lastResult.message?.includes('kedaluwarsa')" class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
+                  <CalendarDays :size="16" class="text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong class="font-semibold block text-amber-950">Aturan Akses QR Antrean:</strong>
+                    Kode QR tiket antrean dibuat khusus untuk sistem keamanan puskesmas dan <strong>hanya aktif pada hari kunjungan</strong> yang tertera di tiket.
+                  </div>
+                </div>
+                <div v-else class="pt-2 border-t border-slate-100 text-slate-500 text-[11px] leading-relaxed">
                   💡 <strong>Solusi:</strong> Jika error menyebut status antrean bukan <em>waiting</em>, klik tombol <strong>Reset</strong> pada tab Simulasi untuk mengembalikan antrean ke status <em>waiting</em> agar bisa di-check-in kembali.
                 </div>
               </div>
@@ -733,7 +740,7 @@ import {
   Keyboard, Activity, CheckCircle2, XCircle, Code, History,
   Volume2, VolumeX, ChevronLeft, ChevronDown, Check, X,
   RotateCcw, RefreshCw, Play, Square, Loader2, Users,
-  AlertCircle, AlertTriangle, ScanLine
+  AlertCircle, AlertTriangle, ScanLine, CalendarDays
 } from "lucide-vue-next";
 import { api } from "../../services/api";
 import { useQueueStore } from "../../stores/queue";

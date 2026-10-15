@@ -23,6 +23,29 @@
             :src="queueStore.qr"
             alt="QR check-in antrean"
           />
+          <!-- QR Validity Badge: QR is strictly active on visit date only -->
+          <div
+            v-if="isTodayTicket"
+            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center gap-1.5"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            QR Aktif Hari Ini · Siap Scan di Lokasi
+          </div>
+          <div
+            v-else-if="isFutureTicket"
+            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center gap-1.5"
+          >
+            <Clock :size="13" class="text-amber-600" />
+            QR Hanya Aktif pada Hari Kunjungan ({{ formatDate(queueStore.currentTicket.date) }})
+          </div>
+          <div
+            v-else-if="isPastTicket"
+            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 flex items-center justify-center gap-1.5"
+          >
+            <AlertCircle :size="13" class="text-rose-600" />
+            QR Kedaluwarsa (Jadwal: {{ formatDate(queueStore.currentTicket.date) }})
+          </div>
+
           <div v-if="queueStore.currentTicket.qr_token" class="text-center my-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
             <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Token Check-In</span>
             <code class="text-emerald-700 font-mono font-bold text-[11px] break-all select-all">{{ queueStore.currentTicket.qr_token }}</code>
@@ -117,7 +140,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { CheckCircle2, Download, QrCode, Sparkles } from "lucide-vue-next";
+import { CheckCircle2, Download, QrCode, Sparkles, Clock, AlertCircle } from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
 import { api } from "../../services/api";
@@ -139,6 +162,32 @@ const instructions = [
     desc: "Petugas akan mencocokkan identitas sebelum Anda dilayani.",
   },
 ];
+
+const todayDateStr = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+});
+
+const isTodayTicket = computed(() => {
+  const t = queueStore.currentTicket;
+  if (!t || !t.date) return true;
+  return t.date === todayDateStr.value;
+});
+
+const isFutureTicket = computed(() => {
+  const t = queueStore.currentTicket;
+  if (!t || !t.date) return false;
+  return t.date > todayDateStr.value;
+});
+
+const isPastTicket = computed(() => {
+  const t = queueStore.currentTicket;
+  if (!t || !t.date) return false;
+  return t.date < todayDateStr.value;
+});
 
 const estimatedWaitTime = computed(() => {
   const t = queueStore.currentTicket;
@@ -176,6 +225,19 @@ function printTicket() {
 
 async function handleCheckinSimulation() {
   if (queueStore.currentTicket) {
+    if (isFutureTicket.value) {
+      queueStore.setNotice(
+        `⏳ Tiket ini dijadwalkan untuk kunjungan ${formatDate(queueStore.currentTicket.date)}. Check-in QR hanya dapat dilakukan pada hari H kunjungan.`,
+      );
+      return;
+    }
+    if (isPastTicket.value) {
+      queueStore.setNotice(
+        `⚠️ Tiket ini sudah kedaluwarsa karena tanggal kunjungan (${formatDate(queueStore.currentTicket.date)}) telah lewat.`,
+      );
+      return;
+    }
+
     const token = queueStore.currentTicket.qr_token || queueStore.currentTicket.id;
     try {
       const res = await api.checkInByQR(token);
@@ -185,12 +247,10 @@ async function handleCheckinSimulation() {
           "✅ Check-in berhasil terverifikasi di server database! Antrean Anda siap dipanggil.",
         );
       } else {
-        queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
-        queueStore.setNotice(res?.message || "Check-in berhasil diproses.");
+        queueStore.setNotice(res?.message || "Check-in gagal diproses.");
       }
-    } catch {
-      queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
-      queueStore.setNotice("Check-in diterima secara lokal.");
+    } catch (e: any) {
+      queueStore.setNotice(e?.message || "Gagal menghubungi server untuk check-in.");
     }
   }
 }
