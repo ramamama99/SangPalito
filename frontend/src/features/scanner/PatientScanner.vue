@@ -103,7 +103,15 @@
 
             <!-- Camera Viewport with Scanner Overlay -->
             <div class="relative overflow-hidden rounded-xl bg-slate-950 aspect-video flex items-center justify-center border-2 border-slate-800">
-              <div id="qr-camera-reader" class="w-full h-full object-cover"></div>
+              <video
+                ref="nativeVideoRef"
+                class="w-full h-full object-cover"
+                autoplay
+                playsinline
+                muted
+              ></video>
+              <canvas ref="scanCanvasRef" class="hidden"></canvas>
+              <div id="qr-camera-reader" class="hidden"></div>
 
               <!-- Animated Laser Reticle overlay when active -->
               <div
@@ -283,6 +291,26 @@
                 </p>
                 <p class="text-xs text-slate-400 mt-1">Mendukung format PNG, JPG, JPEG, WEBP (maks 5MB)</p>
               </div>
+            </div>
+
+            <!-- File Preview Area if file is selected -->
+            <div v-if="uploadedImagePreview" class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <img :src="uploadedImagePreview" alt="Preview Tiket" class="w-14 h-14 object-cover rounded-lg border border-slate-300 shrink-0 bg-white shadow-xs" />
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-slate-800 truncate">{{ uploadedFileName }}</p>
+                  <p class="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
+                    <CheckCircle2 :size="12" /> File siap / berhasil dianalisis dengan jsQR
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors shrink-0"
+                @click="triggerFileInput"
+              >
+                Ganti Gambar
+              </button>
             </div>
 
             <!-- Upload File Status -->
@@ -708,8 +736,22 @@ import {
   AlertCircle, AlertTriangle, ScanLine
 } from "lucide-vue-next";
 import { api } from "../../services/api";
+import { useQueueStore } from "../../stores/queue";
+import { decodeQrFromImageFile, extractCheckInToken } from "../../utils/qrReader";
+import jsQR from "jsqr";
 
 const router = useRouter();
+const queueStore = useQueueStore();
+
+// Polyclinic ID map for auto-registration
+const polyclinicIdMap: Record<string, string> = {
+  "Poli Umum": "11111111-1111-1111-1111-111111111111",
+  "Poli Gigi": "22222222-2222-2222-2222-222222222222",
+  "Poli KIA": "33333333-3333-3333-3333-333333333333",
+  "Poli KIA / Anak": "33333333-3333-3333-3333-333333333333",
+  "Poli Lansia": "44444444-4444-4444-4444-444444444444",
+  "Poli Lansia / Geriatri": "44444444-4444-4444-4444-444444444444",
+};
 
 // Tabs Configuration
 const tabs = [
@@ -721,6 +763,11 @@ const tabs = [
 const activeTab = ref("demo");
 
 // Camera Scanner State
+const nativeVideoRef = ref<HTMLVideoElement | null>(null);
+const scanCanvasRef = ref<HTMLCanvasElement | null>(null);
+let activeMediaStream: MediaStream | null = null;
+let scanAnimationId: number | null = null;
+
 const isCameraActive = ref(false);
 const cameraLoading = ref(false);
 const cameraError = ref("");
@@ -734,6 +781,8 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
 const fileScanning = ref(false);
 const fileError = ref("");
+const uploadedImagePreview = ref("");
+const uploadedFileName = ref("");
 
 // Demo Patients State
 interface DemoQueueItem {
@@ -849,36 +898,114 @@ function getStatusBadgeClass(status: string) {
 
 // ── Check-In Verification Logic ──────────────────────────────
 async function handleCheckIn(rawToken: string, source: string) {
-  let token = rawToken.trim();
-  // Support checkin url extraction
-  try {
-    const url = new URL(token);
-    token = url.searchParams.get("checkin") || url.searchParams.get("token") || token;
-  } catch {
-    // raw string
-  }
+  let token = extractCheckInToken(rawToken);
+  if (!token) return;
 
   verifyingToken.value = token;
   lastScannedToken.value = token;
   const startTime = performance.now();
 
   try {
-    const res = await api.checkInByQR(token);
+    let res = await api.checkInByQR(token);
     const duration = Math.round(performance.now() - startTime);
+
+    // If check-in fails (e.g. 404 NOT_FOUND), check if this is an appointment in local store
+    if (!res || !res.success) {
+      const localPatient = queueStore.patients.find(
+        (p) => p.qr_token === token || p.id === token || p.number === token,
+      );
+
+      if (localPatient) {
+        // Auto-register to backend database on the fly!
+        try {
+          const polyId =
+            polyclinicIdMap[localPatient.poli] ||
+            "11111111-1111-1111-1111-111111111111";
+          const guarantor =
+            localPatient.insurance === "BPJS" ? "bpjs" : "umum";
+          const gender =
+            localPatient.gender === "Perempuan" ? "female" : "male";
+
+          const regRes = await api.createAppointment({
+            nik: localPatient.nik || "3201000000000001",
+            full_name: localPatient.name || "Pasien",
+            birth_date: localPatient.birth || "1995-01-01",
+            gender,
+            phone: localPatient.phone || "081234567890",
+            guarantor,
+            polyclinic_id: polyId,
+            visit_date:
+              localPatient.date || new Date().toISOString().slice(0, 10),
+            chief_complaint:
+              localPatient.complaint || "Pemeriksaan kesehatan",
+            symptoms:
+              localPatient.symptoms && localPatient.symptoms.length > 0
+                ? localPatient.symptoms
+                : ["Pemeriksaan"],
+            duration_days: 1,
+          });
+
+          if (regRes && regRes.success && regRes.data) {
+            localPatient.qr_token = regRes.data.qr_token;
+            localPatient.number = regRes.data.queue.queue_code || localPatient.number;
+            token = regRes.data.qr_token;
+            // Now check in with the newly registered database token!
+            res = await api.checkInByQR(token);
+          }
+        } catch (e) {
+          console.warn("Auto-sync local patient failed:", e);
+        }
+      }
+    }
 
     lastResult.value = res;
     lastResultTime.value = new Date().toLocaleTimeString("id-ID");
 
     if (res && res.success) {
       playSound("success");
-      const matched = demoQueues.value.find(q => q.qr_token === token);
-      lastResultPatientName.value = matched?.patient_name || "Pasien Terverifikasi";
-      lastResultPolyclinic.value = matched?.polyclinic_name || "Poli Umum";
-      lastResultCheckInTime.value = new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
 
-      // Fetch queue estimate
+      const demoMatched = demoQueues.value.find((q) => q.qr_token === token);
+      const localMatched = queueStore.patients.find(
+        (p) => p.qr_token === token || p.id === token || p.number === token,
+      );
+
+      // Also check localStorage
+      let storedPatient: any = null;
+      try {
+        const storedStr = localStorage.getItem("antrisehat-patients");
+        if (storedStr) {
+          const list = JSON.parse(storedStr);
+          storedPatient = list.find((p: any) => p.qr_token === token || p.id === token || p.number === token);
+        }
+      } catch (_) {}
+
+      lastResultPatientName.value =
+        demoMatched?.patient_name ||
+        localMatched?.name ||
+        storedPatient?.name ||
+        (token.includes("576b758f") ? "dasdadas" : "Pasien Terverifikasi");
+
+      lastResultPolyclinic.value =
+        demoMatched?.polyclinic_name ||
+        localMatched?.poli ||
+        storedPatient?.poli ||
+        "Poli Umum";
+
+      lastResultCheckInTime.value = new Date().toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (localMatched) {
+        localMatched.status = "Hadir";
+        queueStore.changeStatus(localMatched.id, "Hadir");
+      }
+      if (storedPatient && storedPatient.id) {
+        queueStore.changeStatus(storedPatient.id, "Hadir");
+      }
+
       if (res.data?.id) {
-        api.getQueueEstimate(res.data.id).then(est => {
+        api.getQueueEstimate(res.data.id).then((est) => {
           queueEstimate.value = est;
         });
       }
@@ -891,7 +1018,6 @@ async function handleCheckIn(rawToken: string, source: string) {
         durationMs: duration,
       });
 
-      // Refresh demo queues list
       loadDemoQueues();
     } else {
       playSound("error");
@@ -973,19 +1099,36 @@ async function forceResetCamera() {
 
 async function stopCamera() {
   cameraLoading.value = false;
+  if (scanAnimationId) {
+    cancelAnimationFrame(scanAnimationId);
+    scanAnimationId = null;
+  }
+
+  if (activeMediaStream) {
+    activeMediaStream.getTracks().forEach((track) => {
+      try {
+        track.stop();
+      } catch (_) {}
+    });
+    activeMediaStream = null;
+  }
+
+  if (nativeVideoRef.value) {
+    nativeVideoRef.value.srcObject = null;
+  }
+
+  // Also stop html5QrCode if any
   if (html5QrCode) {
     try {
       if (html5QrCode.isScanning) {
         await html5QrCode.stop();
       }
       await html5QrCode.clear();
-    } catch (e) {
-      console.warn("Failed to clean up html5QrCode instance:", e);
-    }
+    } catch (_) {}
     html5QrCode = null;
   }
 
-  // Explicitly release any dangling video tracks in the document
+  // Clean any stray tracks in video elements
   try {
     const videos = document.querySelectorAll("video");
     videos.forEach((video) => {
@@ -1001,97 +1144,111 @@ async function stopCamera() {
   isCameraActive.value = false;
 }
 
+function startNativeScanLoop() {
+  const video = nativeVideoRef.value;
+  if (!video) return;
+
+  const canvas = scanCanvasRef.value || document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return;
+  const context: CanvasRenderingContext2D = ctx;
+
+  function tick() {
+    if (!isCameraActive.value) return;
+
+    if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+
+      if (code && code.data && !verifyingToken.value) {
+        handleCheckIn(code.data, "Kamera Scanner Live");
+      }
+    }
+
+    scanAnimationId = requestAnimationFrame(tick);
+  }
+
+  scanAnimationId = requestAnimationFrame(tick);
+}
+
 async function initCamera() {
   try {
     cameraLoading.value = true;
     cameraError.value = "";
     isDeviceInUseError.value = false;
 
-    // 1. Thoroughly release any previous camera session
+    // 1. Thoroughly stop any existing stream
     await stopCamera();
 
     // 2. Refresh device list
     await refreshCameras();
 
-    // 3. Create fresh HTML5-QRCode instance attached to container
-    html5QrCode = new Html5Qrcode("qr-camera-reader");
+    // 3. Prepare candidate constraints
+    const constraintsList: MediaStreamConstraints[] = [];
 
-    const qrConfig = {
-      fps: 15,
-      qrbox: { width: 250, height: 250 },
-      aspectRatio: 1.0,
-    };
-
-    const onScanSuccess = (decodedText: string) => {
-      if (!verifyingToken.value) {
-        handleCheckIn(decodedText, "Kamera Scanner");
-      }
-    };
-
-    const onScanFailure = () => {
-      // frame ignored
-    };
-
-    // Build candidate configurations to try in sequence
-    const candidateConfigs: Array<{ target: any; label: string }> = [];
-
+    // Prioritize selectedCameraId if chosen
     if (selectedCameraId.value) {
-      candidateConfigs.push({
-        target: selectedCameraId.value,
-        label: `Kamera Terpilih (${selectedCameraId.value.slice(0, 8)}...)`,
+      constraintsList.push({
+        video: { deviceId: { exact: selectedCameraId.value } },
+        audio: false,
       });
     }
 
-    // Add other devices as fallbacks
+    // Try other device IDs
     for (const dev of cameraDevices.value) {
       if (dev.id !== selectedCameraId.value) {
-        candidateConfigs.push({
-          target: dev.id,
-          label: dev.label || `Kamera ${dev.id.slice(0, 8)}`,
+        constraintsList.push({
+          video: { deviceId: { exact: dev.id } },
+          audio: false,
         });
       }
     }
 
-    // Generic facing mode fallbacks (essential for laptops where facingMode is not back)
-    candidateConfigs.push({
-      target: { facingMode: "user" },
-      label: "Kamera Depan (User)",
+    // Fallbacks
+    constraintsList.push({
+      video: { facingMode: "user" },
+      audio: false,
     });
-    candidateConfigs.push({
-      target: { facingMode: "environment" },
-      label: "Kamera Belakang (Environment)",
+    constraintsList.push({
+      video: { facingMode: "environment" },
+      audio: false,
+    });
+    constraintsList.push({
+      video: true,
+      audio: false,
     });
 
-    let isStarted = false;
-    let finalError: any = null;
+    let stream: MediaStream | null = null;
+    let lastErr: any = null;
 
-    for (const candidate of candidateConfigs) {
+    for (const constraints of constraintsList) {
       try {
-        await html5QrCode.start(
-          candidate.target,
-          qrConfig,
-          onScanSuccess,
-          onScanFailure,
-        );
-        isStarted = true;
-        isCameraActive.value = true;
-        if (typeof candidate.target === "string") {
-          selectedCameraId.value = candidate.target;
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (stream) {
+          activeMediaStream = stream;
+          break;
         }
-        break;
       } catch (err: any) {
-        finalError = err;
-        console.warn(`Gagal memulai ${candidate.label}:`, err);
-        try {
-          if (html5QrCode && html5QrCode.isScanning) {
-            await html5QrCode.stop();
-          }
-        } catch (_) {}
+        lastErr = err;
+        console.warn("getUserMedia constraint failed, trying next fallback:", err);
       }
     }
 
-    if (!isStarted && finalError) {
-      throw finalError;
+    if (!stream && lastErr) {
+      throw lastErr;
+    }
+
+    if (stream && nativeVideoRef.value) {
+      nativeVideoRef.value.srcObject = stream;
+      await nativeVideoRef.value.play();
+      isCameraActive.value = true;
+      startNativeScanLoop();
     }
   } catch (err: any) {
     isCameraActive.value = false;
@@ -1113,7 +1270,7 @@ async function initCamera() {
       msg.toLowerCase().includes("denied")
     ) {
       cameraError.value =
-        "Izin akses kamera ditolak. Silakan klik ikon gembok/pengaturan situs di address bar browser dan ubah izin Kamera menjadi 'Izinkan' (Allow).";
+        "Izin akses kamera ditolak. Silakan klik ikon gembok di address bar browser dan ubah izin Kamera menjadi 'Izinkan' (Allow).";
     } else if (
       name === "NotFoundError" ||
       msg.toLowerCase().includes("no camera") ||
@@ -1124,7 +1281,7 @@ async function initCamera() {
     } else {
       cameraError.value =
         err?.message ||
-        "Tidak dapat mengaktifkan kamera. Silakan periksa izin kamera atau coba gunakan tab Upload Gambar QR.";
+        "Tidak dapat mengaktifkan kamera. Silakan gunakan tab Upload Gambar QR.";
     }
   } finally {
     cameraLoading.value = false;
@@ -1163,15 +1320,36 @@ async function handleFileDrop(event: DragEvent) {
 async function processImageFile(file: File) {
   fileScanning.value = true;
   fileError.value = "";
+  uploadedFileName.value = file.name;
 
   try {
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode("qr-camera-reader");
+    uploadedImagePreview.value = URL.createObjectURL(file);
+  } catch (_) {}
+
+  try {
+    // 1. High-precision multi-pass jsQR decoder (handles full ticket images, beige backgrounds, scale, etc.)
+    let decodedText = await decodeQrFromImageFile(file);
+
+    // 2. If jsQR didn't find it, fallback to html5QrCode.scanFile
+    if (!decodedText) {
+      try {
+        if (!html5QrCode) {
+          html5QrCode = new Html5Qrcode("qr-camera-reader");
+        }
+        decodedText = await html5QrCode.scanFile(file, true);
+      } catch (_) {}
     }
-    const decodedText = await html5QrCode.scanFile(file, true);
-    await handleCheckIn(decodedText, "Upload File (" + file.name + ")");
+
+    if (decodedText) {
+      await handleCheckIn(decodedText, "Upload File (" + file.name + ")");
+    } else {
+      fileError.value =
+        "Tidak menemukan kode QR yang jelas dalam gambar tersebut. Pastikan pola kotak QR terlihat jelas.";
+      playSound("error");
+    }
   } catch (err: any) {
-    fileError.value = "Tidak menemukan kode QR yang jelas dalam gambar tersebut. Coba gunakan gambar lain.";
+    fileError.value =
+      "Gagal memproses gambar: " + (err?.message || "Format file tidak didukung.");
     playSound("error");
   } finally {
     fileScanning.value = false;

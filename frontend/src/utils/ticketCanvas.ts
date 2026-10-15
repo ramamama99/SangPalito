@@ -19,6 +19,9 @@ export function downloadTicketImage(ticket: Patient, qrDataUrl: string) {
 
   const img = new Image();
   img.onload = () => {
+    // Draw white quiet-zone background behind QR code for maximum contrast and universal optical scanning
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(230, 260, 260, 260);
     ctx.drawImage(img, 240, 270, 240, 240);
     ctx.font = "24px sans-serif";
     [
