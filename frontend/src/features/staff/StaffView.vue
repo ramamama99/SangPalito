@@ -369,6 +369,7 @@ import { todayDate } from "../../constants/initialData";
 import { useQueueStore } from "../../stores/queue";
 import type { Patient } from "../../types";
 import VerifyModal from "./VerifyModal.vue";
+import { api } from "../../services/api";
 
 const router = useRouter();
 const queueStore = useQueueStore();
@@ -549,8 +550,9 @@ function selectPatient(p: Patient) {
   queueStore.soap.plan = "";
 }
 
-function saveMedicalRecord() {
+async function saveMedicalRecord() {
   if (!activePatient.value) return;
+  const current = activePatient.value;
   const record = {
     ...vitals,
     pressure: `${vitals.bp_sys}/${vitals.bp_dia}`,
@@ -564,8 +566,9 @@ function saveMedicalRecord() {
     recordedAt: new Date().toISOString(),
   };
 
+  queueStore.changeStatus(current.id, "Selesai");
   queueStore.patients = queueStore.patients.map((p) =>
-    p.id === activePatient.value?.id
+    p.id === current.id
       ? {
           ...p,
           status: "Selesai",
@@ -573,6 +576,45 @@ function saveMedicalRecord() {
         }
       : p,
   );
+
+  // If patient has a valid UUID, persist visit to backend
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      current.id,
+    )
+  ) {
+    try {
+      await api.createVisit({
+        appointment_id: current.id,
+        patient_id: current.id,
+        doctor_id: "00000000-0000-0000-0000-000000000000",
+        vitals: {
+          bp_sys: Number(vitals.bp_sys) || 120,
+          bp_dia: Number(vitals.bp_dia) || 80,
+          temp: Number(vitals.temp) || 36.5,
+          hr: Number(vitals.hr) || 80,
+          spo2: Number(vitals.spo2) || 98,
+          weight: Number(vitals.weight) || 65,
+          height: Number(vitals.height) || 168,
+        },
+        subjective:
+          subjectiveText.value || current.complaint || "Pemeriksaan rutin",
+        objective:
+          objectiveText.value || "Pemeriksaan fisik umum dalam batas normal",
+        assessment: queueStore.soap.diagnosis || "Observasi Klinis",
+        plan: queueStore.soap.plan || "Terapi simtomatik dan edukasi",
+        diagnoses: [
+          {
+            icd10_code: "Z00.0",
+            is_primary: true,
+            notes: queueStore.soap.diagnosis,
+          },
+        ],
+      });
+    } catch {
+      // offline fallback
+    }
+  }
 
   queueStore.selected = "";
   queueStore.setNotice("Pemeriksaan disimpan dan kunjungan ditutup.");

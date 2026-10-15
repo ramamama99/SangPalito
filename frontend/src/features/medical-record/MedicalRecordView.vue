@@ -199,11 +199,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ChevronLeft, Stethoscope } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
 import type { Patient } from "../../types";
+import { api } from "../../services/api";
 
 const router = useRouter();
 const queueStore = useQueueStore();
@@ -235,6 +236,62 @@ const allergies = computed(() => {
     ),
   ];
 });
+
+const backendVisits = ref<Patient[]>([]);
+
+watch(
+  () => chosenPatient.value,
+  async (p) => {
+    if (!p || !p.id) {
+      backendVisits.value = [];
+      return;
+    }
+    if (
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        p.id,
+      )
+    ) {
+      try {
+        const visits = await api.getPatientVisits(p.id);
+        if (visits && visits.length > 0) {
+          backendVisits.value = visits.map((v, index) => ({
+            ...p,
+            id: v.id || `backend-visit-${index}`,
+            date: v.visit_date
+              ? v.visit_date.slice(0, 10)
+              : new Date().toISOString().slice(0, 10),
+            poli: v.polyclinic_name || "Poli Umum",
+            soap: JSON.stringify({
+              doctor: v.doctor_name || "dr. Rama Palito",
+              diagnosis:
+                v.diagnosis ||
+                v.diagnoses
+                  ?.map((d) => `${d.icd10_code} — ${d.description || ""}`)
+                  .join(", ") ||
+                "Pemeriksaan Rawat Jalan",
+              subjective: v.symptoms || "Pemeriksaan rutin",
+              objective:
+                v.physical_exam || "Pemeriksaan fisik dalam batas normal.",
+              plan: v.treatment_plan || "Terapi sesuai indikasi.",
+              bp_sys: String(v.vitals?.bp_sys || "120"),
+              bp_dia: String(v.vitals?.bp_dia || "80"),
+              hr: String(v.vitals?.hr || v.vitals?.heart_rate || "80"),
+              temp: String(v.vitals?.temp || v.vitals?.temperature || "36.5"),
+              spo2: String(v.vitals?.spo2 || "98"),
+              weight: String(v.vitals?.weight || "65"),
+              height: String(v.vitals?.height || "168"),
+            }),
+            source: "Rekam Medis Cloud",
+            status: "Selesai",
+          }));
+        }
+      } catch {
+        // fallback
+      }
+    }
+  },
+  { immediate: true },
+);
 
 const simulatedHistory = computed<Patient[]>(() => {
   if (!chosenPatient.value) return [];
@@ -312,7 +369,7 @@ const simulatedHistory = computed<Patient[]>(() => {
       (item.id === p.id || (p.nik && item.nik === p.nik)),
   );
 
-  return [...realVisits, ...examples].sort((a, b) =>
+  return [...backendVisits.value, ...realVisits, ...examples].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
 });

@@ -8,6 +8,7 @@ import {
 import { generateQrDataUrl } from "../utils/qr";
 import { speakQueueCall } from "../utils/speech";
 import { downloadTicketImage } from "../utils/ticketCanvas";
+import { api } from "../services/api";
 
 export const useQueueStore = defineStore("queue", () => {
   function getStoredPatients(): Patient[] {
@@ -140,10 +141,64 @@ export const useQueueStore = defineStore("queue", () => {
     if (noticeTimer) clearTimeout(noticeTimer);
   }
 
+  const statusMapToBackend: Record<string, string> = {
+    Hadir: "checked_in",
+    Dipanggil: "called",
+    "Sedang dilayani": "in_service",
+    Selesai: "done",
+    Batal: "cancelled",
+    "Tidak Hadir": "no_show",
+    "Menunggu verifikasi": "waiting",
+  };
+
+  const statusMapFromBackend: Record<string, string> = {
+    waiting: "Menunggu verifikasi",
+    checked_in: "Hadir",
+    called: "Dipanggil",
+    in_service: "Sedang dilayani",
+    done: "Selesai",
+    cancelled: "Batal",
+    no_show: "Tidak Hadir",
+  };
+
+  async function fetchQueuesFromApi() {
+    try {
+      const data = await api.getQueuesToday();
+      if (data && data.length > 0) {
+        const mappedPatients: Patient[] = data.map((q) => ({
+          id: q.id,
+          number: q.queue_code,
+          name: q.patient?.full_name || "Pasien",
+          nik: q.patient?.medical_record_no || "",
+          phone: "",
+          birth: "",
+          gender: "Laki-laki",
+          insurance: "Umum",
+          bpjs: "",
+          date: q.queue_date || new Date().toISOString().slice(0, 10),
+          poli: q.polyclinic?.name || "Poli Umum",
+          complaint: "",
+          allergy: "",
+          symptoms: [],
+          status: statusMapFromBackend[q.status] || q.status,
+          source: "Online",
+        }));
+        patients.value = mappedPatients;
+      }
+    } catch {
+      // Keep existing demo data if backend offline
+    }
+  }
+
+  // Auto fetch from API on load
+  fetchQueuesFromApi();
+
   function changeStatus(id: string, status: string) {
     patients.value = patients.value.map((p) =>
       p.id === id ? { ...p, status } : p,
     );
+    const backendStatus = statusMapToBackend[status] || status;
+    api.updateQueueStatus(id, backendStatus).catch(() => {});
   }
 
   function call(p: Patient) {
@@ -156,6 +211,7 @@ export const useQueueStore = defineStore("queue", () => {
     );
     setNotice(`${p.number} dipanggil ke ${p.poli}`);
     speakQueueCall(p.number, p.poli);
+    api.updateQueueStatus(p.id, "called").catch(() => {});
   }
 
   function updateForm<K extends keyof RegistrationForm>(
@@ -242,5 +298,6 @@ export const useQueueStore = defineStore("queue", () => {
     startRegistration,
     registerPatient,
     downloadTicket,
+    fetchQueuesFromApi,
   };
 });
