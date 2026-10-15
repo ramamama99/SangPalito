@@ -19,11 +19,11 @@ export default defineConfig({
     port: parseInt(process.env.PORT || '8443'),
     proxy: {
       '/api': {
-        target: 'http://localhost:8088',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8088',
+        target: 'ws://localhost:8080',
         ws: true,
       },
     },
