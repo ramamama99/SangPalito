@@ -128,6 +128,7 @@ func (s *authService) Logout(ctx context.Context, userID uuid.UUID) error {
 	if err := s.userRepo.UpdateRefreshToken(ctx, userID, nil); err != nil {
 		return apperror.Internal(fmt.Errorf("authService.Logout: %w", err))
 	}
+	s.logAudit(ctx, &userID, "logout", "user", &userID, "", nil)
 	return nil
 }
 

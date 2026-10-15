@@ -127,14 +127,15 @@
       </div>
 
       <!-- Tombol Keluar (Logout) Pinned di Bawah, tidak perlu scroll -->
-      <RouterLink
-        to="/"
+      <a
+        href="#"
         class="logout-action-btn"
         :title="collapsed ? 'Keluar dari Sistem' : undefined"
+        @click.prevent="$emit('logout')"
       >
         <LogOut :size="18" />
         <span v-if="!collapsed">Keluar</span>
-      </RouterLink>
+      </a>
     </div>
   </aside>
 </template>
@@ -169,6 +170,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: "update:collapsed", val: boolean): void;
   (e: "toggle"): void;
+  (e: "logout"): void;
 }>();
 
 const queueStore = useQueueStore();

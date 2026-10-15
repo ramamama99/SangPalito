@@ -22,14 +22,19 @@ func NewAuditLogRepo(pool *pgxpool.Pool) *auditLogRepo {
 
 // Create inserts a new audit log entry.
 func (r *auditLogRepo) Create(ctx context.Context, log *entity.AuditLog) error {
-	query := `INSERT INTO audit_logs (id, user_id, action, entity, entity_id, ip_address, metadata, created_at)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	query := `INSERT INTO audit_logs (user_id, action, entity, entity_id, ip_address, metadata, created_at)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	metaJSON, _ := json.Marshal(log.Meta)
 
+	var ipParam any
+	if log.IPAddress != "" {
+		ipParam = log.IPAddress
+	}
+
 	_, err := r.pool.Exec(ctx, query,
-		log.ID, log.UserID, log.Action, log.Entity, log.EntityID,
-		log.IPAddress, metaJSON, log.CreatedAt,
+		log.UserID, log.Action, log.Entity, log.EntityID,
+		ipParam, metaJSON, log.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("auditLogRepo.Create: %w", err)

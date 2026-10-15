@@ -11,6 +11,7 @@
     <StaffSidebar
       v-model:collapsed="sidebarCollapsed"
       :doctor-name="doctorName"
+      @logout="handleLogout"
     />
 
     <div class="dashboard-body">
@@ -1168,8 +1169,20 @@ import { api } from "../../services/api";
 const router = useRouter();
 const queueStore = useQueueStore();
 
+const currentUser = api.getCurrentUser();
+const doctorName = ref(
+  currentUser?.full_name && queueStore.role === "medis"
+    ? currentUser.full_name
+    : "dr. Maya Putri"
+);
+
+async function handleLogout() {
+  await api.logout();
+  router.push("/login");
+  window.scrollTo(0, 0);
+}
+
 const sidebarCollapsed = ref(false);
-const doctorName = ref("dr. Maya Putri");
 const subjectiveText = ref("");
 const objectiveText = ref("");
 

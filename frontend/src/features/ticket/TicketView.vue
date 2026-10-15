@@ -1,6 +1,8 @@
 <template>
   <main class="ticket-page container">
     <template v-if="queueStore.currentTicket">
+      <Transition name="popup">
+    <div v-if="isOpen" class="success-popup">
       <div class="success-banner">
         <CheckCircle2 :size="29" />
         <div>
@@ -11,6 +13,8 @@
           </p>
         </div>
       </div>
+      </div>
+      </Transition>
       <div class="ticket-layout">
         <div class="ticket-card">
           <Brand />
@@ -66,15 +70,6 @@
               </strong>
             </span>
           </div>
-          <button
-            class="button primary full-width"
-            @click="queueStore.downloadTicket"
-          >
-            <Download :size="18" /> Unduh Tiket Gambar
-          </button>
-          <button class="button outline full-width" @click="printTicket">
-            Cetak / Simpan PDF
-          </button>
         </div>
         <div class="ticket-instructions">
           <!-- E-RESEP PASIEN DIGITAL -->
@@ -144,23 +139,11 @@
               <p>{{ inst.desc }}</p>
             </div>
           </div>
-          <RouterLink
-            :to="`/qr-test?token=${encodeURIComponent(queueStore.currentTicket.qr_token || queueStore.currentTicket.id)}`"
-            class="button primary full-width"
-            style="text-decoration: none; justify-content: center; gap: 8px;"
-          >
-            <Sparkles :size="18" /> Uji Scan QR di Scanner Live
-          </RouterLink>
           <button
-            class="button outline full-width"
-            :disabled="['Hadir', 'Dipanggil', 'Sedang dilayani', 'Selesai'].includes(queueStore.currentTicket.status)"
-            @click="handleCheckinSimulation"
+            class="button primary full-width"
+            @click="printTicket"
           >
-            <QrCode :size="18" />
-            {{ ['Hadir', 'Dipanggil', 'Sedang dilayani', 'Selesai'].includes(queueStore.currentTicket.status) ? "Sudah Terverifikasi / Hadir" : "Check-in Langsung Sekarang" }}
-          </button>
-          <button class="button outline full-width" @click="openWhatsApp">
-            Buka WhatsApp · kirim tiket
+            <Download :size="18" /> Unduh Tiket Gambar
           </button>
           <p class="muted">
             QR dapat dipindai dengan kamera untuk membuka tiket. Check-in dan
@@ -193,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import {
   CheckCircle2,
@@ -286,6 +269,19 @@ const instructions = [
   },
 ];
 
+const isOpen = ref(false);
+let successTimer: ReturnType<typeof setTimeout>;
+
+onMounted(() => {
+  isOpen.value = true;
+  successTimer = setTimeout(() => {
+    isOpen.value = false;
+  }, 5000); // durasi popup dalam ms (5000 = 5 detik)
+});
+
+onBeforeUnmount(() => clearTimeout(successTimer));
+
+
 const todayDateStr = computed(() => {
   const d = new Date();
   const year = d.getFullYear();
@@ -344,49 +340,9 @@ function formatDate(dateStr: string) {
 
 function printTicket() {
   window.print();
+  goToHome();
 }
 
-async function handleCheckinSimulation() {
-  if (queueStore.currentTicket) {
-    if (isFutureTicket.value) {
-      queueStore.setNotice(
-        `⏳ Tiket ini dijadwalkan untuk kunjungan ${formatDate(queueStore.currentTicket.date)}. Check-in QR hanya dapat dilakukan pada hari H kunjungan.`,
-      );
-      return;
-    }
-    if (isPastTicket.value) {
-      queueStore.setNotice(
-        `⚠️ Tiket ini sudah kedaluwarsa karena tanggal kunjungan (${formatDate(queueStore.currentTicket.date)}) telah lewat.`,
-      );
-      return;
-    }
-
-    const token = queueStore.currentTicket.qr_token || queueStore.currentTicket.id;
-    try {
-      const res = await api.checkInByQR(token);
-      if (res && res.success) {
-        queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
-        queueStore.setNotice(
-          "✅ Check-in berhasil terverifikasi di server database! Antrean Anda siap dipanggil.",
-        );
-      } else {
-        queueStore.setNotice(res?.message || "Check-in gagal diproses.");
-      }
-    } catch (e: any) {
-      queueStore.setNotice(e?.message || "Gagal menghubungi server untuk check-in.");
-    }
-  }
-}
-
-function openWhatsApp() {
-  const t = queueStore.currentTicket;
-  if (!t) return;
-  const phone = t.phone.replace(/^0/, "62");
-  const msg = encodeURIComponent(
-    `E-Tiket AntriSehat: ${t.number}, ${t.poli}, ${t.date}. Simpan tiket Anda.`,
-  );
-  window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
-}
 
 function handleCancel() {
   if (queueStore.currentTicket) {
@@ -502,5 +458,24 @@ function handleNewRegistration() {
   background: #e0f2fe;
   color: #0369a1;
   border: 1px solid #bae6fd;
+}
+
+.success-popup {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(92vw, 520px);
+}
+
+.popup-enter-active,
+.popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from,
+.popup-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-80px);
 }
 </style>
