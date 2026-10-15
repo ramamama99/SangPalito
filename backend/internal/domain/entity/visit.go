@@ -46,6 +46,8 @@ type Visit struct {
 	Assessment      string          `json:"assessment"` // A: Kesimpulan klinis awal dokter
 	Plan            string          `json:"plan"`       // P: Rencana terapi / obat / rujukan
 	Prescription    string          `json:"prescription,omitempty"`
+	MedicationPlan  string          `json:"medication_plan,omitempty"`  // Rencana pemberian obat & instruksi cara pakai
+	PrescriptionNo  string          `json:"prescription_no,omitempty"`  // Nomor resep elektronik jika ada
 	CreatedBy       *uuid.UUID      `json:"created_by,omitempty"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`

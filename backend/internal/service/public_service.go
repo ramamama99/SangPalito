@@ -345,6 +345,7 @@ func (s *publicService) GetAppointmentByToken(ctx context.Context, token uuid.UU
 	}
 
 	return &dto.AppointmentStatusResponse{
+		AppointmentID:    appointment.ID.String(),
 		AppointmentToken: appointment.AppointmentToken.String(),
 		Status:           appointment.Status,
 		VisitDate:        appointment.VisitDate.Format("2006-01-02"),
@@ -355,72 +356,21 @@ func (s *publicService) GetAppointmentByToken(ctx context.Context, token uuid.UU
 func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.QueueResponse, error) {
 	appointment, err := s.appointmentRepo.FindByQRToken(ctx, qrToken)
 	if err != nil {
-		// Fallback for tickets generated in previous sessions, local mocks, or offline modes:
-		// Auto-register and check-in so any scanned prototype ticket works seamlessly!
-		now := time.Now()
-		var facilityID uuid.UUID
-		_ = s.pool.QueryRow(ctx, `SELECT id FROM facilities LIMIT 1`).Scan(&facilityID)
-		if facilityID == uuid.Nil {
-			facilityID = uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+		// 1. Try finding by appointment_token, appointment id, or queue_code
+		var foundApptID uuid.UUID
+		_ = s.pool.QueryRow(ctx, `
+			SELECT a.id FROM appointments a
+			LEFT JOIN queues q ON q.appointment_id = a.id
+			WHERE a.appointment_token::text = $1 OR a.id::text = $1 OR q.queue_code = $1 OR q.id::text = $1
+			LIMIT 1
+		`, qrToken).Scan(&foundApptID)
+
+		if foundApptID != uuid.Nil {
+			appointment, _ = s.appointmentRepo.FindByID(ctx, foundApptID)
 		}
 
-		var polyclinicID uuid.UUID
-		_ = s.pool.QueryRow(ctx, `SELECT id FROM polyclinics WHERE name ILIKE '%umum%' LIMIT 1`).Scan(&polyclinicID)
-		if polyclinicID == uuid.Nil {
-			polyclinicID = uuid.MustParse("11111111-1111-1111-1111-111111111111") // Poli Umum
-		}
-
-		// Get or create a patient
-		var patientID uuid.UUID
-		errScan := s.pool.QueryRow(ctx, `SELECT id FROM patients ORDER BY created_at ASC LIMIT 1`).Scan(&patientID)
-		if errScan != nil {
-			patientID = uuid.New()
-			_, _ = s.pool.Exec(ctx, `INSERT INTO patients (id, nik, full_name, birth_date, gender, phone, guarantor, medical_record_no)
-				VALUES ($1, '3201000000000016', 'Pasien Tiket (A-016)', '1995-01-01', 'male', '081234567890', 'umum', '20261015-0016')
-				ON CONFLICT DO NOTHING`, patientID)
-		}
-
-		appID := uuid.New()
-		_, errApp := s.pool.Exec(ctx, `
-			INSERT INTO appointments (id, facility_id, patient_id, polyclinic_id, visit_date, source, priority, appointment_token, qr_token, created_at)
-			VALUES ($1, $2, $3, $4, $5, 'online', 'normal', gen_random_uuid(), $6, $7)
-			ON CONFLICT (id) DO NOTHING
-		`, appID, facilityID, patientID, polyclinicID, now.Format("2006-01-02"), qrToken, now)
-
-		if errApp == nil {
-			var queueNum int
-			_ = s.pool.QueryRow(ctx, `SELECT COALESCE(MAX(queue_number), 15) + 1 FROM queues WHERE polyclinic_id = $1 AND queue_date = $2`, polyclinicID, now.Format("2006-01-02")).Scan(&queueNum)
-			queueCode := fmt.Sprintf("A-%03d", queueNum)
-			qID := uuid.New()
-			_, errQ := s.pool.Exec(ctx, `
-				INSERT INTO queues (id, appointment_id, polyclinic_id, queue_number, queue_code, status, queue_date, checked_in_at)
-				VALUES ($1, $2, $3, $4, $5, 'checked_in', $6, $7)
-			`, qID, appID, polyclinicID, queueNum, queueCode, now.Format("2006-01-02"), now)
-
-			if errQ == nil {
-				var pName string
-				_ = s.pool.QueryRow(ctx, `SELECT full_name FROM patients WHERE id = $1`, patientID).Scan(&pName)
-				return &dto.QueueResponse{
-					ID:             qID.String(),
-					AppointmentID:  appID.String(),
-					PatientID:      patientID.String(),
-					PatientName:    pName,
-					PolyclinicID:   polyclinicID.String(),
-					PolyclinicName: "Poli Umum",
-					QueueNumber:    queueNum,
-					QueueCode:      queueCode,
-					Status:         "checked_in",
-					QueueDate:      now.Format("2006-01-02"),
-					CallCount:      0,
-					CheckedInAt:    &now,
-				}, nil
-			}
-		}
-
-		// If inserting failed because qr_token already exists, re-fetch appointment!
-		appointment, err = s.appointmentRepo.FindByQRToken(ctx, qrToken)
-		if err != nil {
-			return nil, apperror.NotFound("Appointment", err)
+		if appointment == nil {
+			return nil, apperror.NotFound("Tiket atau QR Token antrean tidak ditemukan di sistem. Pastikan tiket Anda telah terdaftar.", err)
 		}
 	}
 

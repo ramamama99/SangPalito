@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -70,6 +71,19 @@ func (h *PublicHandler) CreateAppointment(c *gin.Context) {
 		_ = c.Error(apperror.BadRequest("Request body tidak valid", err))
 		return
 	}
+	if req.Phone != "" {
+		cleaned := strings.Map(func(r rune) rune {
+			if r >= '0' && r <= '9' {
+				return r
+			}
+			return -1
+		}, req.Phone)
+		if strings.HasPrefix(cleaned, "62") {
+			cleaned = "0" + cleaned[2:]
+		}
+		req.Phone = cleaned
+	}
+
 	if err := h.validate.Struct(req); err != nil {
 		_ = c.Error(apperror.ValidationError(err.Error()))
 		return

@@ -46,6 +46,8 @@ func Setup(
 	visitRepo := postgres.NewVisitRepo(pool)
 	preRepo := postgres.NewPreAnamnesisRepo(pool)
 	icd10Repo := postgres.NewICD10Repository(pool)
+	medicationRepo := postgres.NewMedicationRepo(pool)
+	prescriptionRepo := postgres.NewPrescriptionRepo(pool)
 
 	// Auto-seed Puskesmas common ICD-10 codes in background
 	go func() {
@@ -60,7 +62,8 @@ func Setup(
 	userService := service.NewUserService(userRepo)
 	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
 	apptService := service.NewAppointmentService(appointmentRepo, preRepo, polyclinicRepo, facilityRepo)
-	visitService := service.NewVisitService(visitRepo, icd10Repo)
+	visitService := service.NewVisitService(visitRepo, icd10Repo, prescriptionRepo)
+	prescriptionService := service.NewPrescriptionService(prescriptionRepo, medicationRepo)
 	analyticsService := service.NewAnalyticsService(pool)
 
 	// ── Handlers ─────────────────────────────────────────────
@@ -72,6 +75,7 @@ func Setup(
 	masterHandler := handler.NewMasterHandler(masterService)
 	apptHandler := handler.NewAppointmentHandler(apptService, masterService)
 	visitHandler := handler.NewVisitHandler(visitService)
+	prescriptionHandler := handler.NewPrescriptionHandler(prescriptionService, publicService)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService, defaultFacilityID)
 	wsHandler := handler.NewWSHandler(hub, pool)
 	auditLogHandler := handler.NewAuditLogHandler(auditLogRepo)
@@ -105,6 +109,10 @@ func Setup(
 	api.GET("/doctors", masterHandler.GetDoctors)
 	api.GET("/schedules", masterHandler.GetSchedules)
 	api.GET("/icd10", visitHandler.SearchICD10)
+	api.GET("/medications", prescriptionHandler.ListMedications)
+	api.POST("/medications", prescriptionHandler.CreateMedication)
+	api.PUT("/medications/:id", prescriptionHandler.UpdateMedication)
+	api.DELETE("/medications/:id", prescriptionHandler.DeleteMedication)
 
 	// ── Public Routes (no auth) ─────────────────────────────
 	auth := api.Group("/auth")
@@ -119,6 +127,8 @@ func Setup(
 		public.GET("/schedules", publicHandler.ListSchedules)
 		public.POST("/appointments", publicHandler.CreateAppointment)
 		public.GET("/appointments/:token", publicHandler.GetAppointmentStatus)
+		public.GET("/appointments/:token/prescription", prescriptionHandler.GetByAppointmentToken)
+		public.GET("/prescriptions/:prescription_no", prescriptionHandler.GetByNo)
 		public.POST("/queues/checkin", publicHandler.CheckIn)
 		public.GET("/queues/demo", publicHandler.GetDemoQueues)
 		public.POST("/queues/reset-demo", publicHandler.ResetDemoQueue)
@@ -179,6 +189,13 @@ func Setup(
 			visits.POST("", middleware.RequireRoles("medic", "admin"), visitHandler.CreateVisit)
 			visits.GET("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.GetVisitByID)
 			visits.PATCH("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.UpdateVisit)
+		}
+
+		// Prescriptions / e-Resep Obat (medic, registrar, admin)
+		prescriptions := authenticated.Group("/prescriptions")
+		{
+			prescriptions.POST("", middleware.RequireRoles("medic", "admin"), prescriptionHandler.Create)
+			prescriptions.PATCH("/:id/dispense", middleware.RequireRoles("medic", "registrar", "admin"), prescriptionHandler.Dispense)
 		}
 
 		// Users (admin only)

@@ -55,7 +55,9 @@ export interface ApiVisitItem {
     notes?: string
   }>
   treatment_plan?: string
-  prescription?: string
+  prescription?: any
+  prescription_no?: string
+  medication_plan?: string
   created_at: string
 }
 
@@ -200,11 +202,13 @@ export const api = {
     objective?: string
     assessment: string
     plan: string
+    medication_plan?: string
     diagnoses: Array<{
       icd10_code: string
       is_primary: boolean
       notes?: string
     }>
+    [key: string]: any
   }) {
     try {
       const res = await fetch(`${BASE_URL}/visits`, {
@@ -232,7 +236,167 @@ export const api = {
     }
   },
 
-  // ── 4. Autentikasi Staf ──────────────────────────────────
+  // ── 4. Resep & Obat (Prescriptions & Medications) ───────
+  async getMedications(search = '', category = '', route = '') {
+    try {
+      const params = new URLSearchParams()
+      if (search) params.append('search', search)
+      if (category) params.append('category', category)
+      if (route) params.append('route', route)
+      const res = await fetch(`${BASE_URL}/medications?${params.toString()}`)
+      if (!res.ok) return []
+      const json = await res.json()
+      return json.data || []
+    } catch {
+      return []
+    }
+  },
+
+  async createPrescription(payload: any) {
+    try {
+      const res = await fetch(`${BASE_URL}/prescriptions`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to create prescription:', err)
+      return null
+    }
+  },
+
+  async getPrescriptionByNo(prescriptionNo: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/public/prescriptions/${encodeURIComponent(prescriptionNo)}`)
+      if (!res.ok) return null
+      const json = await res.json()
+      return json.data || null
+    } catch {
+      return null
+    }
+  },
+
+  async getPrescriptionByAppointmentToken(token: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/public/appointments/${token}/prescription`)
+      if (!res.ok) return null
+      const json = await res.json()
+      return json.data || null
+    } catch {
+      return null
+    }
+  },
+
+  async dispensePrescription(id: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/prescriptions/${id}/dispense`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to dispense prescription:', err)
+      return null
+    }
+  },
+
+  async createMedication(payload: any) {
+    try {
+      const res = await fetch(`${BASE_URL}/medications`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to create medication:', err)
+      return null
+    }
+  },
+
+  async updateMedication(id: string, payload: any) {
+    try {
+      const res = await fetch(`${BASE_URL}/medications/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to update medication:', err)
+      return null
+    }
+  },
+
+  async deleteMedication(id: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/medications/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to delete medication:', err)
+      return null
+    }
+  },
+
+  async searchPatients(query = '', page = 1, limit = 50) {
+    try {
+      const res = await fetch(`${BASE_URL}/patients?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`, {
+        headers: getHeaders(),
+      })
+      if (!res.ok) return []
+      const json = await res.json()
+      return json.data || []
+    } catch {
+      return []
+    }
+  },
+
+  async createPatient(payload: any) {
+    try {
+      const res = await fetch(`${BASE_URL}/patients`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to create patient:', err)
+      return null
+    }
+  },
+
+  async updatePatient(id: string, payload: any) {
+    try {
+      const res = await fetch(`${BASE_URL}/patients/${id}`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to update patient:', err)
+      return null
+    }
+  },
+
+  async deletePatient(id: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/patients/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to delete patient:', err)
+      return null
+    }
+  },
+
+  // ── 5. Autentikasi Staf ──────────────────────────────────
   async login(email: string, password: string) {
     try {
       const res = await fetch(`${BASE_URL}/auth/login`, {

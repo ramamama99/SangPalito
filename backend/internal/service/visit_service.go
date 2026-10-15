@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"sangpalito/backend/internal/apperror"
 	"sangpalito/backend/internal/domain/entity"
 	"sangpalito/backend/internal/domain/repository"
@@ -24,12 +27,14 @@ type VisitService interface {
 type visitService struct {
 	visitRepo repository.VisitRepository
 	icd10Repo repository.ICD10Repository
+	rxRepo    repository.PrescriptionRepository
 }
 
-func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.ICD10Repository) VisitService {
+func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.ICD10Repository, rxRepo repository.PrescriptionRepository) VisitService {
 	return &visitService{
 		visitRepo: visitRepo,
 		icd10Repo: icd10Repo,
+		rxRepo:    rxRepo,
 	}
 }
 
@@ -49,17 +54,63 @@ func (s *visitService) CreateVisit(ctx context.Context, req *dto.CreateVisitRequ
 	doctorID := req.DoctorID
 	vitals := req.Vitals
 
+	visitID := uuid.New()
+	var rxNo string
+	if req.Prescription != nil && len(req.Prescription.Items) > 0 {
+		rxID := uuid.New()
+		rxNo = fmt.Sprintf("RX-%s-%s", time.Now().Format("20060102"), strings.ToUpper(rxID.String()[:5]))
+
+		rxEntity := &entity.Prescription{
+			ID:             rxID,
+			PrescriptionNo: rxNo,
+			AppointmentID:  &req.AppointmentID,
+			VisitID:        &visitID,
+			PatientID:      req.PatientID,
+			DoctorID:       &doctorID,
+			DoctorName:     req.Prescription.DoctorName,
+			Status:         "pending_dispense",
+			Notes:          req.Prescription.Notes,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+			Items:          make([]entity.PrescriptionItem, len(req.Prescription.Items)),
+		}
+
+		for i, item := range req.Prescription.Items {
+			rxEntity.Items[i] = entity.PrescriptionItem{
+				ID:             uuid.New(),
+				PrescriptionID: rxID,
+				MedicationID:   item.MedicationID,
+				MedicationName: item.MedicationName,
+				DosageForm:     item.DosageForm,
+				Quantity:       item.Quantity,
+				Unit:           item.Unit,
+				Route:          item.Route,
+				Frequency:      item.Frequency,
+				Timing:         item.Timing,
+				Instruction:    item.Instruction,
+				Notes:          item.Notes,
+				CreatedAt:      time.Now(),
+			}
+		}
+
+		if s.rxRepo != nil {
+			_ = s.rxRepo.Create(ctx, rxEntity)
+		}
+	}
+
 	visit := &entity.Visit{
-		ID:            uuid.New(),
-		AppointmentID: req.AppointmentID,
-		PatientID:     req.PatientID,
-		DoctorID:      &doctorID,
-		Vitals:        &vitals,
-		Subjective:    req.Subjective,
-		Objective:     req.Objective,
-		Assessment:    req.Assessment,
-		Plan:          req.Plan,
-		CreatedBy:     createdBy,
+		ID:             visitID,
+		AppointmentID:  req.AppointmentID,
+		PatientID:      req.PatientID,
+		DoctorID:       &doctorID,
+		Vitals:         &vitals,
+		Subjective:     req.Subjective,
+		Objective:      req.Objective,
+		Assessment:     req.Assessment,
+		Plan:           req.Plan,
+		MedicationPlan: req.MedicationPlan,
+		PrescriptionNo: rxNo,
+		CreatedBy:      createdBy,
 	}
 
 	var diagnoses []entity.Diagnosis
@@ -124,18 +175,20 @@ func (s *visitService) GetVisitByID(ctx context.Context, id uuid.UUID) (*dto.Vis
 	}
 
 	return &dto.VisitResponse{
-		ID:            visit.ID,
-		AppointmentID: visit.AppointmentID,
-		PatientID:     visit.PatientID,
-		DoctorID:      doctorID,
-		Vitals:        vitals,
-		Subjective:    visit.Subjective,
-		Objective:     visit.Objective,
-		Assessment:    visit.Assessment,
-		Plan:          visit.Plan,
-		Diagnoses:     diagResponses,
-		CreatedAt:     visit.CreatedAt,
-		UpdatedAt:     visit.UpdatedAt,
+		ID:             visit.ID,
+		AppointmentID:  visit.AppointmentID,
+		PatientID:      visit.PatientID,
+		DoctorID:       doctorID,
+		Vitals:         vitals,
+		Subjective:     visit.Subjective,
+		Objective:      visit.Objective,
+		Assessment:     visit.Assessment,
+		Plan:           visit.Plan,
+		MedicationPlan: visit.MedicationPlan,
+		PrescriptionNo: visit.PrescriptionNo,
+		Diagnoses:      diagResponses,
+		CreatedAt:      visit.CreatedAt,
+		UpdatedAt:      visit.UpdatedAt,
 	}, nil
 }
 

@@ -66,11 +66,12 @@ type ResetDemoRequest struct {
 
 // AppointmentStatusResponse is returned for GET /api/v1/public/appointments/:token.
 type AppointmentStatusResponse struct {
-	AppointmentToken string     `json:"appointment_token"`
-	Status           string     `json:"status"`
-	VisitDate        string     `json:"visit_date"`
-	PolyclinicName   string     `json:"polyclinic_name"`
-	DoctorName       string     `json:"doctor_name"`
+	AppointmentID    string      `json:"appointment_id"`
+	AppointmentToken string      `json:"appointment_token"`
+	Status           string      `json:"status"`
+	VisitDate        string      `json:"visit_date"`
+	PolyclinicName   string      `json:"polyclinic_name"`
+	DoctorName       string      `json:"doctor_name"`
 	Queue            *QueueBrief `json:"queue,omitempty"`
 }
 

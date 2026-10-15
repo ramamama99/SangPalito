@@ -1202,7 +1202,7 @@ label small {
 .dashboard {
   display: flex;
   background: #f5f7f5;
-  min-height: calc(100vh - 94px);
+  min-height: 100vh;
 }
 .sidebar {
   width: 225px;
@@ -1267,9 +1267,11 @@ label small {
 }
 .dashboard-body {
   flex: 1;
-  padding: 34px;
+  padding: clamp(16px, 2vw, 32px);
   min-width: 0;
-  max-width: 1500px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .dashboard-heading {
   display: flex;
@@ -1286,9 +1288,10 @@ label small {
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 15px;
   margin-bottom: 26px;
+  width: 100%;
 }
 .stat-card {
   background: #fff;
@@ -1574,27 +1577,56 @@ td small {
 .tv-footer > span {
   margin-left: auto;
 }
-.modal-overlay {
+.modal-overlay,
+.modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #133d3c66;
-  backdrop-filter: blur(5px);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  z-index: 50;
+  padding: clamp(12px, 2.5vw, 24px);
+  z-index: 100;
+  animation: modalOverlayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.modal {
+
+@keyframes modalOverlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+.modal,
+.modal-card {
   position: relative;
   background: #fff;
   border-radius: 20px;
-  max-width: 480px;
+  max-width: 650px;
   width: 100%;
-  padding: 35px;
   max-height: 90vh;
   overflow: auto;
-  box-shadow: 0 25px 90px #143f3c25;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: modalScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 .modal-close {
   position: absolute;

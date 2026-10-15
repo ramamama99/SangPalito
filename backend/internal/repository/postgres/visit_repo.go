@@ -54,8 +54,8 @@ func (r *visitRepository) Create(ctx context.Context, visit *entity.Visit, diagn
 	insertVisitSQL := `
 		INSERT INTO visits (
 			id, appointment_id, patient_id, doctor_id, vitals, 
-			subjective, objective, assessment, plan, created_by, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+			subjective, objective, assessment, plan, medication_plan, prescription_no, created_by, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	var creatorID *uuid.UUID
 	if visit.CreatedBy != nil && *visit.CreatedBy != uuid.Nil {
@@ -76,6 +76,8 @@ func (r *visitRepository) Create(ctx context.Context, visit *entity.Visit, diagn
 		visit.Objective,
 		visit.Assessment,
 		visit.Plan,
+		visit.MedicationPlan,
+		visit.PrescriptionNo,
 		creatorID,
 		visit.CreatedAt,
 		visit.UpdatedAt,
@@ -116,7 +118,8 @@ func (r *visitRepository) Create(ctx context.Context, visit *entity.Visit, diagn
 func (r *visitRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Visit, []entity.Diagnosis, error) {
 	visitSQL := `
 		SELECT id, appointment_id, patient_id, doctor_id, vitals, 
-		       subjective, objective, assessment, plan, created_by, created_at, updated_at
+		       subjective, objective, assessment, plan, COALESCE(medication_plan, ''), COALESCE(prescription_no, ''),
+		       created_by, created_at, updated_at
 		FROM visits
 		WHERE id = $1 LIMIT 1`
 
@@ -133,6 +136,8 @@ func (r *visitRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.V
 		&visit.Objective,
 		&visit.Assessment,
 		&visit.Plan,
+		&visit.MedicationPlan,
+		&visit.PrescriptionNo,
 		&visit.CreatedBy,
 		&visit.CreatedAt,
 		&visit.UpdatedAt,
@@ -183,7 +188,9 @@ func (r *visitRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.V
 func (r *visitRepository) FindByPatientID(ctx context.Context, patientID uuid.UUID) ([]*entity.Visit, error) {
 	sql := `
 		SELECT v.id, v.appointment_id, v.patient_id, v.doctor_id, v.vitals, 
-		       v.subjective, v.objective, v.assessment, v.plan, v.created_by, v.created_at, v.updated_at,
+		       v.subjective, v.objective, v.assessment, v.plan, 
+		       COALESCE(v.medication_plan, ''), COALESCE(v.prescription_no, ''),
+		       v.created_by, v.created_at, v.updated_at,
 		       COALESCE((SELECT icd10_code FROM diagnoses WHERE visit_id = v.id AND is_primary = true LIMIT 1), '') as primary_icd
 		FROM visits v
 		WHERE v.patient_id = $1
@@ -203,6 +210,7 @@ func (r *visitRepository) FindByPatientID(ctx context.Context, patientID uuid.UU
 		if err := rows.Scan(
 			&v.ID, &v.AppointmentID, &v.PatientID, &v.DoctorID, &vitalsBytes,
 			&v.Subjective, &v.Objective, &v.Assessment, &v.Plan,
+			&v.MedicationPlan, &v.PrescriptionNo,
 			&v.CreatedBy, &v.CreatedAt, &v.UpdatedAt, &primaryICD,
 		); err != nil {
 			return nil, fmt.Errorf("visit_repo.FindByPatientID scan: %w", err)
@@ -216,6 +224,7 @@ func (r *visitRepository) FindByPatientID(ctx context.Context, patientID uuid.UU
 		v.Diagnosis = v.Assessment
 		v.ICDCode = primaryICD
 		v.TreatmentPlan = v.Plan
+		v.Prescription = v.MedicationPlan
 
 		visits = append(visits, &v)
 	}

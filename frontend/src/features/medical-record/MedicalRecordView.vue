@@ -180,6 +180,52 @@
                   <p class="soap-text">{{ getVisitPlan(visit) }}</p>
                 </div>
               </div>
+
+              <!-- Dedicated Section for Medication & e-Prescription -->
+              <div v-if="getVisitMedicationPlan(visit) || getVisitPrescription(visit)" class="rx-history-card">
+                <div class="rx-history-header">
+                  <div class="rx-history-title">
+                    <Pill :size="16" class="rx-pill-icon" />
+                    <strong>Perencanaan Terapi Obat & e-Resep</strong>
+                  </div>
+                  <div v-if="getVisitPrescription(visit)?.prescription_no" class="rx-status-meta">
+                    <span class="rx-no-badge">{{ getVisitPrescription(visit)?.prescription_no }}</span>
+                    <span
+                      class="rx-status-badge"
+                      :class="getVisitPrescription(visit)?.status === 'dispensed' ? 'dispensed' : 'pending'"
+                    >
+                      {{ getVisitPrescription(visit)?.status === 'dispensed' ? 'Sudah Ditebus' : 'Menunggu Penebusan' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div v-if="getVisitPrescription(visit)?.items?.length" class="rx-meds-list">
+                  <div
+                    v-for="(item, itIdx) in getVisitPrescription(visit)!.items"
+                    :key="itIdx"
+                    class="rx-med-item"
+                  >
+                    <div class="rx-med-top">
+                      <div class="rx-med-name-row">
+                        <span class="route-badge" :data-route="item.route">
+                          {{ formatRouteLabel(item.route) }}
+                        </span>
+                        <strong class="rx-med-name">{{ item.medication_name }}</strong>
+                      </div>
+                      <span class="rx-med-qty">{{ item.quantity }} {{ item.unit }}</span>
+                    </div>
+                    <div class="rx-med-details">
+                      <p><strong>Aturan:</strong> {{ item.frequency }} · {{ item.timing }}</p>
+                      <p v-if="item.instruction" class="rx-med-instruction">
+                        <strong>Petunjuk Cara Pakai:</strong> {{ item.instruction }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="rx-plain-plan">
+                  <p>{{ getVisitMedicationPlan(visit) }}</p>
+                </div>
+              </div>
             </article>
           </div>
         </section>
@@ -201,9 +247,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { ChevronLeft, Stethoscope } from "lucide-vue-next";
+import { ChevronLeft, Stethoscope, Pill } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
-import type { Patient } from "../../types";
+import type { Patient, Prescription } from "../../types";
 import { api } from "../../services/api";
 
 const router = useRouter();
@@ -261,6 +307,9 @@ watch(
               ? v.visit_date.slice(0, 10)
               : new Date().toISOString().slice(0, 10),
             poli: v.polyclinic_name || "Poli Umum",
+            medication_plan: v.medication_plan,
+            prescription_no: v.prescription_no,
+            prescription: v.prescription,
             soap: JSON.stringify({
               doctor: v.doctor_name || "dr. Rama Palito",
               diagnosis:
@@ -273,6 +322,9 @@ watch(
               objective:
                 v.physical_exam || "Pemeriksaan fisik dalam batas normal.",
               plan: v.treatment_plan || "Terapi sesuai indikasi.",
+              medication_plan: v.medication_plan,
+              prescription_no: v.prescription_no,
+              prescription: v.prescription,
               bp_sys: String(v.vitals?.bp_sys || "120"),
               bp_dia: String(v.vitals?.bp_dia || "80"),
               hr: String(v.vitals?.hr || v.vitals?.heart_rate || "80"),
@@ -307,6 +359,37 @@ const simulatedHistory = computed<Patient[]>(() => {
       objective:
         "Kesadaran baik, faring hiperemis ringan. Suara napas vesikuler.",
       plan: "Edukasi istirahat, cukup cairan, serta kontrol bila keluhan memburuk.",
+      medication_plan: "1. Paracetamol 500mg (Diminum - Oral) - 3 x 1 tablet sehari sesudah makan.\n2. Antasida DOEN (Dikunyah - Chewable) - 3 x 1 tablet kunyah 1 jam sebelum makan.\n3. Vitamin C 500mg (Dikunyah - Chewable) - 1 x 1 tablet kunyah sesudah makan.",
+      prescription_no: "RX-20261008-U012",
+      prescription: {
+        id: "rx-sim-1",
+        prescription_no: "RX-20261008-U012",
+        status: "dispensed",
+        doctor_name: "dr. Maya Putri",
+        polyclinic: "Poli Umum",
+        items: [
+          {
+            medication_name: "Paracetamol 500mg",
+            dosage_form: "Tablet",
+            route: "oral_minum",
+            frequency: "3 x 1 tablet sehari",
+            timing: "Sesudah makan",
+            quantity: 10,
+            unit: "Tablet",
+            instruction: "Diminum utuh dengan 1 gelas air putih sesudah makan bila demam atau nyeri.",
+          },
+          {
+            medication_name: "Antasida DOEN Kunyah",
+            dosage_form: "Tablet Kunyah",
+            route: "oral_kunyah",
+            frequency: "3 x 1 tablet kunyah sehari",
+            timing: "1 jam sebelum makan atau saat maag kambuh",
+            quantity: 12,
+            unit: "Tablet",
+            instruction: "Wajib dikunyah hingga lumat di mulut sebelum ditelan, lalu minum sedikit air hangat.",
+          },
+        ],
+      },
       bp_sys: "120",
       bp_dia: "80",
       hr: "84",
@@ -322,7 +405,28 @@ const simulatedHistory = computed<Patient[]>(() => {
       diagnosis: "K02.9 — Karies gigi",
       subjective: "Gigi geraham kanan bawah terasa ngilu saat minum dingin.",
       objective: "Kavitas pada gigi 46, tanpa pembengkakan gingiva.",
-      plan: "Edukasi kebersihan gigi dan jadwal perawatan restorasi.",
+      plan: "Edukasi kebersihan gigi dan penambalan kavitas.",
+      medication_plan: "1. Asam Mefenamat 500mg (Diminum - Oral) - 3 x 1 kapsul sesudah makan jika nyeri.",
+      prescription_no: "RX-20260910-G005",
+      prescription: {
+        id: "rx-sim-2",
+        prescription_no: "RX-20260910-G005",
+        status: "dispensed",
+        doctor_name: "drg. Rani Prameswari",
+        polyclinic: "Poli Gigi",
+        items: [
+          {
+            medication_name: "Asam Mefenamat 500mg",
+            dosage_form: "Kapsul",
+            route: "oral_minum",
+            frequency: "3 x 1 kapsul sehari",
+            timing: "Sesudah makan",
+            quantity: 10,
+            unit: "Kapsul",
+            instruction: "Diminum segera sesudah makan untuk mencegah iritasi lambung. Hentikan jika nyeri reda.",
+          },
+        ],
+      },
       bp_sys: "118",
       bp_dia: "78",
       hr: "76",
@@ -337,9 +441,30 @@ const simulatedHistory = computed<Patient[]>(() => {
       doctor: "dr. Aditya Rahman",
       diagnosis: "I10 — Hipertensi esensial",
       subjective:
-        "Kontrol tekanan darah, sesekali pusing. Tidak ada nyeri dada.",
+        "Kontrol tekanan darah rutin, sesekali pusing tegang di tengkuk. Tidak ada nyeri dada.",
       objective: "Kesadaran baik, tekanan darah meningkat pada pemeriksaan.",
       plan: "Evaluasi terapi, edukasi pembatasan garam, dan pemantauan tekanan darah.",
+      medication_plan: "1. Amlodipine 5mg (Diminum - Oral) - 1 x 1 tablet malam sebelum tidur.",
+      prescription_no: "RX-20260717-U022",
+      prescription: {
+        id: "rx-sim-3",
+        prescription_no: "RX-20260717-U022",
+        status: "dispensed",
+        doctor_name: "dr. Aditya Rahman",
+        polyclinic: "Poli Umum",
+        items: [
+          {
+            medication_name: "Amlodipine 5mg",
+            dosage_form: "Tablet",
+            route: "oral_minum",
+            frequency: "1 x 1 tablet sehari",
+            timing: "Malam hari sebelum tidur",
+            quantity: 30,
+            unit: "Tablet",
+            instruction: "Diminum teratur tiap malam pada jam yang sama.",
+          },
+        ],
+      },
       bp_sys: "160",
       bp_dia: "100",
       hr: "88",
@@ -357,6 +482,9 @@ const simulatedHistory = computed<Patient[]>(() => {
       id: `simulation-${p.id}-${index}`,
       date: localDate,
       poli: record.poli,
+      medication_plan: record.medication_plan,
+      prescription_no: record.prescription_no,
+      prescription: record.prescription,
       soap: JSON.stringify(record),
       source: "Simulasi",
       status: "Selesai",
@@ -383,6 +511,33 @@ const filteredVisits = computed(() => {
     return true;
   });
 });
+
+function getVisitPrescription(visit: Patient): Prescription | undefined {
+  if (visit.prescription) return visit.prescription;
+  const rec = parseSoap(visit) as any;
+  return rec.prescription;
+}
+
+function getVisitMedicationPlan(visit: Patient): string {
+  if (visit.medication_plan) return visit.medication_plan;
+  const rec = parseSoap(visit) as any;
+  return rec.medication_plan || "";
+}
+
+function formatRouteLabel(route?: string) {
+  if (!route) return "Diminum";
+  const routeLabels: Record<string, string> = {
+    oral_minum: "Diminum",
+    oral_kunyah: "Dikunyah",
+    topikal_oles: "Dioleskan",
+    tetes_mata: "Tetes Mata",
+    tetes_telinga: "Tetes Telinga",
+    kumur: "Dikumur",
+    inhalasi: "Dihirup",
+    sirup_minum: "Sirup",
+  };
+  return routeLabels[route] || route;
+}
 
 function getInitials(name: string) {
   return name
@@ -537,8 +692,9 @@ function goToStaff() {
 <style scoped>
 .medical-record-page {
   min-height: 100vh;
+  width: 100%;
   background-color: #f8fafc;
-  padding: 32px 16px 48px;
+  padding: clamp(14px, 2.5vw, 36px);
   display: flex;
   justify-content: center;
   box-sizing: border-box;
@@ -548,11 +704,11 @@ function goToStaff() {
 
 .medical-record-wrapper {
   width: 100%;
-  max-width: 860px;
+  max-width: 100%;
   background-color: #ffffff;
   border: 1px solid #eef2f6;
-  border-radius: 24px;
-  padding: 28px 32px 36px;
+  border-radius: 20px;
+  padding: clamp(16px, 2.5vw, 36px);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
 }
@@ -982,5 +1138,177 @@ function goToStaff() {
   .vitals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ── Prescription & Medication History Styles ── */
+.rx-history-card {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.rx-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rx-history-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.rx-pill-icon {
+  color: #0f766e;
+}
+
+.rx-status-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rx-no-badge {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #0f766e;
+}
+
+.rx-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.rx-status-badge.dispensed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.rx-status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rx-meds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rx-med-item {
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.rx-med-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rx-med-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rx-med-name {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.rx-med-qty {
+  font-weight: 700;
+  font-family: monospace;
+  color: #1e464c;
+}
+
+.rx-med-details {
+  color: #475569;
+  line-height: 1.4;
+}
+
+.rx-med-instruction {
+  color: #0f766e;
+  margin-top: 2px;
+}
+
+.rx-plain-plan {
+  font-size: 12px;
+  color: #334155;
+  white-space: pre-line;
+  background: #ffffff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Route Badges */
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.route-badge[data-route="oral_minum"],
+.route-badge[data-route="sirup_minum"] {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.route-badge[data-route="oral_kunyah"] {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.route-badge[data-route="topikal_oles"] {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.route-badge[data-route="tetes_mata"],
+.route-badge[data-route="tetes_telinga"] {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+.route-badge[data-route="kumur"] {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.route-badge[data-route="inhalasi"] {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
 }
 </style>

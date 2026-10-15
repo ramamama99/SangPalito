@@ -15,23 +15,27 @@ type CreateDiagnosisRequest struct {
 }
 
 type CreateVisitRequest struct {
-	AppointmentID uuid.UUID                `json:"appointment_id" binding:"required"`
-	PatientID     uuid.UUID                `json:"patient_id" binding:"required"`
-	DoctorID      uuid.UUID                `json:"doctor_id" binding:"required"`
-	Vitals        entity.Vitals            `json:"vitals"`
-	Subjective    string                   `json:"subjective" binding:"required"`
-	Objective     string                   `json:"objective"`
-	Assessment    string                   `json:"assessment" binding:"required"`
-	Plan          string                   `json:"plan" binding:"required"`
-	Diagnoses     []CreateDiagnosisRequest `json:"diagnoses" binding:"required,min=1"`
+	AppointmentID   uuid.UUID                       `json:"appointment_id" binding:"required"`
+	PatientID       uuid.UUID                       `json:"patient_id" binding:"required"`
+	DoctorID        uuid.UUID                       `json:"doctor_id" binding:"required"`
+	Vitals          entity.Vitals                   `json:"vitals"`
+	Subjective      string                          `json:"subjective" binding:"required"`
+	Objective       string                          `json:"objective"`
+	Assessment      string                          `json:"assessment" binding:"required"`
+	Plan            string                          `json:"plan" binding:"required"`
+	MedicationPlan  string                          `json:"medication_plan"`
+	PrescriptionNo  string                          `json:"prescription_no"`
+	Diagnoses       []CreateDiagnosisRequest        `json:"diagnoses"`
+	Prescription    *CreatePrescriptionRequest      `json:"prescription,omitempty"`
 }
 
 type UpdateVisitRequest struct {
-	Vitals     *entity.Vitals `json:"vitals"`
-	Subjective string         `json:"subjective"`
-	Objective  string         `json:"objective"`
-	Assessment string         `json:"assessment"`
-	Plan       string         `json:"plan"`
+	Vitals         *entity.Vitals `json:"vitals"`
+	Subjective     string         `json:"subjective"`
+	Objective      string         `json:"objective"`
+	Assessment     string         `json:"assessment"`
+	Plan           string         `json:"plan"`
+	MedicationPlan string         `json:"medication_plan"`
 }
 
 type DiagnosisResponse struct {
@@ -43,18 +47,21 @@ type DiagnosisResponse struct {
 }
 
 type VisitResponse struct {
-	ID            uuid.UUID           `json:"id"`
-	AppointmentID uuid.UUID           `json:"appointment_id"`
-	PatientID     uuid.UUID           `json:"patient_id"`
-	DoctorID      uuid.UUID           `json:"doctor_id"`
-	Vitals        entity.Vitals       `json:"vitals"`
-	Subjective    string              `json:"subjective"`
-	Objective     string              `json:"objective"`
-	Assessment    string              `json:"assessment"`
-	Plan          string              `json:"plan"`
-	Diagnoses     []DiagnosisResponse `json:"diagnoses"`
-	CreatedAt     time.Time           `json:"created_at"`
-	UpdatedAt     time.Time           `json:"updated_at"`
+	ID             uuid.UUID             `json:"id"`
+	AppointmentID  uuid.UUID             `json:"appointment_id"`
+	PatientID      uuid.UUID             `json:"patient_id"`
+	DoctorID       uuid.UUID             `json:"doctor_id"`
+	Vitals         entity.Vitals         `json:"vitals"`
+	Subjective     string                `json:"subjective"`
+	Objective      string                `json:"objective"`
+	Assessment     string                `json:"assessment"`
+	Plan           string                `json:"plan"`
+	MedicationPlan string                `json:"medication_plan,omitempty"`
+	PrescriptionNo string                `json:"prescription_no,omitempty"`
+	Diagnoses      []DiagnosisResponse   `json:"diagnoses"`
+	Prescription   *PrescriptionResponse `json:"prescription,omitempty"`
+	CreatedAt      time.Time             `json:"created_at"`
+	UpdatedAt      time.Time             `json:"updated_at"`
 }
 
 type ICD10Response struct {

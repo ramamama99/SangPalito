@@ -77,6 +77,61 @@
           </button>
         </div>
         <div class="ticket-instructions">
+          <!-- E-RESEP PASIEN DIGITAL -->
+          <div v-if="ticketPrescription || queueStore.currentTicket.medication_plan || queueStore.currentTicket.prescription_no" class="patient-rx-card">
+            <div class="rx-card-top">
+              <div class="flex items-center gap-2">
+                <Pill :size="20" class="text-teal-700" />
+                <h3 class="font-bold text-sm text-slate-800">e-Resep Dokter Anda</h3>
+              </div>
+              <span
+                class="rx-status-pill"
+                :class="(ticketPrescription?.status === 'dispensed' || queueStore.currentTicket.prescription?.status === 'dispensed') ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'"
+              >
+                {{ (ticketPrescription?.status === 'dispensed' || queueStore.currentTicket.prescription?.status === 'dispensed') ? '✓ Obat Sudah Ditebus' : '⏳ Menunggu di Farmasi' }}
+              </span>
+            </div>
+
+            <div class="rx-card-meta">
+              <span class="text-xs text-slate-500 font-medium">Nomor e-Resep:</span>
+              <strong class="font-mono text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                {{ ticketPrescription?.prescription_no || queueStore.currentTicket.prescription_no || queueStore.currentTicket.prescription?.prescription_no || 'RX-TERTULIS' }}
+              </strong>
+            </div>
+
+            <!-- List of medicines with detailed usage instructions -->
+            <div v-if="rxItemsList.length" class="rx-card-items">
+              <div
+                v-for="(item, itIdx) in rxItemsList"
+                :key="itIdx"
+                class="rx-card-item"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="route-badge" :data-route="item.route">
+                      {{ formatRouteLabel(item.route) }}
+                    </span>
+                    <strong class="text-xs text-slate-900">{{ item.medication_name }}</strong>
+                  </div>
+                  <span class="text-xs font-mono font-bold text-teal-900">{{ item.quantity }} {{ item.unit }}</span>
+                </div>
+                <div class="text-xs text-slate-600 mt-1 space-y-0.5">
+                  <p><strong>Aturan:</strong> {{ item.frequency }} · {{ item.timing }}</p>
+                  <p v-if="item.instruction" class="text-teal-800 font-medium">
+                    <strong>Petunjuk:</strong> {{ item.instruction }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="queueStore.currentTicket.medication_plan" class="text-xs text-slate-700 whitespace-pre-line p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+              {{ queueStore.currentTicket.medication_plan }}
+            </div>
+
+            <p class="text-[11px] text-slate-500 mt-2">
+              Tunjukkan nomor e-resep ini ke loket Farmasi / Pengambilan Obat puskesmas.
+            </p>
+          </div>
+
           <h2>Selanjutnya, apa?</h2>
           <div
             v-for="(inst, i) in instructions"
@@ -138,15 +193,83 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { CheckCircle2, Download, QrCode, Sparkles, Clock, AlertCircle } from "lucide-vue-next";
+import {
+  CheckCircle2,
+  Download,
+  QrCode,
+  Sparkles,
+  Clock,
+  AlertCircle,
+  Pill,
+} from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
 import { api } from "../../services/api";
+import type { Prescription, PrescriptionItem } from "../../types";
 
 const router = useRouter();
 const queueStore = useQueueStore();
+
+const ticketPrescription = ref<Prescription | null>(null);
+
+const rxItemsList = computed<PrescriptionItem[]>(() => {
+  if (ticketPrescription.value?.items?.length) {
+    return ticketPrescription.value.items;
+  }
+  if (queueStore.currentTicket?.prescription?.items?.length) {
+    return queueStore.currentTicket.prescription.items;
+  }
+  return [];
+});
+
+watch(
+  () => queueStore.currentTicket,
+  async (t) => {
+    if (!t) {
+      ticketPrescription.value = null;
+      return;
+    }
+    if (t.prescription) {
+      ticketPrescription.value = t.prescription;
+      return;
+    }
+    try {
+      const soap = JSON.parse(t.soap || "{}");
+      if (soap.prescription) {
+        ticketPrescription.value = soap.prescription;
+        return;
+      }
+    } catch {}
+
+    const token = t.qr_token || t.id;
+    if (token) {
+      try {
+        const rx = await api.getPrescriptionByAppointmentToken(token);
+        if (rx) {
+          ticketPrescription.value = rx;
+        }
+      } catch {}
+    }
+  },
+  { immediate: true },
+);
+
+function formatRouteLabel(route?: string) {
+  if (!route) return "Diminum";
+  const routeLabels: Record<string, string> = {
+    oral_minum: "Diminum",
+    oral_kunyah: "Dikunyah",
+    topikal_oles: "Dioleskan",
+    tetes_mata: "Tetes Mata",
+    tetes_telinga: "Tetes Telinga",
+    kumur: "Dikumur",
+    inhalasi: "Dihirup",
+    sirup_minum: "Sirup",
+  };
+  return routeLabels[route] || route;
+}
 
 const instructions = [
   {
@@ -284,3 +407,100 @@ function handleNewRegistration() {
   window.scrollTo(0, 0);
 }
 </script>
+
+<style scoped>
+.patient-rx-card {
+  margin-bottom: 24px;
+  padding: 18px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.rx-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rx-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border-width: 1px;
+}
+
+.rx-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.rx-card-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rx-card-item {
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 10px;
+}
+
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.route-badge[data-route="oral_minum"],
+.route-badge[data-route="sirup_minum"] {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.route-badge[data-route="oral_kunyah"] {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.route-badge[data-route="topikal_oles"] {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.route-badge[data-route="tetes_mata"],
+.route-badge[data-route="tetes_telinga"] {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+.route-badge[data-route="kumur"] {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.route-badge[data-route="inhalasi"] {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+</style>
