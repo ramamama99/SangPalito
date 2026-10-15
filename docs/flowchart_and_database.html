@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>AntriSehat (SangPalito) - Dokumentasi Flowchart & Skema Database</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 16mm;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.5;
+      background-color: #ffffff;
+      font-size: 11pt;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    
+    /* Cover Page */
+    .cover-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 10px;
+      page-break-after: always;
+    }
+    .cover-header {
+      border-left: 6px solid #0f766e;
+      padding-left: 20px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #ccfbf1;
+      color: #0f766e;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .cover-title {
+      font-size: 30pt;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+    .cover-subtitle {
+      font-size: 15pt;
+      color: #0f766e;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .cover-desc {
+      font-size: 11pt;
+      color: #475569;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 40px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .meta-item h4 {
+      font-size: 9pt;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .meta-item p {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .cover-footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9pt;
+      color: #94a3b8;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+      border-bottom: 2px solid #0f766e;
+      padding-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-desc {
+      font-size: 10pt;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+    h3.sub-title {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f766e;
+      margin: 18px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Flowchart Visual Cards */
+    .flowchart-card {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      position: relative;
+    }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #0f766e;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 10pt;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(15,118,110,0.3);
+    }
+    .step-box {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #0f766e;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .step-box.decision {
+      border-left-color: #d97706;
+      background: #fffbeb;
+    }
+    .step-box.action {
+      border-left-color: #2563eb;
+      background: #eff6ff;
+    }
+    .step-box.calc {
+      border-left-color: #7c3aed;
+      background: #faf5ff;
+    }
+    .step-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .step-badge {
+      font-size: 7.5pt;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-user { background: #e0f2fe; color: #0284c7; }
+    .badge-system { background: #f3e8ff; color: #7e22ce; }
+    .badge-doctor { background: #dcfce7; color: #15803d; }
+    .step-text {
+      font-size: 9.5pt;
+      color: #334155;
+      line-height: 1.4;
+    }
+    .step-formula {
+      font-family: "Courier New", Courier, monospace;
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 6px;
+      font-size: 8.5pt;
+      color: #475569;
+    }
+    .arrow-down {
+      margin-left: 14px;
+      color: #94a3b8;
+      font-size: 14pt;
+      line-height: 1;
+      padding: 2px 0;
+    }
+
+    /* Database Schema Table */
+    .table-container {
+      margin-bottom: 22px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .table-header-box {
+      background: #f1f5f9;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-name {
+      font-size: 11pt;
+      font-weight: 800;
+      color: #0f766e;
+      font-family: "Courier New", Courier, monospace;
+    }
+    .table-desc {
+      font-size: 9pt;
+      color: #64748b;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 8.5pt;
+    }
+    table.data-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-bottom: 1px solid #cbd5e1;
+      text-transform: uppercase;
+      font-size: 7.5pt;
+      letter-spacing: 0.3px;
+    }
+    table.data-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+      color: #334155;
+    }
+    table.data-table tr:nth-child(even) {
+      background-color: #fafbfc;
+    }
+    .col-name {
+      font-family: "Courier New", Courier, monospace;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .col-type {
+      font-family: "Courier New", Courier, monospace;
+      color: #2563eb;
+    }
+    .key-pk {
+      display: inline-block;
+      padding: 1px 5px;
+      background: #fef08a;
+      color: #854d0e;
+      font-weight: 800;
+      border-radius: 3px;
+      font-size: 7pt;
+    }
+    .key-fk {
+      display: inline-block;
+      padding: 1px 5px;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 800;
+      border-radius: 3px;
+      font-size: 7pt;
+    }
+    .key-unique {
+      display: inline-block;
+      padding: 1px 5px;
+      background: #f3e8ff;
+      color: #6b21a8;
+      font-weight: 800;
+      border-radius: 3px;
+      font-size: 7pt;
+    }
+    .not-null {
+      color: #dc2626;
+      font-weight: 700;
+    }
+    .nullable {
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== COVER PAGE ==================== -->
+  <div class="cover-page">
+    <div class="cover-header">
+      <span class="badge">Spesifikasi Arsitektur & Rekayasa Perangkat Lunak</span>
+      <h1 class="cover-title">AntriSehat</h1>
+      <h2 class="cover-subtitle">SangPalito Healthcare Queue & Clinical Management System</h2>
+      <p class="cover-desc">
+        Dokumen teknis komprehensif yang memuat diagram alur sistem (flowchart), algoritma estimasi waktu tunggu cerdas (Smart Wait-Time EMA), serta spesifikasi skema relasional database PostgreSQL.
+      </p>
+    </div>
+
+    <div class="cover-meta-grid">
+      <div class="meta-item">
+        <h4>Arsitektur Frontend</h4>
+        <p>Vue 3 · Pinia · Vite · Tailwind CSS</p>
+      </div>
+      <div class="meta-item">
+        <h4>Arsitektur Backend</h4>
+        <p>Go 1.24 (Gin Gonic) · WebSockets · REST</p>
+      </div>
+      <div class="meta-item">
+        <h4>Database & Provider</h4>
+        <p>PostgreSQL 15+ (Supabase) · pgxpool</p>
+      </div>
+      <div class="meta-item">
+        <h4>Standar Medis & Keamanan</h4>
+        <p>ICD-10 · SOAP · AES-256-GCM NIK Encrypt</p>
+      </div>
+      <div class="meta-item">
+        <h4>Fasilitas Uji Coba</h4>
+        <p>Puskesmas Kebon Jeruk (PKM-KBJ-01)</p>
+      </div>
+      <div class="meta-item">
+        <h4>Tanggal Publikasi</h4>
+        <p>Oktober 2026 · Versi 1.0 Production Ready</p>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>AntriSehat (SangPalito) · Dokumen Resmi Sistem</span>
+      <span>Halaman 1 / 9</span>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 1: FLOWCHART SISTEM ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Diagram 1 · Alur Pendaftaran & Pra-Anamnesis Pasien</span>
+  </div>
+  <p class="section-desc">
+    Menjelaskan proses pendaftaran pasien secara Online mandiri atau Walk-in di loket puskesmas, enkripsi data sensitif (NIK), pengisian pra-anamnesis gejala, serta pembentukan token janji temu & QR code.
+  </p>
+
+  <div class="flowchart-card">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Akses Aplikasi & Pilihan Jalur Registrasi</span>
+            <span class="step-badge badge-user">Pasien / Petugas</span>
+          </div>
+          <p class="step-text">
+            Pasien membuka portal AntriSehat (Online) atau Petugas Loket membuka form Walk-in di faskes. Memilih Poliklinik tujuan (Poli Umum, Gigi, KIA, Lansia) dan jadwal dokter.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Input Identitas & Enkripsi Data Medis</span>
+            <span class="step-badge badge-system">Sistem Keamanan</span>
+          </div>
+          <p class="step-text">
+            Penginputan Nama Lengkap, NIK (16 digit), Tanggal Lahir, Jenis Kelamin, No. HP, dan Penjamin (BPJS/Umum). NIK langsung dienkripsi menggunakan <strong>AES-256-GCM</strong> dengan salt acak dan SHA-256 blind indexing untuk pencarian tanpa dekripsi.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Pengisian Pra-Anamnesis Mandiri</span>
+            <span class="step-badge badge-user">Klinis Awal</span>
+          </div>
+          <p class="step-text">
+            Pasien/petugas menginput keluhan utama (chief complaint), daftar gejala (symptoms array JSON), durasi keluhan (hari), dan riwayat alergi obat/makanan.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-box decision">
+          <div class="step-title">
+            <span>Evaluasi Triase & Prioritas Pasien</span>
+            <span class="step-badge badge-system">Rule Engine</span>
+          </div>
+          <p class="step-text">
+            Sistem menganalisis parameter prioritas:
+            <br>• Usia &ge; 60 tahun &rarr; Kategori <strong>elderly</strong> (Poli Lansia).
+            <br>• Ibu Hamil &rarr; Kategori <strong>pregnant</strong> (Poli KIA).
+            <br>• Anak balita (&lt; 5 thn) &rarr; Wajib mencatat data wali (guardian).
+            <br>• Gejala darurat (nyeri dada akut, sesak berat) &rarr; Kategori <strong>emergency</strong> (langsung diarahkan ke UGD).
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-box action">
+          <div class="step-title">
+            <span>Penerbitan E-Tiket & QR Code Token</span>
+            <span class="step-badge badge-system">Output Transaksi</span>
+          </div>
+          <p class="step-text">
+            Sistem membuat record pada tabel <code>appointments</code> dan menerbitkan UUID <code>appointment_token</code> serta <code>qr_token</code>. Pasien dapat mengunduh E-Tiket berupa file gambar Canvas (PNG) lengkap dengan QR Code untuk check-in di faskes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 2: SMART WAIT-TIME FLOWCHART ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Diagram 2 · Alur Check-in & Mesin Estimasi Waktu Tunggu Cerdas (EMA)</span>
+  </div>
+  <p class="section-desc">
+    Menjelaskan mekanisme check-in via pemindaian QR Code di kios, aktivasi nomor antrean, dan perhitungan waktu tunggu dinamis berbasis Exponential Moving Average & Complexity Factor.
+  </p>
+
+  <div class="flowchart-card">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Kedatangan di Faskes & Scan QR Token</span>
+            <span class="step-badge badge-user">Pasien di Lokasi</span>
+          </div>
+          <p class="step-text">
+            Pasien tiba di Puskesmas dan memindai QR Code di Kios Check-in Mandiri / dibantu Petugas Loket. Endpoint <code>POST /api/v1/public/queues/checkin</code> memverifikasi keabsahan token.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-box action">
+          <div class="step-title">
+            <span>Aktivasi Antrean & Penomoran Kode Poli</span>
+            <span class="step-badge badge-system">Database Transaksi</span>
+          </div>
+          <p class="step-text">
+            Status antrean berubah dari <code>waiting</code> menjadi <code>checked_in</code>. Sistem menetapkan kode antrean resmi harian berurutan sesuai poliklinik (misal: <strong>A-001</strong> untuk Poli Umum, <strong>B-001</strong> untuk Poli Gigi).
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-box calc">
+          <div class="step-title">
+            <span>Perhitungan Exponential Moving Average (EMA) Poliklinik</span>
+            <span class="step-badge badge-system">Algoritma AI / Statistik</span>
+          </div>
+          <p class="step-text">
+            Sistem menghitung rata-rata bergerak eksponensial dari durasi pelayanan pasien sebelumnya pada poliklinik tersebut untuk mencerminkan kecepatan dokter hari ini.
+          </p>
+          <div class="step-formula">
+            EMA<sub>t</sub> = (&alpha; &times; T<sub>actual_service</sub>) + ((1 - &alpha;) &times; EMA<sub>t-1</sub>)
+            <br>Keterangan: &alpha; = 0.3 (smoothing factor responsif), T<sub>actual</sub> = durasi konsultasi aktual pasien selesai (menit).
+          </div>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-box calc">
+          <div class="step-title">
+            <span>Penyesuaian Faktor Kompleksitas Pasien (Complexity Factor)</span>
+            <span class="step-badge badge-system">Koreksi Klinis</span>
+          </div>
+          <p class="step-text">
+            Setiap pasien di antrean depan dikalibrasi durasi estimasinya berdasarkan profil klinis pra-anamnesis:
+          </p>
+          <div class="step-formula">
+            Faktor = 1.0 (baseline) 
+            <br>+ 0.20 jika Lansia (&ge; 60 thn) 
+            <br>+ 0.15 jika Balita (&lt; 5 thn) 
+            <br>+ 0.30 jika Triase Darurat / Merah 
+            <br>+ (0.10 &times; jumlah_gejala jika gejala &gt; 2)
+          </div>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-box action">
+          <div class="step-title">
+            <span>Penyajian Real-Time ke Layar TV & Smartphone Pasien</span>
+            <span class="step-badge badge-system">WebSocket Broadcaster</span>
+          </div>
+          <p class="step-text">
+            Total estimasi menit dihitung dari akumulasi pasien di depan dibagi jumlah dokter aktif. Hasil disiarkan secara instan melalui <strong>WebSocket /ws/queues</strong> ke Layar Display TV Ruang Tunggu dan E-Tiket Web Pasien.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 3: CLINICAL & SOAP FLOWCHART ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Diagram 3 · Alur Pelayanan Poli & Rekam Medis Elektronik (SOAP & ICD-10)</span>
+  </div>
+  <p class="section-desc">
+    Menjelaskan proses pemanggilan suara cerdas (TTS), pemeriksaan tanda-tanda vital, penegakan diagnosis standar ICD-10, pengisian formulir SOAP, dan penutupan kunjungan medis.
+  </p>
+
+  <div class="flowchart-card">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Pemanggilan Pasien oleh Dokter / Perawat</span>
+            <span class="step-badge badge-doctor">Dashboard Poli</span>
+          </div>
+          <p class="step-text">
+            Dokter menekan tombol "Panggil" pada antrean pasien berstatus <code>Hadir</code>. Status diperbarui ke <code>called</code>. Web Speech API memutar audio pemanggilan suara otomatis: <em>"Nomor antrean A 001, silakan menuju Poli Umum"</em>.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-box action">
+          <div class="step-title">
+            <span>Pemeriksaan Fisik & Tanda-Tanda Vital (Vitals)</span>
+            <span class="step-badge badge-doctor">Pemeriksaan Klinis</span>
+          </div>
+          <p class="step-text">
+            Tenaga medis menginput parameter vital: Tekanan Darah Sistolik/Diastolik (mmHg), Detak Jantung (bpm), Suhu Tubuh (°C), Saturasi Oksigen SpO2 (%), Berat Badan (kg), dan Tinggi Badan (cm). Sistem otomatis menyorot nilai abnormal jika di luar batas acuan.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-box">
+          <div class="step-title">
+            <span>Pencatatan SOAP & Diagnosis ICD-10</span>
+            <span class="step-badge badge-doctor">Rekam Medis (RME)</span>
+          </div>
+          <p class="step-text">
+            Dokter mengisi formulir SOAP terstandarisasi:
+            <br>• <strong>S (Subjektif)</strong>: Keluhan pasien, riwayat penyakit sekarang.
+            <br>• <strong>O (Objektif)</strong>: Hasil inspeksi, palpasi, auskultasi faring/paru/jantung.
+            <br>• <strong>A (Asesmen)</strong>: Diagnosis primer dan sekunder berkode resmi WHO ICD-10 (misal: <em>J00 Acute nasopharyngitis</em>, <em>I10 Essential hypertension</em>).
+            <br>• <strong>P (Plan/Rencana)</strong>: Rencana terapi obat, edukasi, rujukan lab, atau jadwal kontrol.
+          </p>
+        </div>
+      </div>
+      <div class="arrow-down">↓</div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-box action">
+          <div class="step-title">
+            <span>Penyimpanan ke PostgreSQL & Penutupan Antrean</span>
+            <span class="step-badge badge-system">Finalisasi Data</span>
+          </div>
+          <p class="step-text">
+            Sistem menyimpan data ke tabel <code>visits</code> dan <code>diagnoses</code> secara atomik (Database Transaction). Status antrean diubah menjadi <code>done</code> (Selesai), waktu selesai dicatat di <code>service_end</code>, dan durasi aktual masuk ke perbaruan algoritma EMA berikutnya.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 4: DATABASE SCHEMA ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Tabel Skema Database Relasional PostgreSQL (1/5)</span>
+  </div>
+  <p class="section-desc">
+    Spesifikasi tabel fasilitas puskesmas, otentikasi staf, dan manajemen poliklinik.
+  </p>
+
+  <!-- Table 1: facilities -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">1. facilities</span>
+      <span class="table-desc">Menyimpan data master fasilitas kesehatan (Puskesmas/Klinik)</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik fasilitas kesehatan</td>
+        </tr>
+        <tr>
+          <td class="col-name">name</td>
+          <td class="col-type">VARCHAR(150)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama resmi puskesmas (contoh: Puskesmas Kebon Jeruk)</td>
+        </tr>
+        <tr>
+          <td class="col-name">type</td>
+          <td class="col-type">VARCHAR(30)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Tipe faskes: puskesmas | klinik</td>
+        </tr>
+        <tr>
+          <td class="col-name">code</td>
+          <td class="col-type">VARCHAR(30)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Kode registrasi Kemenkes fasilitas (contoh: PKM-KBJ-01)</td>
+        </tr>
+        <tr>
+          <td class="col-name">address</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Alamat lengkap domisili puskesmas</td>
+        </tr>
+        <tr>
+          <td class="col-name">phone</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nomor telepon operasional / call center faskes</td>
+        </tr>
+        <tr>
+          <td class="col-name">created_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>now()</td>
+          <td>Waktu perekaman entitas fasilitas</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 2: roles & user_roles -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">2. roles & user_roles</span>
+      <span class="table-desc">Kamus role RBAC dan pemetaan hak akses staf (admin, registrar, medic, head)</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">roles.id</td>
+          <td class="col-type">SMALLSERIAL</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>auto-inc</td>
+          <td>ID integer role staf (1..4)</td>
+        </tr>
+        <tr>
+          <td class="col-name">roles.name</td>
+          <td class="col-type">VARCHAR(30)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama role: admin | registrar | medic | head</td>
+        </tr>
+        <tr>
+          <td class="col-name">user_roles.user_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Foreign Key ke tabel <code>users.id</code> (ON DELETE CASCADE)</td>
+        </tr>
+        <tr>
+          <td class="col-name">user_roles.role_id</td>
+          <td class="col-type">SMALLINT</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Foreign Key ke tabel <code>roles.id</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 3: users -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">3. users</span>
+      <span class="table-desc">Akun autentikasi petugas pendaftaran, perawat, dokter, dan admin</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik pengguna</td>
+        </tr>
+        <tr>
+          <td class="col-name">facility_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Faskes tempat staf bertugas &rarr; <code>facilities.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">full_name</td>
+          <td class="col-type">VARCHAR(120)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama lengkap staf / dokter beserta gelar</td>
+        </tr>
+        <tr>
+          <td class="col-name">email</td>
+          <td class="col-type">VARCHAR(150)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Alamat email untuk login kredensial sistem</td>
+        </tr>
+        <tr>
+          <td class="col-name">password_hash</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Hash kata sandi terenkripsi (bcrypt cost 12)</td>
+        </tr>
+        <tr>
+          <td class="col-name">is_active</td>
+          <td class="col-type">BOOLEAN</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>true</td>
+          <td>Status keaktifan akun pengguna</td>
+        </tr>
+        <tr>
+          <td class="col-name">created_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>now()</td>
+          <td>Waktu pembuatan akun</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 5: DATABASE SCHEMA (2/5) ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Tabel Skema Database Relasional PostgreSQL (2/5)</span>
+  </div>
+  <p class="section-desc">
+    Spesifikasi tabel master poliklinik, tenaga medis (dokter), dan jadwal praktek layanan.
+  </p>
+
+  <!-- Table 4: polyclinics -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">4. polyclinics</span>
+      <span class="table-desc">Master poliklinik tujuan layanan (Umum, Gigi, KIA, Lansia)</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik poliklinik</td>
+        </tr>
+        <tr>
+          <td class="col-name">facility_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Relasi faskes induk &rarr; <code>facilities.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">name</td>
+          <td class="col-type">VARCHAR(80)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama poliklinik (contoh: Poli Gigi, Poli Umum)</td>
+        </tr>
+        <tr>
+          <td class="col-name">queue_prefix</td>
+          <td class="col-type">CHAR(2)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Prefix huruf kode antrean (A: Umum, B: Gigi, C: KIA, D: Lansia)</td>
+        </tr>
+        <tr>
+          <td class="col-name">avg_service_min</td>
+          <td class="col-type">SMALLINT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>10</td>
+          <td>Estimasi durasi standar konsultasi poli dalam menit</td>
+        </tr>
+        <tr>
+          <td class="col-name">is_active</td>
+          <td class="col-type">BOOLEAN</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>true</td>
+          <td>Status operasional poli hari ini</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 5: doctors -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">5. doctors</span>
+      <span class="table-desc">Profil dokter pemeriksa dan keterkaitan akun staf</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik data dokter</td>
+        </tr>
+        <tr>
+          <td class="col-name">facility_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Relasi faskes &rarr; <code>facilities.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">user_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Akun login dokter di sistem &rarr; <code>users.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">full_name</td>
+          <td class="col-type">VARCHAR(120)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama lengkap dokter (contoh: dr. Rama Palito)</td>
+        </tr>
+        <tr>
+          <td class="col-name">specialty</td>
+          <td class="col-type">VARCHAR(80)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Spesialisasi / Keahlian klinis (contoh: Dokter Umum, Spesialis Anak)</td>
+        </tr>
+        <tr>
+          <td class="col-name">str_no</td>
+          <td class="col-type">VARCHAR(40)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nomor Surat Tanda Registrasi (STR) Kemenkes</td>
+        </tr>
+        <tr>
+          <td class="col-name">is_active</td>
+          <td class="col-type">BOOLEAN</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>true</td>
+          <td>Status keaktifan praktek dokter</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 6: schedules -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">6. schedules</span>
+      <span class="table-desc">Jadwal shift kerja dokter per poliklinik dan kuota harian</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier jadwal</td>
+        </tr>
+        <tr>
+          <td class="col-name">polyclinic_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Poli layanan &rarr; <code>polyclinics.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">doctor_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Dokter bertugas &rarr; <code>doctors.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">day_of_week</td>
+          <td class="col-type">SMALLINT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Hari kerja (1 = Senin, 2 = Selasa, ..., 7 = Minggu)</td>
+        </tr>
+        <tr>
+          <td class="col-name">start_time</td>
+          <td class="col-type">TIME</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Jam mulai operasional (misal: 08:00)</td>
+        </tr>
+        <tr>
+          <td class="col-name">end_time</td>
+          <td class="col-type">TIME</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Jam selesai operasional (misal: 12:00)</td>
+        </tr>
+        <tr>
+          <td class="col-name">quota</td>
+          <td class="col-type">SMALLINT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>30</td>
+          <td>Batas kuota maksimal pasien per sesi jadwal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 6: DATABASE SCHEMA (3/5) ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Tabel Skema Database Relasional PostgreSQL (3/5)</span>
+  </div>
+  <p class="section-desc">
+    Spesifikasi tabel master pasien (dengan proteksi enkripsi NIK) dan pendaftaran janji temu.
+  </p>
+
+  <!-- Table 7: patients -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">7. patients</span>
+      <span class="table-desc">Master data pasien puskesmas (Dilindungi enkripsi AES-256 pada NIK)</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik pasien</td>
+        </tr>
+        <tr>
+          <td class="col-name">facility_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Faskes terdaftar &rarr; <code>facilities.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">medical_record_no</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nomor Rekam Medis unik (contoh: RM-2026-0001)</td>
+        </tr>
+        <tr>
+          <td class="col-name">nik_encrypted</td>
+          <td class="col-type">BYTEA</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Ciphertext NIK terenkripsi AES-256-GCM (Wajib lindungi privasi)</td>
+        </tr>
+        <tr>
+          <td class="col-name">nik_hash</td>
+          <td class="col-type">VARCHAR(64)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Blind index SHA-256(NIK) untuk query cari tanpa dekripsi</td>
+        </tr>
+        <tr>
+          <td class="col-name">full_name</td>
+          <td class="col-type">VARCHAR(150)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Nama lengkap pasien sesuai identitas KTP/KK</td>
+        </tr>
+        <tr>
+          <td class="col-name">birth_date</td>
+          <td class="col-type">DATE</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Tanggal lahir untuk kalkulasi usia & penentuan prioritas geriatri</td>
+        </tr>
+        <tr>
+          <td class="col-name">gender</td>
+          <td class="col-type">gender_t</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>ENUM: 'male' (Laki-laki) | 'female' (Perempuan)</td>
+        </tr>
+        <tr>
+          <td class="col-name">phone</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nomor telepon seluler / WhatsApp aktif</td>
+        </tr>
+        <tr>
+          <td class="col-name">guarantor</td>
+          <td class="col-type">guarantor_t</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>'umum'</td>
+          <td>ENUM: 'bpjs', 'umum', 'asuransi', 'lainnya'</td>
+        </tr>
+        <tr>
+          <td class="col-name">bpjs_no</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nomor kartu kepesertaan BPJS Kesehatan (13 digit)</td>
+        </tr>
+        <tr>
+          <td class="col-name">guardian_name</td>
+          <td class="col-type">VARCHAR(150)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nama orang tua/wali penanggung jawab pasien anak (&lt; 18 thn)</td>
+        </tr>
+        <tr>
+          <td class="col-name">guardian_relation</td>
+          <td class="col-type">VARCHAR(50)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Hubungan keluarga wali (contoh: Ayah Kandung, Ibu, Kakek)</td>
+        </tr>
+        <tr>
+          <td class="col-name">guardian_phone</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Nomor telepon aktif orang tua/wali pasien</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 8: appointments -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">8. appointments</span>
+      <span class="table-desc">Transaksi janji temu / pendaftaran kunjungan poli</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik pendaftaran</td>
+        </tr>
+        <tr>
+          <td class="col-name">facility_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Faskes pendaftaran &rarr; <code>facilities.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">patient_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Pasien pendaftar &rarr; <code>patients.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">polyclinic_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Poli dituju &rarr; <code>polyclinics.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">schedule_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Sesi praktek dokter &rarr; <code>schedules.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">visit_date</td>
+          <td class="col-type">DATE</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Tanggal rencana kunjungan berobat</td>
+        </tr>
+        <tr>
+          <td class="col-name">source</td>
+          <td class="col-type">appt_source_t</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>'online'</td>
+          <td>ENUM: 'online' (Ponsel) | 'walk_in' (Loket)</td>
+        </tr>
+        <tr>
+          <td class="col-name">priority</td>
+          <td class="col-type">priority_t</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>'normal'</td>
+          <td>ENUM: 'normal', 'elderly', 'pregnant', 'disabled', 'emergency'</td>
+        </tr>
+        <tr>
+          <td class="col-name">appointment_token</td>
+          <td class="col-type">UUID</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Token rahasia akses status e-tiket pasien</td>
+        </tr>
+        <tr>
+          <td class="col-name">qr_token</td>
+          <td class="col-type">VARCHAR(64)</td>
+          <td><span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Token enkripsi teks QR Code untuk check-in di scanner</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 7: DATABASE SCHEMA (4/5) ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Tabel Skema Database Relasional PostgreSQL (4/5)</span>
+  </div>
+  <p class="section-desc">
+    Spesifikasi tabel operasional antrean real-time dan data pra-anamnesis klinis awal.
+  </p>
+
+  <!-- Table 9: queues -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">9. queues</span>
+      <span class="table-desc">Status pelacakan nomor antrean harian dan siklus panggilan</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik antrean</td>
+        </tr>
+        <tr>
+          <td class="col-name">appointment_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span> <span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Janji temu terkait &rarr; <code>appointments.id</code> (ON DELETE CASCADE)</td>
+        </tr>
+        <tr>
+          <td class="col-name">polyclinic_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Poli antrean &rarr; <code>polyclinics.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">queue_date</td>
+          <td class="col-type">DATE</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Tanggal aktif antrean</td>
+        </tr>
+        <tr>
+          <td class="col-name">queue_number</td>
+          <td class="col-type">INT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Angka nomor urut harian (contoh: 1, 2, 3...)</td>
+        </tr>
+        <tr>
+          <td class="col-name">queue_code</td>
+          <td class="col-type">VARCHAR(10)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Kode lengkap antrean publik (contoh: A-001, B-002)</td>
+        </tr>
+        <tr>
+          <td class="col-name">status</td>
+          <td class="col-type">queue_status_t</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>'waiting'</td>
+          <td>ENUM: waiting, checked_in, called, in_service, done, cancelled, no_show</td>
+        </tr>
+        <tr>
+          <td class="col-name">checked_in_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Waktu pasien memindai QR check-in di faskes</td>
+        </tr>
+        <tr>
+          <td class="col-name">called_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Waktu terakhir petugas memanggil nomor antrean</td>
+        </tr>
+        <tr>
+          <td class="col-name">call_count</td>
+          <td class="col-type">SMALLINT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>0</td>
+          <td>Jumlah panggilan suara yang telah dilakukan (maks 3x)</td>
+        </tr>
+        <tr>
+          <td class="col-name">service_start</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Waktu pasien mulai masuk ke ruang periksa dokter</td>
+        </tr>
+        <tr>
+          <td class="col-name">service_end</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Waktu konsultasi selesai (dipakai untuk input kalkulasi EMA)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 10: pre_anamneses -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">10. pre_anamneses</span>
+      <span class="table-desc">Data pra-anamnesis keluhan mandiri pasien sebelum pemeriksaan</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik pra-anamnesis</td>
+        </tr>
+        <tr>
+          <td class="col-name">appointment_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span> <span class="key-unique">UNIQ</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Relasi pendaftaran &rarr; <code>appointments.id</code> (CASCADE)</td>
+        </tr>
+        <tr>
+          <td class="col-name">chief_complaint</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Keluhan utama pasien (misal: Demam tinggi 3 hari)</td>
+        </tr>
+        <tr>
+          <td class="col-name">symptoms</td>
+          <td class="col-type">JSONB</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Array gejala dalam format JSON (misal: ["Demam", "Batuk"])</td>
+        </tr>
+        <tr>
+          <td class="col-name">duration_days</td>
+          <td class="col-type">SMALLINT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Lama durasi gejala dirasakan pasien dalam satuan hari</td>
+        </tr>
+        <tr>
+          <td class="col-name">allergies</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Riwayat alergi obat antibiotik/makanan pasien</td>
+        </tr>
+        <tr>
+          <td class="col-name">triage_flag</td>
+          <td class="col-type">VARCHAR(20)</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Kategori urgensi triase: normal | attention | emergency</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 8: DATABASE SCHEMA (5/5) ==================== -->
+  <div class="page-break"></div>
+
+  <div class="section-title">
+    <span>Tabel Skema Database Relasional PostgreSQL (5/5)</span>
+  </div>
+  <p class="section-desc">
+    Spesifikasi tabel rekam medis elektronik (RME), catatan SOAP, diagnosis standar ICD-10, dan audit trail.
+  </p>
+
+  <!-- Table 11: visits -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">11. visits</span>
+      <span class="table-desc">Rekam medis kunjungan (RME), tanda-tanda vital, dan catatan SOAP dokter</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier unik kunjungan medis</td>
+        </tr>
+        <tr>
+          <td class="col-name">appointment_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Relasi pendaftaran &rarr; <code>appointments.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">patient_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Pasien yang diperiksa &rarr; <code>patients.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">doctor_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Dokter pemeriksa &rarr; <code>doctors.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">vitals</td>
+          <td class="col-type">JSONB</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Tanda vital JSON: {bp_sys, bp_dia, hr, temp, spo2, weight, height}</td>
+        </tr>
+        <tr>
+          <td class="col-name">subjective</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td><strong>S (Subjektif)</strong>: Keluhan pasien & riwayat penyakit</td>
+        </tr>
+        <tr>
+          <td class="col-name">objective</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td><strong>O (Objektif)</strong>: Hasil pemeriksaan fisik dokter</td>
+        </tr>
+        <tr>
+          <td class="col-name">assessment</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td><strong>A (Asesmen)</strong>: Kesimpulan diagnosa klinis</td>
+        </tr>
+        <tr>
+          <td class="col-name">plan</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td><strong>P (Plan)</strong>: Terapi, resep obat, edukasi, rujukan</td>
+        </tr>
+        <tr>
+          <td class="col-name">created_by</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Staf/Dokter yang mencatat &rarr; <code>users.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">created_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>now()</td>
+          <td>Waktu penguncian rekam medis</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 12 & 13: icd10_codes & diagnoses -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">12 & 13. icd10_codes & diagnoses</span>
+      <span class="table-desc">Kamus master diagnosis WHO ICD-10 dan pemetaan ke kunjungan pasien</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">icd10_codes.code</td>
+          <td class="col-type">VARCHAR(10)</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Kode standar ICD-10 (contoh: J00, I10, K02.9, E11)</td>
+        </tr>
+        <tr>
+          <td class="col-name">icd10_codes.description</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Deskripsi resmi diagnosis medis (Bahasa Indonesia & Latin)</td>
+        </tr>
+        <tr>
+          <td class="col-name">diagnoses.id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>gen_random_uuid()</td>
+          <td>Identifier record diagnosis</td>
+        </tr>
+        <tr>
+          <td class="col-name">diagnoses.visit_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Kunjungan medis terkait &rarr; <code>visits.id</code> (CASCADE)</td>
+        </tr>
+        <tr>
+          <td class="col-name">diagnoses.icd10_code</td>
+          <td class="col-type">VARCHAR(10)</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Relasi kode &rarr; <code>icd10_codes.code</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">diagnoses.is_primary</td>
+          <td class="col-type">BOOLEAN</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>false</td>
+          <td>True = Diagnosis Primer, False = Diagnosis Sekunder / Komorbid</td>
+        </tr>
+        <tr>
+          <td class="col-name">diagnoses.notes</td>
+          <td class="col-type">TEXT</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Catatan klinis tambahan dari dokter pemeriksa</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table 14: audit_logs -->
+  <div class="table-container">
+    <div class="table-header-box">
+      <span class="table-name">14. audit_logs</span>
+      <span class="table-desc">Rekam jejak kepatuhan dan audit trail keamanan data medis</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Tipe Data</th>
+          <th>Key</th>
+          <th>Null</th>
+          <th>Default</th>
+          <th>Deskripsi & Hubungan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-name">id</td>
+          <td class="col-type">BIGSERIAL</td>
+          <td><span class="key-pk">PK</span></td>
+          <td class="not-null">No</td>
+          <td>auto-inc</td>
+          <td>Identifier log audit</td>
+        </tr>
+        <tr>
+          <td class="col-name">user_id</td>
+          <td class="col-type">UUID</td>
+          <td><span class="key-fk">FK</span></td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Staf pelaku aktivitas &rarr; <code>users.id</code></td>
+        </tr>
+        <tr>
+          <td class="col-name">action</td>
+          <td class="col-type">VARCHAR(50)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Tipe aksi (contoh: LOGIN, VIEW_NIK, CREATE_VISIT, UPDATE_STATUS)</td>
+        </tr>
+        <tr>
+          <td class="col-name">entity</td>
+          <td class="col-type">VARCHAR(50)</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>-</td>
+          <td>Entitas sasaran (contoh: patients, visits, appointments)</td>
+        </tr>
+        <tr>
+          <td class="col-name">entity_id</td>
+          <td class="col-type">UUID</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>ID record yang diakses / diubah</td>
+        </tr>
+        <tr>
+          <td class="col-name">ip_address</td>
+          <td class="col-type">INET</td>
+          <td>-</td>
+          <td class="nullable">Yes</td>
+          <td>-</td>
+          <td>Alamat IP komputer pengakses</td>
+        </tr>
+        <tr>
+          <td class="col-name">created_at</td>
+          <td class="col-type">TIMESTAMPTZ</td>
+          <td>-</td>
+          <td class="not-null">No</td>
+          <td>now()</td>
+          <td>Waktu persis pencatatan audit log</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
