@@ -58,6 +58,11 @@ const router = createRouter({
       component: PatientScanner,
     },
     {
+      path: "/qr-test",
+      name: "qr-test",
+      component: PatientScanner,
+    },
+    {
       path: "/:pathMatch(.*)*",
       redirect: "/",
     },

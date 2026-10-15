@@ -79,7 +79,15 @@ func main() {
 	notifWorker.Start(ctx)
 
 	// ── 8. Session Rate Limiter ─────────────────────────────
-	rateLimiter := middleware.NewSessionRateLimiter(5, 5*time.Minute)
+	maxReqs := cfg.RateLimit.MaxRequests
+	if maxReqs <= 0 {
+		maxReqs = 100
+	}
+	limiterTimeout := cfg.RateLimit.Timeout
+	if limiterTimeout <= 0 {
+		limiterTimeout = 10 * time.Second
+	}
+	rateLimiter := middleware.NewSessionRateLimiter(maxReqs, limiterTimeout)
 
 	// ── 9. Default Facility ID & Test Data ─────────────────
 	defFac, _ := facilityRepo.GetFirst(ctx)

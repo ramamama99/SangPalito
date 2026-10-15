@@ -26,8 +26,10 @@ type PublicService interface {
 	ListSchedules(ctx context.Context, polyclinicID uuid.UUID, date time.Time) ([]*dto.ScheduleResponse, error)
 	CreatePublicAppointment(ctx context.Context, req dto.PublicAppointmentRequest, facilityID uuid.UUID) (*dto.PublicAppointmentResponse, error)
 	GetAppointmentByToken(ctx context.Context, token uuid.UUID) (*dto.AppointmentStatusResponse, error)
-	CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.QueueResponse, error)
+	CheckIn(ctx context.Context, qrToken string) (*dto.QueueResponse, error)
 	GetQueueEstimate(ctx context.Context, queueID uuid.UUID) (*dto.QueueEstimateResponse, error)
+	GetDemoQueues(ctx context.Context) ([]*dto.DemoQueueResponse, error)
+	ResetDemoQueue(ctx context.Context, qrToken string) error
 }
 
 type publicService struct {
@@ -308,15 +310,10 @@ func (s *publicService) GetAppointmentByToken(ctx context.Context, token uuid.UU
 }
 
 // CheckIn processes a QR code check-in and advances the queue to checked_in.
-func (s *publicService) CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.QueueResponse, error) {
-	appointment, err := s.appointmentRepo.FindByQRToken(ctx, qrToken.String())
+func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.QueueResponse, error) {
+	appointment, err := s.appointmentRepo.FindByQRToken(ctx, qrToken)
 	if err != nil {
 		return nil, err
-	}
-
-	// Update appointment status
-	if err := s.appointmentRepo.UpdateStatus(ctx, appointment.ID, "checked_in"); err != nil {
-		return nil, apperror.Internal(fmt.Errorf("publicService.CheckIn: update appointment: %w", err))
 	}
 
 	// Find the queue for this appointment and advance it
@@ -328,9 +325,11 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.Qu
 	for _, q := range queues {
 		if q.AppointmentID == appointment.ID {
 			if !q.Status.CanTransitionTo(entity.StatusCheckedIn) {
-				return nil, apperror.BadRequest("Status antrean tidak dapat di-check-in", nil)
+				return nil, apperror.BadRequest(fmt.Sprintf("Status antrean '%s' tidak dapat di-check-in (hanya antrean dengan status 'waiting' yang dapat check-in)", q.Status), nil)
 			}
 			q.Status = entity.StatusCheckedIn
+			now := time.Now()
+			q.CheckedInAt = &now
 			if err := s.queueRepo.UpdateStatus(ctx, q); err != nil {
 				return nil, apperror.Internal(fmt.Errorf("publicService.CheckIn: update queue: %w", err))
 			}
@@ -339,6 +338,62 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken uuid.UUID) (*dto.Qu
 	}
 
 	return nil, apperror.NotFound("Antrean untuk appointment ini", nil)
+}
+
+// GetDemoQueues returns the list of demo queues with their appointment tokens and patient details.
+func (s *publicService) GetDemoQueues(ctx context.Context) ([]*dto.DemoQueueResponse, error) {
+	query := `
+		SELECT a.qr_token, p.full_name, q.queue_code, q.queue_number, poly.name, q.status, q.checked_in_at
+		FROM queues q
+		JOIN appointments a ON q.appointment_id = a.id
+		JOIN patients p ON a.patient_id = p.id
+		JOIN polyclinics poly ON q.polyclinic_id = poly.id
+		ORDER BY q.queue_number ASC
+	`
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, apperror.Internal(fmt.Errorf("publicService.GetDemoQueues: %w", err))
+	}
+	defer rows.Close()
+
+	list := make([]*dto.DemoQueueResponse, 0)
+	for rows.Next() {
+		item := &dto.DemoQueueResponse{}
+		if err := rows.Scan(
+			&item.QRToken, &item.PatientName, &item.QueueCode, &item.QueueNumber,
+			&item.PolyclinicName, &item.Status, &item.CheckedInAt,
+		); err != nil {
+			return nil, apperror.Internal(fmt.Errorf("publicService.GetDemoQueues scan: %w", err))
+		}
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+// ResetDemoQueue resets a demo appointment/queue back to 'waiting' for testing.
+func (s *publicService) ResetDemoQueue(ctx context.Context, qrToken string) error {
+	if qrToken == "" || qrToken == "all" {
+		_, err := s.pool.Exec(ctx, `
+			UPDATE queues SET status = 'waiting', checked_in_at = NULL, called_at = NULL, service_start = NULL, service_end = NULL, call_count = 0
+			WHERE appointment_id IN (SELECT id FROM appointments WHERE qr_token LIKE 'qr-%')
+		`)
+		if err != nil {
+			return apperror.Internal(fmt.Errorf("publicService.ResetDemoQueue update all: %w", err))
+		}
+		return nil
+	}
+
+	ct, err := s.pool.Exec(ctx, `
+		UPDATE queues SET status = 'waiting', checked_in_at = NULL, called_at = NULL, service_start = NULL, service_end = NULL, call_count = 0
+		WHERE appointment_id = (SELECT id FROM appointments WHERE qr_token = $1)
+	`, qrToken)
+	if err != nil {
+		return apperror.Internal(fmt.Errorf("publicService.ResetDemoQueue: %w", err))
+	}
+	if ct.RowsAffected() == 0 {
+		return apperror.NotFound("Antrean dengan token QR tersebut", nil)
+	}
+	return nil
 }
 
 // GetQueueEstimate calculates estimated wait time using Exponential Moving Average (EMA) and Complexity Factors.

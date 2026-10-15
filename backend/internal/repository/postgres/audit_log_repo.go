@@ -22,7 +22,7 @@ func NewAuditLogRepo(pool *pgxpool.Pool) *auditLogRepo {
 
 // Create inserts a new audit log entry.
 func (r *auditLogRepo) Create(ctx context.Context, log *entity.AuditLog) error {
-	query := `INSERT INTO audit_logs (id, user_id, action, entity, entity_id, ip_address, meta, created_at)
+	query := `INSERT INTO audit_logs (id, user_id, action, entity, entity_id, ip_address, metadata, created_at)
 	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	metaJSON, _ := json.Marshal(log.Meta)
@@ -63,7 +63,7 @@ func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uu
 	}
 
 	query := fmt.Sprintf(`
-		SELECT id, user_id, action, entity, entity_id, ip_address, meta, created_at
+		SELECT id, user_id, action, entity, entity_id, ip_address, metadata, created_at
 		FROM audit_logs
 		%s
 		ORDER BY created_at DESC

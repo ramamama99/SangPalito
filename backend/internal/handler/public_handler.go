@@ -119,13 +119,7 @@ func (h *PublicHandler) CheckIn(c *gin.Context) {
 		return
 	}
 
-	qrToken, err := uuid.Parse(req.QRToken)
-	if err != nil {
-		_ = c.Error(apperror.BadRequest("QR token tidak valid", err))
-		return
-	}
-
-	result, err := h.publicService.CheckIn(c.Request.Context(), qrToken)
+	result, err := h.publicService.CheckIn(c.Request.Context(), req.QRToken)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -149,4 +143,27 @@ func (h *PublicHandler) GetQueueEstimate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.OK(result))
+}
+
+// GetDemoQueues handles GET /api/v1/public/queues/demo.
+func (h *PublicHandler) GetDemoQueues(c *gin.Context) {
+	list, err := h.publicService.GetDemoQueues(c.Request.Context())
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(list))
+}
+
+// ResetDemoQueue handles POST /api/v1/public/queues/reset-demo.
+func (h *PublicHandler) ResetDemoQueue(c *gin.Context) {
+	var req dto.ResetDemoRequest
+	_ = c.ShouldBindJSON(&req)
+
+	if err := h.publicService.ResetDemoQueue(c.Request.Context(), req.QRToken); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Antrean demo berhasil di-reset ke status 'waiting'"}))
 }

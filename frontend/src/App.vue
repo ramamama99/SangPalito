@@ -17,7 +17,7 @@ const route = useRoute();
 const isTvRoute = computed(() => route.path === "/tv");
 
 const showHeader = computed(() => {
-  const hiddenRoutes = ["/tv", "/staff", "/medical-record", "/scan"];
+  const hiddenRoutes = ["/tv", "/staff", "/medical-record", "/scan", "/qr-test"];
   return !hiddenRoutes.includes(route.path);
 });
 </script>

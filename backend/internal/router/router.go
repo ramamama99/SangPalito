@@ -120,6 +120,8 @@ func Setup(
 		public.POST("/appointments", publicHandler.CreateAppointment)
 		public.GET("/appointments/:token", publicHandler.GetAppointmentStatus)
 		public.POST("/queues/checkin", publicHandler.CheckIn)
+		public.GET("/queues/demo", publicHandler.GetDemoQueues)
+		public.POST("/queues/reset-demo", publicHandler.ResetDemoQueue)
 		public.GET("/queues/:id/estimate", publicHandler.GetQueueEstimate)
 		public.GET("/queues/:id/display", wsHandler.GetPolyclinicDisplay)
 	}

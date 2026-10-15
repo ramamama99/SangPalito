@@ -45,7 +45,23 @@ type PatientBrief struct {
 
 // CheckInRequest is the payload for POST /api/v1/public/queues/checkin.
 type CheckInRequest struct {
-	QRToken string `json:"qr_token" validate:"required,uuid4"`
+	QRToken string `json:"qr_token" validate:"required,min=3,max=64"`
+}
+
+// DemoQueueResponse is returned for test listing of demo queues.
+type DemoQueueResponse struct {
+	QRToken        string     `json:"qr_token"`
+	PatientName    string     `json:"patient_name"`
+	QueueCode      string     `json:"queue_code"`
+	QueueNumber    int        `json:"queue_number"`
+	PolyclinicName string     `json:"polyclinic_name"`
+	Status         string     `json:"status"`
+	CheckedInAt    *time.Time `json:"checked_in_at,omitempty"`
+}
+
+// ResetDemoRequest is the payload for POST /api/v1/public/queues/reset-demo.
+type ResetDemoRequest struct {
+	QRToken string `json:"qr_token"`
 }
 
 // AppointmentStatusResponse is returned for GET /api/v1/public/appointments/:token.

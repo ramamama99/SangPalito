@@ -37,6 +37,12 @@
         >
           <span class="live-dot" /> Antrean Live
         </button>
+        <button
+          :class="{ 'nav-active': route.path === '/qr-test' || route.path === '/scan' }"
+          @click="goToRoute('/qr-test')"
+        >
+          <QrCode :size="15" /> Uji Scan QR
+        </button>
       </nav>
       <div class="nav-actions">
         <button class="staff-link" @click="goToRoute('/login')">
@@ -61,7 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Users, ArrowUpRight, Menu, X } from "lucide-vue-next";
+import { Users, ArrowUpRight, Menu, X, QrCode } from "lucide-vue-next";
 import Brand from "../common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
 

@@ -145,6 +145,32 @@ export const api = {
     }
   },
 
+  async getDemoQueues() {
+    try {
+      const res = await fetch(`${BASE_URL}/public/queues/demo`)
+      if (!res.ok) return []
+      const json = await res.json()
+      return json.data || []
+    } catch (err) {
+      console.error('Failed to get demo queues:', err)
+      return []
+    }
+  },
+
+  async resetDemoQueue(qrToken = 'all') {
+    try {
+      const res = await fetch(`${BASE_URL}/public/queues/reset-demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qr_token: qrToken }),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to reset demo queue:', err)
+      return null
+    }
+  },
+
   // ── 3. Rekam Medis (Visits & Clinical) ────────────────────
   async getPatientVisits(patientId: string): Promise<ApiVisitItem[]> {
     try {
