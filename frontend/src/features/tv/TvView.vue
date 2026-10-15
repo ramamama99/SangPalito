@@ -9,15 +9,15 @@
         </span>
       </div>
 
-      <!-- Real-time Clock Widget (UTC+7 / WIB) -->
-      <div class="flex items-center gap-3 bg-white px-3.5 py-1.5 rounded-xl border border-[var(--line)] shadow-2xs">
-        <div class="flex items-center gap-1.5 text-xs text-[var(--muted)] font-medium">
-          <Calendar :size="14" />
-          <span>{{ currentDate }}</span>
+      <!-- Real-time Clock Widget (UTC+7 / WIB) - Diperbesar untuk Layar TV -->
+      <div class="flex items-center gap-3 sm:gap-5 bg-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl border border-[var(--line)] shadow-sm">
+        <div class="flex items-center gap-2 text-sm sm:text-base font-semibold text-[var(--muted)]">
+          <Calendar :size="18" class="text-[var(--deep)] shrink-0" />
+          <span class="capitalize">{{ currentDate }}</span>
         </div>
-        <div class="h-4 w-px bg-[var(--line)]" />
-        <div class="flex items-center gap-1.5 font-mono font-bold text-sm sm:text-base text-[var(--deep)] tabular-nums">
-          <Clock :size="15" />
+        <div class="h-6 w-px bg-[var(--line)]" />
+        <div class="flex items-center gap-2.5 font-mono font-black text-xl sm:text-2xl lg:text-3xl text-[var(--deep)] tabular-nums tracking-tight">
+          <Clock :size="22" class="text-[var(--deep)] shrink-0" />
           <span>{{ currentTime }}</span>
         </div>
       </div>
@@ -104,15 +104,6 @@
         </div>
       </section>
     </div>
-
-    <!-- Footer TV Info Bar -->
-    <footer class="pt-2 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)] shrink-0">
-      <div class="flex items-center gap-2 font-medium">
-        <Clock3 :size="14" />
-        <span>Jam Pelayanan: 08.00 – 14.00 WIB (UTC+7)</span>
-      </div>
-      <span class="hidden sm:inline">Siapkan KTP dan kartu BPJS Anda · Jaga kebersihan dan kenyamanan bersama</span>
-    </footer>
   </main>
 </template>
 
@@ -125,7 +116,6 @@ import {
   HeartPulse,
   Users,
   Clock,
-  Clock3,
   Calendar,
 } from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
