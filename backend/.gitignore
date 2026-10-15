@@ -22,6 +22,10 @@ tmp/
 *.env.local
 .env.example
 
+# Local PostgreSQL Data
+pgdata/
+
+
 # Markdown planning files (gunakan root .gitignore juga)
 *.md
 # Kecuali agent.md — ini adalah rules wajib yang harus di-commit
