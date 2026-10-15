@@ -109,14 +109,19 @@ export const api = {
 
   // ── 2. Pendaftaran Pasien & Appointment ──────────────────
   async createAppointment(data: {
-    patient_id: string
+    nik: string
+    full_name: string
+    birth_date: string
+    gender: 'male' | 'female'
+    phone?: string
+    guarantor: 'bpjs' | 'umum' | 'asuransi' | 'lainnya'
+    bpjs_no?: string
     polyclinic_id: string
     schedule_id?: string
     visit_date: string
     chief_complaint?: string
     symptoms?: string[]
     duration_days?: number
-    allergies?: string
   }) {
     try {
       const res = await fetch(`${BASE_URL}/public/appointments`, {
@@ -124,10 +129,11 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      return await res.json()
+      const json = await res.json()
+      return json
     } catch (err) {
       console.error('Failed to create appointment:', err)
-      return null
+      return { success: false, message: 'Gagal terhubung ke backend server' }
     }
   },
 

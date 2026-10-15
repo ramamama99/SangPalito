@@ -1,0 +1,2 @@
+ALTER TABLE patients
+DROP COLUMN IF EXISTS blood_type;

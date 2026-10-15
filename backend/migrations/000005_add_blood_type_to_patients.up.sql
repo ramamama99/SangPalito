@@ -1,0 +1,2 @@
+ALTER TABLE patients
+ADD COLUMN IF NOT EXISTS blood_type VARCHAR(10);

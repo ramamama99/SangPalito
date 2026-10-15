@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -41,6 +42,7 @@ func (r *polyclinicRepo) FindAll(ctx context.Context, facilityID uuid.UUID) ([]e
 		if err := rows.Scan(&p.ID, &p.FacilityID, &p.Name, &p.QueuePrefix, &p.AvgServiceMin, &p.IsActive); err != nil {
 			return nil, fmt.Errorf("polyclinicRepo.FindAll scan: %w", err)
 		}
+		p.QueuePrefix = strings.TrimSpace(p.QueuePrefix)
 		p.Code = p.QueuePrefix
 		list = append(list, p)
 	}
@@ -63,6 +65,7 @@ func (r *polyclinicRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.Po
 		}
 		return nil, fmt.Errorf("polyclinicRepo.FindByID: %w", err)
 	}
+	p.QueuePrefix = strings.TrimSpace(p.QueuePrefix)
 	p.Code = p.QueuePrefix
 	return &p, nil
 }

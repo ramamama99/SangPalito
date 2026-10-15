@@ -131,8 +131,12 @@ func (r *queueRepo) UpdateStatus(ctx context.Context, q *entity.Queue) error {
 
 // GetNextQueueNumber returns the next queue number for a polyclinic on a date using SELECT FOR UPDATE.
 func (r *queueRepo) GetNextQueueNumber(ctx context.Context, tx pgx.Tx, polyclinicID uuid.UUID, date time.Time) (int, error) {
+	// Lock the polyclinic row to serialize queue number generation for this polyclinic
+	var dummy uuid.UUID
+	_ = tx.QueryRow(ctx, "SELECT id FROM polyclinics WHERE id = $1 FOR UPDATE", polyclinicID).Scan(&dummy)
+
 	query := `SELECT COALESCE(MAX(queue_number), 0) FROM queues
-	           WHERE polyclinic_id = $1 AND queue_date = $2 FOR UPDATE`
+	           WHERE polyclinic_id = $1 AND queue_date = $2`
 
 	var maxNum int
 	err := tx.QueryRow(ctx, query, polyclinicID, date).Scan(&maxNum)

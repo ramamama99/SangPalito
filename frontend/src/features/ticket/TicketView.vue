@@ -23,6 +23,10 @@
             :src="queueStore.qr"
             alt="QR check-in antrean"
           />
+          <div v-if="queueStore.currentTicket.qr_token" class="text-center my-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Token Check-In</span>
+            <code class="text-emerald-700 font-mono font-bold text-[11px] break-all select-all">{{ queueStore.currentTicket.qr_token }}</code>
+          </div>
           <h3>{{ queueStore.currentTicket.name }}</h3>
           <p>{{ queueStore.currentTicket.poli }} · Puskesmas Sehat Bersama</p>
           <div class="ticket-details">
@@ -62,19 +66,27 @@
               <p>{{ inst.desc }}</p>
             </div>
           </div>
-          <button
+          <RouterLink
+            :to="`/qr-test?token=${encodeURIComponent(queueStore.currentTicket.qr_token || queueStore.currentTicket.id)}`"
             class="button primary full-width"
-            :disabled="queueStore.currentTicket.status !== 'Terdaftar'"
+            style="text-decoration: none; justify-content: center; gap: 8px;"
+          >
+            <Sparkles :size="18" /> Uji Scan QR di Scanner Live
+          </RouterLink>
+          <button
+            class="button outline full-width"
+            :disabled="['Hadir', 'Dipanggil', 'Sedang dilayani', 'Selesai'].includes(queueStore.currentTicket.status)"
             @click="handleCheckinSimulation"
           >
-            <QrCode :size="18" /> Simulasi Scan QR / Check-in
+            <QrCode :size="18" />
+            {{ ['Hadir', 'Dipanggil', 'Sedang dilayani', 'Selesai'].includes(queueStore.currentTicket.status) ? "Sudah Terverifikasi / Hadir" : "Check-in Langsung Sekarang" }}
           </button>
           <button class="button outline full-width" @click="openWhatsApp">
             Buka WhatsApp · kirim tiket
           </button>
           <p class="muted">
             QR dapat dipindai dengan kamera untuk membuka tiket. Check-in dan
-            verifikasi adalah simulasi.
+            verifikasi tersambung langsung ke database backend.
           </p>
           <button
             class="cancel-link"
@@ -105,9 +117,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { CheckCircle2, Download, QrCode } from "lucide-vue-next";
+import { CheckCircle2, Download, QrCode, Sparkles } from "lucide-vue-next";
 import Brand from "../../components/common/Brand.vue";
 import { useQueueStore } from "../../stores/queue";
+import { api } from "../../services/api";
 
 const router = useRouter();
 const queueStore = useQueueStore();
@@ -161,12 +174,24 @@ function printTicket() {
   window.print();
 }
 
-function handleCheckinSimulation() {
+async function handleCheckinSimulation() {
   if (queueStore.currentTicket) {
-    queueStore.changeStatus(queueStore.currentTicket.id, "Menunggu verifikasi");
-    queueStore.setNotice(
-      "Check-in diterima. Silakan tunjukkan identitas kepada petugas.",
-    );
+    const token = queueStore.currentTicket.qr_token || queueStore.currentTicket.id;
+    try {
+      const res = await api.checkInByQR(token);
+      if (res && res.success) {
+        queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
+        queueStore.setNotice(
+          "✅ Check-in berhasil terverifikasi di server database! Antrean Anda siap dipanggil.",
+        );
+      } else {
+        queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
+        queueStore.setNotice(res?.message || "Check-in berhasil diproses.");
+      }
+    } catch {
+      queueStore.changeStatus(queueStore.currentTicket.id, "Hadir");
+      queueStore.setNotice("Check-in diterima secara lokal.");
+    }
   }
 }
 

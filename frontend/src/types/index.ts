@@ -16,6 +16,8 @@ export type Patient = {
   status: string;
   source: string;
   soap?: string;
+  qr_token?: string;
+  appointment_token?: string;
 };
 
 export type Service = {

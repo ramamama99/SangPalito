@@ -292,9 +292,14 @@
             Kembali
           </button>
           <span>Langkah {{ queueStore.step }} dari 3</span>
-          <button class="button primary" type="submit">
-            {{ queueStore.step === 3 ? "Daftar Sekarang" : "Lanjutkan" }}
-            <ArrowRight :size="18" />
+          <button class="button primary" type="submit" :disabled="queueStore.isRegistering">
+            <template v-if="queueStore.isRegistering">
+              <span>Mendaftarkan & Membuat QR...</span>
+            </template>
+            <template v-else>
+              {{ queueStore.step === 3 ? "Daftar Sekarang & Buat QR" : "Lanjutkan" }}
+              <ArrowRight :size="18" />
+            </template>
           </button>
         </div>
       </form>
@@ -398,12 +403,12 @@ function formatDate(dateStr: string) {
   }
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (queueStore.step < 3) {
     queueStore.step++;
     window.scrollTo({ top: 150, behavior: "smooth" });
   } else {
-    const result = queueStore.registerPatient();
+    const result = await queueStore.registerPatient();
     if (result.isWalkin) {
       router.push("/staff");
     } else {

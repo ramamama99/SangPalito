@@ -74,7 +74,11 @@ export const useQueueStore = defineStore("queue", () => {
     if (newVal) {
       localStorage.setItem("antrisehat-ticket", newVal);
       try {
-        qr.value = await generateQrDataUrl(newVal);
+        const found = patients.value.find(
+          (p) => p.id === newVal || p.qr_token === newVal,
+        );
+        const tokenToEncode = found?.qr_token || newVal;
+        qr.value = await generateQrDataUrl(tokenToEncode);
       } catch (err) {
         console.error("Failed to generate QR code", err);
       }
@@ -86,7 +90,10 @@ export const useQueueStore = defineStore("queue", () => {
 
   // Initial QR code generation if ticket exists
   if (ticket.value) {
-    generateQrDataUrl(ticket.value)
+    const found = patients.value.find(
+      (p) => p.id === ticket.value || p.qr_token === ticket.value,
+    );
+    generateQrDataUrl(found?.qr_token || ticket.value)
       .then((res) => {
         qr.value = res;
       })
@@ -118,7 +125,9 @@ export const useQueueStore = defineStore("queue", () => {
 
   // Getters / Computed
   const currentTicket = computed(() =>
-    patients.value.find((p) => p.id === ticket.value),
+    patients.value.find(
+      (p) => p.id === ticket.value || p.qr_token === ticket.value,
+    ),
   );
   const active = computed(() =>
     patients.value.find((p) => p.status === "Dipanggil"),
@@ -228,28 +237,95 @@ export const useQueueStore = defineStore("queue", () => {
     walkin.value = isWalkin;
   }
 
-  function registerPatient() {
-    const id = crypto.randomUUID();
-    const prefix =
-      form.value.poli === "Poli Gigi"
-        ? "B"
-        : form.value.poli === "Poli KIA"
-          ? "C"
-          : form.value.poli === "Poli Lansia"
-            ? "D"
-            : "A";
+  const isRegistering = ref(false);
 
-    const existingPoliNumbers = patients.value
-      .filter((p) => p.number.startsWith(prefix))
-      .map((p) => Number(p.number.split("-")[1]));
+  const polyclinicIdMap: Record<string, string> = {
+    "Poli Umum": "11111111-1111-1111-1111-111111111111",
+    "Poli Gigi": "22222222-2222-2222-2222-222222222222",
+    "Poli KIA": "33333333-3333-3333-3333-333333333333",
+    "Poli KIA / Anak": "33333333-3333-3333-3333-333333333333",
+    "Poli Lansia": "44444444-4444-4444-4444-444444444444",
+    "Poli Lansia / Geriatri": "44444444-4444-4444-4444-444444444444",
+  };
 
-    const maxNum = Math.max(11, ...existingPoliNumbers);
-    const number = `${prefix}-${String(maxNum + 1).padStart(3, "0")}`;
+  async function registerPatient() {
+    isRegistering.value = true;
+    let id: string = crypto.randomUUID();
+    let qrToken = "";
+    let queueCode = "";
+    let appointmentToken = "";
+
+    const polyclinicId =
+      polyclinicIdMap[form.value.poli] || "11111111-1111-1111-1111-111111111111";
+    const guarantor =
+      form.value.insurance === "BPJS"
+        ? "bpjs"
+        : form.value.insurance === "Asuransi Swasta"
+          ? "asuransi"
+          : "umum";
+    const gender = form.value.gender === "Perempuan" ? "female" : "male";
+    const visitDate = form.value.date || new Date().toISOString().slice(0, 10);
+    const birthDate = form.value.birth || "1995-01-01";
+
+    try {
+      const res = await api.createAppointment({
+        nik: form.value.nik || "3201000000000001",
+        full_name: form.value.name || "Pasien Baru",
+        birth_date: birthDate,
+        gender,
+        phone: form.value.phone || "081234567890",
+        guarantor,
+        bpjs_no: form.value.bpjs || undefined,
+        polyclinic_id: polyclinicId,
+        visit_date: visitDate,
+        chief_complaint: form.value.complaint || "Pemeriksaan kesehatan umum",
+        symptoms:
+          form.value.symptoms && form.value.symptoms.length > 0
+            ? form.value.symptoms
+            : ["Pemeriksaan Umum"],
+        duration_days: 1,
+      });
+
+      if (res && res.success && res.data) {
+        qrToken = res.data.qr_token;
+        queueCode = res.data.queue?.queue_code || "";
+        appointmentToken = res.data.appointment_token || "";
+        id = qrToken; // Set ID directly to the database QR token
+      }
+    } catch (err) {
+      console.error("API createAppointment failed:", err);
+    } finally {
+      isRegistering.value = false;
+    }
+
+    if (!queueCode) {
+      const prefix =
+        form.value.poli === "Poli Gigi"
+          ? "B"
+          : form.value.poli === "Poli KIA"
+            ? "C"
+            : form.value.poli === "Poli Lansia"
+              ? "D"
+              : "A";
+
+      const existingPoliNumbers = patients.value
+        .filter((p) => p.number.startsWith(prefix))
+        .map((p) => Number(p.number.split("-")[1]));
+
+      const maxNum = Math.max(11, ...existingPoliNumbers);
+      queueCode = `${prefix}-${String(maxNum + 1).padStart(3, "0")}`;
+    }
+
+    if (!qrToken) {
+      qrToken = id;
+    }
 
     const newPatient: Patient = {
       ...form.value,
       id,
-      number,
+      number: queueCode,
+      qr_token: qrToken,
+      appointment_token: appointmentToken,
       source: walkin.value ? "Langsung" : "Online",
       status: walkin.value ? "Hadir" : "Terdaftar",
     };
@@ -257,10 +333,17 @@ export const useQueueStore = defineStore("queue", () => {
     patients.value.push(newPatient);
     ticket.value = id;
 
+    // Immediately generate real QR data URL for the ticket
+    try {
+      qr.value = await generateQrDataUrl(qrToken);
+    } catch (e) {
+      console.error("Failed to generate QR data url:", e);
+    }
+
     if (walkin.value) {
       setNotice("Pasien walk-in berhasil didaftarkan.");
     }
-    return { id, isWalkin: walkin.value };
+    return { id, isWalkin: walkin.value, qr_token: qrToken, queue_code: queueCode };
   }
 
   function downloadTicket() {
@@ -297,6 +380,7 @@ export const useQueueStore = defineStore("queue", () => {
     updateForm,
     startRegistration,
     registerPatient,
+    isRegistering,
     downloadTicket,
     fetchQueuesFromApi,
   };

@@ -4,15 +4,15 @@ import "time"
 
 // PublicAppointmentRequest is the payload for POST /api/v1/public/appointments.
 type PublicAppointmentRequest struct {
-	NIK            string           `json:"nik"              validate:"required,len=16,numeric"`
+	NIK            string           `json:"nik"              validate:"required,min=10,max=16,numeric"`
 	FullName       string           `json:"full_name"        validate:"required,min=2,max=150"`
 	BirthDate      string           `json:"birth_date"       validate:"required,datetime=2006-01-02"`
 	Gender         string           `json:"gender"           validate:"required,oneof=male female"`
 	Phone          string           `json:"phone"            validate:"omitempty,min=9,max=15,numeric"`
 	Guarantor      string           `json:"guarantor"        validate:"required,oneof=bpjs umum asuransi lainnya"`
 	BPJSNo         string           `json:"bpjs_no"          validate:"omitempty,min=5,max=20,numeric"`
-	PolyclinicID   string           `json:"polyclinic_id"    validate:"required,uuid4"`
-	ScheduleID     string           `json:"schedule_id"      validate:"required,uuid4"`
+	PolyclinicID   string           `json:"polyclinic_id"    validate:"required,uuid"`
+	ScheduleID     string           `json:"schedule_id"      validate:"omitempty,uuid"`
 	VisitDate      string           `json:"visit_date"       validate:"required,datetime=2006-01-02"`
 	ChiefComplaint string           `json:"chief_complaint"  validate:"omitempty,max=500"`
 	Symptoms       []string         `json:"symptoms,omitempty"`

@@ -1022,6 +1022,15 @@ function switchTab(tabId: string) {
 
 onMounted(async () => {
   await loadDemoQueues();
+
+  // If token or checkin query parameter is present in URL, auto verify
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get("token") || params.get("checkin");
+  if (urlToken) {
+    switchTab("manual");
+    manualToken.value = urlToken;
+    handleCheckIn(urlToken, "Tautan QR / URL");
+  }
 });
 
 onUnmounted(() => {
