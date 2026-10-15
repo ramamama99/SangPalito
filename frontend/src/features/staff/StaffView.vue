@@ -682,11 +682,22 @@
         <div class="panel-heading">
           <div>
             <h3>Database Katalog Obat & Farmasi</h3>
-            <p class="muted text-xs">Kelola master sediaan obat, rute penggunaan, aturan pakai, dan indikasi terapi.</p>
+            <p class="muted text-xs">Kelola master sediaan obat, rute penggunaan, aturan pakai, dan indikasi terapi sesuai standar e-FORNAS Kemenkes.</p>
           </div>
-          <button class="button primary small" @click="openAddMedModal">
-            <Plus :size="16" /> Tambah Obat Baru
-          </button>
+          <div class="flex items-center gap-2">
+            <a
+              href="https://e-fornas.kemkes.go.id/guest/daftar-obat"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="button outline small flex items-center gap-1.5"
+              title="Buka Referensi Resmi e-FORNAS Kemenkes RI"
+            >
+              <ExternalLink :size="15" /> Referensi e-FORNAS
+            </a>
+            <button class="button primary small" @click="openAddMedModal">
+              <Plus :size="16" /> Tambah Obat Baru
+            </button>
+          </div>
         </div>
 
         <!-- Filter & Search Toolbar -->
@@ -1029,7 +1040,17 @@
         <form @submit.prevent="saveMedicationSubmit" class="modal-body space-y-3">
           <div class="crud-form-grid-2">
             <label>
-              Kode Obat (e-FORNAS / Katalog)
+              <span class="flex items-center justify-between">
+                <span>Kode Obat (e-FORNAS / Katalog)</span>
+                <a
+                  href="https://e-fornas.kemkes.go.id/guest/daftar-obat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-[11px] text-teal-700 hover:underline inline-flex items-center gap-1 font-normal"
+                >
+                  Cek e-FORNAS <ExternalLink :size="11" />
+                </a>
+              </span>
               <input v-model="medForm.code" placeholder="Contoh: FORNAS-PCT-500" />
             </label>
             <label>
@@ -1157,6 +1178,7 @@ import {
   X,
   Database,
   Edit2,
+  ExternalLink,
 } from "lucide-vue-next";
 import { services } from "../../constants/services";
 import { todayDate, initialMedications } from "../../constants/initialData";
