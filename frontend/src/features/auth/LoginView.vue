@@ -64,7 +64,10 @@ async function handleLogin() {
       router.push("/staff");
       window.scrollTo(0, 0);
     } else {
-      errorMessage.value = res.error?.message || res.message || "Email atau kata sandi tidak valid";
+      errorMessage.value =
+        typeof res.error === "string"
+          ? res.error
+          : res.error?.message || res.message || "Email atau kata sandi tidak valid";
     }
   } catch (err: any) {
     errorMessage.value = "Gagal terhubung ke server backend";
