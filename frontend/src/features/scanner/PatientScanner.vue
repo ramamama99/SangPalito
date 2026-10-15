@@ -1,75 +1,54 @@
 <template>
   <main
-    ref="kioskContainerRef"
-    class="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans transition-colors duration-300 select-none"
+    ref="scannerContainerRef"
+    class="min-h-screen bg-[var(--surface-subtle,#f8fafc)] text-slate-900 flex flex-col font-sans transition-colors duration-200"
     :class="{ 'p-4 sm:p-6 lg:p-8': !isFullscreen, 'p-6 sm:p-10': isFullscreen }"
   >
-    <!-- TOP KIOSK HEADER BAR -->
-    <header class="w-full max-w-7xl mx-auto mb-6 bg-slate-800/80 backdrop-blur-md rounded-2xl border border-slate-700/80 p-4 sm:p-5 shadow-xl shadow-black/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <!-- TOP KIOSK HEADER -->
+    <header class="w-full max-w-6xl mx-auto mb-6 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <!-- Hospital Branding -->
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 shrink-0 ring-2 ring-emerald-400/30">
-          <Activity :size="26" class="animate-pulse" />
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 shadow-xs">
+          <Activity :size="26" class="text-emerald-600" />
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Kios Check-In Mandiri Pasien
+            <span class="text-[11px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              Anjungan Check-In Mandiri
             </span>
-            <span class="text-xs text-slate-400 font-mono">v2.5</span>
+            <span class="text-xs text-slate-400 font-mono">SangPalito</span>
           </div>
-          <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5 flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
             Puskesmas Sehat Bersama
           </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">
-            Anjungan Pelayanan Pendaftaran Terpadu · Terhubung Langsung dengan Supabase Cloud
+          <p class="text-xs text-slate-500 hidden sm:block">
+            Pindai tiket antrean pasien menggunakan mesin scanner barcode fisik atau kamera kios.
           </p>
         </div>
       </div>
 
-      <!-- Real-time Digital Monospace Clock -->
-      <div class="flex items-center justify-between md:justify-center px-4 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-center shadow-inner">
+      <!-- Real-time Digital Clock -->
+      <div class="flex items-center justify-between md:justify-center px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
         <div>
-          <div class="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">
+          <div class="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-emerald-700">
             {{ currentTimeString || '00:00:00 WIB' }}
           </div>
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+          <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
             {{ currentDateString || 'Memuat Waktu...' }}
           </div>
         </div>
       </div>
 
-      <!-- System Connectivity Badges & Controls -->
+      <!-- Controls & Navigation -->
       <div class="flex flex-wrap items-center gap-2.5">
-        <!-- Hardware Scanner Status Badge -->
-        <div
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all"
-          :class="scannerSignalActive
-            ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-            : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'"
-        >
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2" :class="scannerSignalActive ? 'bg-amber-400' : 'bg-emerald-500'"></span>
-          </span>
-          <Barcode :size="14" />
-          <span>{{ scannerSignalActive ? 'Data Scanner Diterima!' : 'Scanner Fisik (HID)' }}</span>
-        </div>
-
-        <!-- Camera Status Badge -->
-        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-700 text-slate-300">
-          <Camera :size="14" :class="isCameraActive ? 'text-emerald-400' : 'text-slate-500'" />
-          <span>{{ isCameraActive ? 'Kamera Aktif' : 'Kamera Siaga' }}</span>
-        </div>
-
         <!-- Audio Toggle Button -->
         <button
           type="button"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-medium border border-slate-700 bg-slate-900 hover:bg-slate-700/80 text-slate-200 transition-colors shadow-sm flex items-center gap-1.5"
+          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs flex items-center gap-1.5"
           @click="soundEnabled = !soundEnabled"
-          :title="soundEnabled ? 'Matikan Nada Konfirmasi' : 'Aktifkan Nada Konfirmasi'"
+          :title="soundEnabled ? 'Matikan Suara Konfirmasi' : 'Aktifkan Suara Konfirmasi'"
         >
-          <Volume2 v-if="soundEnabled" :size="16" class="text-emerald-400" />
+          <Volume2 v-if="soundEnabled" :size="16" class="text-emerald-600" />
           <VolumeX v-else :size="16" class="text-slate-400" />
           <span class="hidden sm:inline">{{ soundEnabled ? 'Audio Aktif' : 'Mute' }}</span>
         </button>
@@ -77,12 +56,12 @@
         <!-- Fullscreen Kiosk Mode Toggle -->
         <button
           type="button"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-sm"
+          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-xs"
           :class="isFullscreen
-            ? 'bg-emerald-600 border-emerald-500 text-white shadow-emerald-500/20'
-            : 'bg-slate-900 border-slate-700 hover:bg-slate-700/80 text-slate-200'"
+            ? 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-600/20'
+            : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
           @click="toggleFullscreen"
-          title="Mode Layar Penuh (Kiosk Station)"
+          title="Mode Layar Penuh"
         >
           <Minimize v-if="isFullscreen" :size="16" />
           <Maximize v-else :size="16" />
@@ -92,8 +71,7 @@
         <!-- Back to Staff Dashboard -->
         <RouterLink
           to="/staff"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-colors flex items-center gap-1"
-          title="Buka Dashboard Staf"
+          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 transition-colors flex items-center gap-1 shadow-xs"
         >
           <ChevronLeft :size="15" />
           <span class="hidden sm:inline">Staf</span>
@@ -101,30 +79,30 @@
       </div>
     </header>
 
-    <!-- COOLDOWN SENSOR STATUS BANNER -->
-    <section class="w-full max-w-7xl mx-auto mb-6">
+    <!-- COOLDOWN & SENSOR ACTIVE STATUS BANNER -->
+    <section class="w-full max-w-6xl mx-auto mb-6">
       <div
-        class="relative overflow-hidden rounded-2xl border transition-all duration-300 p-4 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        class="relative overflow-hidden rounded-2xl border transition-all duration-300 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         :class="isCooldown
-          ? 'bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-amber-500/50 shadow-amber-950/50'
-          : 'bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border-emerald-500/40 shadow-emerald-950/30'"
+          ? 'bg-amber-50 border-amber-300 text-amber-950'
+          : 'bg-emerald-50 border-emerald-200 text-emerald-950'"
       >
-        <!-- Cooldown Progress Track (animated smoothly) -->
+        <!-- Animated Cooldown Progress Bar -->
         <div
           v-if="isCooldown"
-          class="absolute bottom-0 left-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 transition-all duration-75 ease-linear shadow-[0_0_10px_rgba(251,191,36,0.8)]"
+          class="absolute bottom-0 left-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 transition-all duration-75 ease-linear"
           :style="{ width: `${cooldownProgress}%` }"
         ></div>
 
         <div class="flex items-center gap-3.5 min-w-0">
           <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-colors"
+            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition-colors"
             :class="isCooldown
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30 animate-pulse'
-              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'"
+              ? 'bg-amber-100 text-amber-700 border border-amber-300 animate-pulse'
+              : 'bg-emerald-100 text-emerald-700 border border-emerald-300'"
           >
             <Hourglass v-if="isCooldown" :size="20" class="animate-spin" />
-            <Zap v-else :size="20" class="animate-bounce" />
+            <Zap v-else :size="20" class="text-emerald-600" />
           </div>
 
           <div class="min-w-0">
@@ -132,909 +110,537 @@
               <span
                 class="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
                 :class="isCooldown
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'"
+                  ? 'bg-amber-200 text-amber-900 border border-amber-300'
+                  : 'bg-emerald-200 text-emerald-900 border border-emerald-300'"
               >
-                {{ isCooldown ? 'Jeda Sensor Aktif' : 'Sensor Siap Memindai' }}
+                {{ isCooldown ? 'Jeda Pemindaian Aktif' : 'Sensor Siap Memindai' }}
               </span>
-              <span class="text-xs text-slate-400 font-mono hidden sm:inline">
-                Interval: 3 Detik Anti-Duplikasi
+              <span class="text-xs text-slate-500 font-mono hidden sm:inline">
+                Jeda 3 Detik Anti-Duplikasi
               </span>
             </div>
 
-            <p class="text-sm font-semibold text-slate-100 truncate mt-0.5">
+            <p class="text-sm font-semibold text-slate-800 truncate mt-0.5">
               <template v-if="isCooldown">
                 Menyiapkan mesin untuk pasien berikutnya... Mohon tunggu
-                <span class="font-mono font-bold text-amber-400 text-base">({{ cooldownRemaining }}s)</span>
+                <span class="font-mono font-bold text-amber-800 text-base">({{ cooldownRemaining }}s)</span>
               </template>
               <template v-else>
-                Silakan tempelkan kode QR tiket Anda ke mesin scanner fisik atau hadapkan ke kamera kios.
+                Silakan tempelkan QR tiket ke mesin scan fisik atau hadapkan ke kamera di bawah.
               </template>
             </p>
           </div>
         </div>
 
         <!-- Sensor Status Indicator Pill -->
-        <div class="flex items-center gap-3 self-end sm:self-auto shrink-0">
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           <div
-            class="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-2 border"
+            class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-2 border bg-white shadow-xs"
             :class="isCooldown
-              ? 'bg-amber-900/40 border-amber-500/40 text-amber-300'
-              : 'bg-emerald-900/40 border-emerald-500/40 text-emerald-300'"
+              ? 'border-amber-300 text-amber-800'
+              : 'border-emerald-300 text-emerald-800'"
           >
-            <span class="w-2.5 h-2.5 rounded-full" :class="isCooldown ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'"></span>
-            {{ isCooldown ? `COOLDOWN (${cooldownRemaining}s)` : 'SENSOR READY' }}
+            <span class="w-2.5 h-2.5 rounded-full" :class="isCooldown ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'"></span>
+            {{ isCooldown ? `JEDA (${cooldownRemaining}s)` : 'SIAP MEMINDAI' }}
           </div>
         </div>
       </div>
     </section>
 
-    <!-- KIOSK NAVIGATION TABS -->
-    <nav class="w-full max-w-7xl mx-auto mb-6 flex flex-wrap gap-2.5">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md"
-        :class="activeTab === tab.id
-          ? 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-400/30'
-          : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700/80 border border-slate-700 hover:text-white'"
-        @click="switchTab(tab.id)"
-      >
-        <component :is="tab.icon" :size="17" />
-        <span>{{ tab.label }}</span>
-        <span
-          v-if="tab.badge"
-          class="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider"
-          :class="activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-300'"
-        >
-          {{ tab.badge }}
-        </span>
-      </button>
-    </nav>
-
-    <!-- MAIN TWO-COLUMN WORKSPACE -->
-    <div class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 pb-10">
-      <!-- LEFT COLUMN: SCANNER INPUT ENGINE (7 COLS) -->
-      <section class="lg:col-span-7 space-y-6">
-        <!-- TAB 1: HARDWARE BARCODE SCANNER (HID PLUG & PLAY) -->
-        <div
-          v-show="activeTab === 'hardware'"
-          class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-5"
-        >
-          <div class="flex items-center justify-between border-b border-slate-700/70 pb-4">
+    <!-- MAIN SINGLE-PAGE SCANNER WORKSPACE -->
+    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 pb-10">
+      <!-- LEFT COLUMN: LIVE SCANNER VIEWPORT (7 COLS) -->
+      <section class="lg:col-span-7 space-y-4">
+        <!-- Main Scanner Frame Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <!-- Viewport Header -->
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <Barcode :size="22" class="text-emerald-400" />
-                Mesin Barcode / QR Scanner Fisik
+              <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ScanLine :size="22" class="text-emerald-600" />
+                Area Pemindaian QR Tiket
               </h2>
-              <p class="text-xs text-slate-400 mt-1">
-                Mendukung scanner genggam atau barcode reader meja (Honeywell, Zebra, Sunmi, Datalogic, Eyoyo USB/Bluetooth HID).
-              </p>
-            </div>
-            <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Auto-Listen Aktif
-            </span>
-          </div>
-
-          <!-- Kiosk Scanner Terminal Graphic -->
-          <div class="relative overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 p-8 flex flex-col items-center justify-center text-center gap-4">
-            <!-- Animated Laser Scan Target -->
-            <div class="relative w-48 h-48 rounded-2xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center bg-slate-900/60 p-4">
-              <div class="w-full h-full rounded-xl bg-slate-950 flex flex-col items-center justify-center gap-2 text-slate-500 border border-slate-800 relative overflow-hidden">
-                <QrCode :size="64" class="text-slate-600 transition-colors" :class="{ '!text-emerald-400': scannerSignalActive }" />
-                <span class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Arahkan Laser ke Sini</span>
-
-                <!-- Animated Laser Line Sweep -->
-                <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399] animate-scanner-laser"></div>
-              </div>
-
-              <!-- Reticle Corner Accents -->
-              <div class="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-emerald-400 rounded-tl-lg"></div>
-              <div class="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-emerald-400 rounded-tr-lg"></div>
-              <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 border-emerald-400 rounded-bl-lg"></div>
-              <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 border-emerald-400 rounded-br-lg"></div>
-            </div>
-
-            <!-- Status Guidance Text -->
-            <div class="space-y-1.5 max-w-md">
-              <h3 class="text-base font-bold text-white flex items-center justify-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                Mesin Pemindai Siap Menerima Scan
-              </h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                Pasien cukup mengarahkan lembar tiket atau layar ponsel ke sorotan sinar laser mesin scanner. Sistem akan membaca token dan memverifikasi secara instan tanpa perlu menekan tombol apapun.
+              <p class="text-xs text-slate-500 mt-0.5">
+                Kamera kios aktif membaca kode QR secara real-time.
               </p>
             </div>
 
-            <!-- Signal Pulse Banner -->
-            <div
-              v-if="scannerSignalActive"
-              class="w-full py-2 px-3 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold flex items-center justify-center gap-2 animate-bounce"
-            >
-              <Zap :size="15" />
-              Sinyal Scanner Fisik Terdeteksi: {{ lastDetectedScanString }}
-            </div>
-          </div>
-
-          <!-- Hardware Configuration & Testing Input -->
-          <div class="rounded-xl bg-slate-900/90 border border-slate-700/80 p-4 space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-slate-300 flex items-center gap-1.5">
-                <Cpu :size="15" class="text-emerald-400" /> Mode Komunikasi Mesin
-              </span>
-              <span class="font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                USB HID Keyboard Emulation
-              </span>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Scanner fisik Anda bertindak layaknya keyboard super-cepat. Kode yang terpindai otomatis diterima dari halaman manapun tanpa perlu meletakkan kursor pada kotak input.
-            </p>
-
-            <!-- Optional manual test input for scanner gun -->
-            <div class="pt-2 border-t border-slate-800">
-              <label for="hardware-test-input" class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                Area Uji Scan / Tes Mesin Fisik:
-              </label>
-              <div class="relative">
-                <input
-                  id="hardware-test-input"
-                  v-model="hardwareTestInput"
-                  type="text"
-                  placeholder="Klik di sini lalu tembakkan barcode scanner untuk pengujian..."
-                  class="w-full rounded-xl bg-slate-950 border border-slate-700 py-2.5 pl-3.5 pr-20 text-xs font-mono text-emerald-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  @keydown.enter.prevent="handleHardwareTestSubmit"
-                />
-                <button
-                  type="button"
-                  class="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
-                  :disabled="!hardwareTestInput.trim() || isCooldown"
-                  @click="handleHardwareTestSubmit"
-                >
-                  Test Scan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 2: LIVE CAMERA SCANNER (WEBCAM / BUILT-IN KIOSK CAMERA) -->
-        <div
-          v-show="activeTab === 'camera'"
-          class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-5"
-        >
-          <div class="flex items-center justify-between border-b border-slate-700/70 pb-4">
-            <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <Camera :size="22" class="text-emerald-400" />
-                Kamera Scanner Kios
-              </h2>
-              <p class="text-xs text-slate-400 mt-1">
-                Kamera web kios otomatis membaca kode QR dari struk atau layar smartphone pasien.
-              </p>
-            </div>
-            <span
-              class="px-2.5 py-1 text-xs font-semibold rounded-full border"
-              :class="isCameraActive
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                : 'bg-slate-700/60 text-slate-400 border-slate-600'"
-            >
-              {{ isCameraActive ? 'Kamera Aktif' : 'Kamera Nonaktif' }}
-            </span>
-          </div>
-
-          <!-- Video Viewport -->
-          <div class="relative overflow-hidden rounded-2xl bg-slate-950 aspect-video flex items-center justify-center border-2 border-slate-700/80 shadow-2xl">
-            <video
-              ref="nativeVideoRef"
-              class="w-full h-full object-cover"
-              autoplay
-              playsinline
-              muted
-            ></video>
-            <canvas ref="scanCanvasRef" class="hidden"></canvas>
-            <div id="qr-camera-reader" class="hidden"></div>
-
-            <!-- Reticle & Laser Sweep Overlay -->
-            <div
-              v-if="isCameraActive"
-              class="pointer-events-none absolute inset-0 flex items-center justify-center"
-            >
-              <div
-                class="relative w-64 h-64 border-2 rounded-2xl transition-all duration-300"
-                :class="isCooldown
-                  ? 'border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.4)]'
-                  : 'border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.4)]'"
+            <!-- Mode Switcher (Kamera vs Input Manual) -->
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+              <button
+                type="button"
+                class="px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
+                :class="scannerMode === 'camera' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                @click="scannerMode = 'camera'"
               >
-                <!-- Reticle Corners -->
-                <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 rounded-tl-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
-                <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 rounded-tr-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
-                <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 rounded-bl-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
-                <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 rounded-br-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
+                <Camera :size="13" /> Kamera Kios
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
+                :class="scannerMode === 'manual' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                @click="scannerMode = 'manual'"
+              >
+                <Keyboard :size="13" /> Input Kode
+              </button>
+            </div>
+          </div>
 
-                <!-- Laser Line Sweep -->
+          <!-- MODE A: CAMERA SCANNER VIEWPORT -->
+          <div v-show="scannerMode === 'camera'" class="space-y-4">
+            <div class="relative overflow-hidden rounded-2xl bg-slate-950 aspect-video flex items-center justify-center border-2 border-slate-800 shadow-inner">
+              <video
+                ref="nativeVideoRef"
+                class="w-full h-full object-cover"
+                autoplay
+                playsinline
+                muted
+              ></video>
+              <canvas ref="scanCanvasRef" class="hidden"></canvas>
+              <div id="qr-camera-reader" class="hidden"></div>
+
+              <!-- Reticle & Laser Sweep Overlay -->
+              <div
+                v-if="isCameraActive"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center"
+              >
                 <div
-                  class="absolute inset-x-0 h-1 animate-scanner-laser shadow-[0_0_12px]"
+                  class="relative w-64 h-64 border-2 rounded-2xl transition-all duration-300"
                   :class="isCooldown
-                    ? 'bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-amber-400'
-                    : 'bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-emerald-400'"
-                ></div>
-
-                <!-- Cooldown Overlay Inside Reticle -->
-                <div
-                  v-if="isCooldown"
-                  class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs rounded-xl flex flex-col items-center justify-center p-3 text-center text-amber-300 gap-1.5"
+                    ? 'border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.3)]'
+                    : 'border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.3)]'"
                 >
-                  <Hourglass :size="24" class="animate-spin text-amber-400" />
-                  <span class="text-xs font-bold uppercase tracking-wider">Jeda Pemindaian</span>
-                  <span class="text-lg font-mono font-black text-white">({{ cooldownRemaining }}s)</span>
+                  <!-- Reticle Corners -->
+                  <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 rounded-tl-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
+                  <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 rounded-tr-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
+                  <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 rounded-bl-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
+                  <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 rounded-br-lg" :class="isCooldown ? 'border-amber-400' : 'border-emerald-400'"></div>
+
+                  <!-- Laser Sweep -->
+                  <div
+                    class="absolute inset-x-0 h-1 animate-scanner-laser shadow-[0_0_12px]"
+                    :class="isCooldown
+                      ? 'bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-amber-400'
+                      : 'bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-emerald-400'"
+                  ></div>
+
+                  <!-- Cooldown Overlay -->
+                  <div
+                    v-if="isCooldown"
+                    class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs rounded-xl flex flex-col items-center justify-center p-3 text-center text-amber-300 gap-1"
+                  >
+                    <Hourglass :size="24" class="animate-spin text-amber-400" />
+                    <span class="text-xs font-bold uppercase tracking-wider">Jeda Sensor</span>
+                    <span class="text-xl font-mono font-black text-white">({{ cooldownRemaining }}s)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Camera Inactive Placeholder -->
+              <div
+                v-if="!isCameraActive"
+                class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-3 bg-slate-900/90"
+              >
+                <div class="p-4 rounded-2xl bg-slate-800 border border-slate-700 text-slate-400">
+                  <CameraOff :size="36" />
+                </div>
+                <div class="max-w-xs space-y-1">
+                  <p class="font-bold text-slate-200 text-sm">Kamera Belum Dinyalakan</p>
+                  <p class="text-xs text-slate-400">
+                    Nyalakan kamera untuk mengaktifkan pemindaian visual QR secara otomatis.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <!-- Inactive Placeholder -->
-            <div
-              v-if="!isCameraActive"
-              class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-3 bg-slate-950/90"
-            >
-              <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-500">
-                <CameraOff :size="40" />
-              </div>
-              <div class="max-w-xs space-y-1">
-                <p class="font-bold text-slate-200 text-sm">Kamera Belum Aktif</p>
-                <p class="text-xs text-slate-400">
-                  Nyalakan kamera untuk mengaktifkan pemindaian visual otomatis.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Camera Controls & Device Picker -->
-          <div class="space-y-3">
-            <div v-if="cameraDevices.length > 0" class="flex items-center gap-2">
-              <label for="camera-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1.5">
-                <Camera :size="14" class="text-slate-400" /> Pilih Perangkat:
-              </label>
-              <select
-                id="camera-select"
-                v-model="selectedCameraId"
-                :disabled="isCameraActive || cameraLoading"
-                class="flex-1 rounded-xl border border-slate-700 py-2 px-3 text-xs bg-slate-900 text-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                @change="onCameraChange"
-              >
-                <option v-for="dev in cameraDevices" :key="dev.id" :value="dev.id">
-                  {{ dev.label || `Kamera ${dev.id}` }}
-                </option>
-              </select>
+            <!-- Camera Controls & Device Picker -->
+            <div class="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                title="Muat ulang daftar kamera"
-                class="p-2 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300 transition-colors"
-                @click="refreshCameras"
-              >
-                <RefreshCw :size="14" />
-              </button>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <button
-                type="button"
-                class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2"
+                class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-2"
                 :class="isCameraActive
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/30'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'"
+                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'"
                 :disabled="cameraLoading"
                 @click="toggleCamera"
               >
-                <Loader2 v-if="cameraLoading" :size="18" class="animate-spin" />
-                <Square v-else-if="isCameraActive" :size="18" />
-                <Play v-else :size="18" />
-                {{ isCameraActive ? 'Matikan Kamera Scanner' : 'Nyalakan Kamera Scanner' }}
+                <Loader2 v-if="cameraLoading" :size="16" class="animate-spin" />
+                <Square v-else-if="isCameraActive" :size="16" />
+                <Play v-else :size="16" />
+                {{ isCameraActive ? 'Matikan Kamera' : 'Nyalakan Kamera Kios' }}
               </button>
+
+              <div v-if="cameraDevices.length > 1" class="flex items-center gap-1.5">
+                <select
+                  id="camera-select"
+                  v-model="selectedCameraId"
+                  :disabled="isCameraActive || cameraLoading"
+                  class="rounded-xl border border-slate-300 py-2 px-3 text-xs bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  @change="onCameraChange"
+                >
+                  <option v-for="dev in cameraDevices" :key="dev.id" :value="dev.id">
+                    {{ dev.label || `Kamera ${dev.id}` }}
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  title="Muat ulang kamera"
+                  class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
+                  @click="refreshCameras"
+                >
+                  <RefreshCw :size="14" />
+                </button>
+              </div>
             </div>
 
-            <!-- Camera Error & Troubleshooting Card -->
+            <!-- Camera Error Card -->
             <div
               v-if="cameraError"
-              class="rounded-xl border p-4 text-xs space-y-2.5"
+              class="rounded-xl border p-3.5 text-xs space-y-2"
               :class="isDeviceInUseError
-                ? 'bg-amber-950/60 border-amber-500/40 text-amber-200'
-                : 'bg-rose-950/60 border-rose-500/40 text-rose-200'"
+                ? 'bg-amber-50 border-amber-300 text-amber-900'
+                : 'bg-rose-50 border-rose-200 text-rose-900'"
             >
-              <div class="flex items-start gap-2.5">
-                <AlertTriangle v-if="isDeviceInUseError" :size="18" class="text-amber-400 shrink-0 mt-0.5" />
-                <AlertCircle v-else :size="18" class="text-rose-400 shrink-0 mt-0.5" />
-                <div class="space-y-1">
-                  <p class="font-bold text-xs uppercase tracking-wide">
-                    {{ isDeviceInUseError ? 'Perangkat Kamera Sedang Digunakan (Device In Use)' : 'Kendala Akses Kamera' }}
-                  </p>
-                  <p class="leading-relaxed text-slate-300">
-                    {{ cameraError }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-700/60">
-                <button
-                  type="button"
-                  class="py-1.5 px-3 rounded-lg font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 transition-colors flex items-center gap-1.5"
-                  @click="forceResetCamera"
-                >
-                  <RotateCcw :size="13" /> Reset Kamera
-                </button>
-                <button
-                  type="button"
-                  class="py-1.5 px-3 rounded-lg font-semibold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition-colors flex items-center gap-1.5 ml-auto"
-                  @click="switchTab('hardware')"
-                >
-                  <Barcode :size="13" /> Gunakan Mesin Barcode Scanner
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: 1-CLICK DEMO PATIENTS SIMULATION -->
-        <div
-          v-show="activeTab === 'demo'"
-          class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-5"
-        >
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-700/70 pb-4">
-            <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <Sparkles :size="20" class="text-amber-400" />
-                Simulasi Antrean Pasien (1-Click)
-              </h2>
-              <p class="text-xs text-slate-400 mt-1">
-                Uji coba alur check-in langsung terhadap database Supabase PostgreSQL.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-              :disabled="resettingLoading"
-              @click="resetAllDemoQueues"
-            >
-              <RefreshCw :size="14" :class="{ 'animate-spin': resettingLoading }" />
-              Reset Status Semua ke 'Waiting'
-            </button>
-          </div>
-
-          <!-- Demo Patients Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div
-              v-for="item in demoQueues"
-              :key="item.qr_token"
-              class="rounded-xl border p-4 flex flex-col justify-between transition-all bg-slate-900/90 hover:border-slate-600 shadow-md"
-              :class="{
-                'border-emerald-500/40 bg-emerald-950/20': item.status === 'checked_in',
-                'border-blue-500/40 bg-blue-950/20': item.status === 'waiting',
-                'border-amber-500/40 bg-amber-950/20': item.status === 'called',
-                'border-purple-500/40 bg-purple-950/20': item.status === 'in_service'
-              }"
-            >
-              <div class="flex items-start gap-3">
-                <!-- QR Code Box -->
-                <div class="w-16 h-16 shrink-0 rounded-xl bg-white p-1 border border-slate-200 flex items-center justify-center shadow-sm">
-                  <img
-                    v-if="qrCodeDataUrls[item.qr_token]"
-                    :src="qrCodeDataUrls[item.qr_token]"
-                    :alt="`QR ${item.patient_name}`"
-                    class="w-full h-full object-contain"
-                  />
-                  <QrCode v-else :size="28" class="text-slate-800" />
-                </div>
-
-                <!-- Info -->
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center justify-between gap-1">
-                    <span class="font-bold text-sm text-white truncate">{{ item.patient_name }}</span>
-                    <span class="text-xs font-black px-1.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">
-                      {{ item.queue_code }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ item.polyclinic_name }}</p>
-
-                  <div class="mt-2 flex items-center gap-1.5">
-                    <span
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                      :class="getStatusBadgeClass(item.status)"
-                    >
-                      <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                      {{ formatStatus(item.status) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="mt-3.5 pt-2.5 border-t border-slate-800 flex items-center gap-2">
-                <button
-                  type="button"
-                  class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md"
-                  :class="isCooldown
-                    ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'"
-                  :disabled="verifyingToken === item.qr_token || isCooldown"
-                  @click="handleCheckIn(item.qr_token, 'Simulasi ' + item.patient_name)"
-                >
-                  <Loader2 v-if="verifyingToken === item.qr_token" :size="13" class="animate-spin" />
-                  <Check v-else :size="13" />
-                  {{ isCooldown ? `Jeda (${cooldownRemaining}s)` : 'Uji Check-In' }}
-                </button>
-
-                <button
-                  type="button"
-                  class="p-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-700 transition-colors"
-                  title="Kembalikan status pasien ini ke 'waiting'"
-                  @click="resetSingleQueue(item.qr_token)"
-                >
-                  <RotateCcw :size="14" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: FILE UPLOAD QR IMAGE -->
-        <div
-          v-show="activeTab === 'upload'"
-          class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-5"
-        >
-          <div class="border-b border-slate-700/70 pb-4">
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <FileImage :size="22" class="text-emerald-400" />
-              Upload Berkas Gambar QR Tiket
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">
-              Unggah file gambar e-tiket atau struk antrean pasien untuk mendeteksi token QR secara otomatis.
-            </p>
-          </div>
-
-          <div
-            class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors flex flex-col items-center justify-center gap-3 cursor-pointer bg-slate-900/60"
-            :class="isDragging ? 'border-emerald-500 bg-emerald-950/20' : 'border-slate-700 hover:border-emerald-500/60'"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleFileDrop"
-            @click="triggerFileInput"
-          >
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept="image/*"
-              class="hidden"
-              @change="handleFileChange"
-            />
-            <div class="p-3.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              <UploadCloud :size="30" />
-            </div>
-            <div>
-              <p class="text-sm font-bold text-white">
-                Tarik file ke sini atau <span class="text-emerald-400 underline">pilih dari perangkat</span>
-              </p>
-              <p class="text-xs text-slate-400 mt-1">Mendukung file PNG, JPG, JPEG, WEBP (maksimal 5MB)</p>
-            </div>
-          </div>
-
-          <div v-if="uploadedImagePreview" class="p-3 bg-slate-900 border border-slate-700 rounded-xl flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0">
-              <img :src="uploadedImagePreview" alt="Preview" class="w-14 h-14 object-cover rounded-lg border border-slate-700 shrink-0 bg-white" />
-              <div class="min-w-0">
-                <p class="text-xs font-bold text-white truncate">{{ uploadedFileName }}</p>
-                <p class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                  <CheckCircle2 :size="12" /> Berkas berhasil dianalisis dengan jsQR multi-pass
+              <div class="flex items-start gap-2">
+                <AlertTriangle v-if="isDeviceInUseError" :size="16" class="text-amber-600 shrink-0 mt-0.5" />
+                <AlertCircle v-else :size="16" class="text-rose-600 shrink-0 mt-0.5" />
+                <p class="leading-relaxed font-medium">
+                  {{ cameraError }}
                 </p>
               </div>
+              <button
+                type="button"
+                class="py-1 px-2.5 rounded-lg font-semibold text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors"
+                @click="forceResetCamera"
+              >
+                Coba Reset Kamera
+              </button>
             </div>
-            <button
-              type="button"
-              class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 border border-slate-600 hover:bg-slate-700 text-slate-200 transition-colors"
-              @click="triggerFileInput"
-            >
-              Ganti File
-            </button>
           </div>
 
-          <div v-if="fileScanning" class="flex items-center justify-center gap-2 py-4 text-emerald-400 text-xs font-semibold">
-            <Loader2 :size="16" class="animate-spin" /> Menganalisis pola matriks QR...
-          </div>
-          <div v-else-if="fileError" class="text-xs text-rose-300 bg-rose-950/60 p-3 rounded-xl border border-rose-500/40 flex items-center gap-2">
-            <AlertCircle :size="16" class="shrink-0 text-rose-400" /> {{ fileError }}
+          <!-- MODE B: MANUAL CODE INPUT VIEWPORT -->
+          <div v-show="scannerMode === 'manual'" class="space-y-4">
+            <form @submit.prevent="handleManualSubmit" class="space-y-3">
+              <div>
+                <label for="manual-token" class="block text-xs font-semibold text-slate-700 mb-1">
+                  Masukkan Kode Token QR Tiket:
+                </label>
+                <div class="relative">
+                  <input
+                    id="manual-token"
+                    v-model="manualToken"
+                    type="text"
+                    required
+                    placeholder="Contoh: qr-ahmad-fauzi-004 atau token registrasi..."
+                    class="w-full rounded-xl border border-slate-300 py-2.5 pl-3.5 pr-10 text-sm font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                  />
+                  <button
+                    v-if="manualToken"
+                    type="button"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    @click="manualToken = ''"
+                  >
+                    <X :size="16" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Demo Chips for Testing -->
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span class="text-xs text-slate-400">Pilihan Cepat:</span>
+                <button
+                  v-for="chip in quickChips"
+                  :key="chip.code"
+                  type="button"
+                  class="text-[11px] font-mono px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
+                  @click="manualToken = chip.code"
+                >
+                  {{ chip.label }}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full py-2.5 px-4 rounded-xl font-bold text-sm transition-all shadow-xs flex items-center justify-center gap-2"
+                :class="isCooldown
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'"
+                :disabled="verifyingToken === manualToken || !manualToken.trim() || isCooldown"
+              >
+                <Loader2 v-if="verifyingToken === manualToken" :size="16" class="animate-spin" />
+                <CheckCircle2 v-else :size="16" />
+                {{ isCooldown ? `Jeda (${cooldownRemaining}s)` : 'Verifikasi Check-In' }}
+              </button>
+            </form>
           </div>
         </div>
 
-        <!-- TAB 5: MANUAL TOKEN INPUT -->
-        <div
-          v-show="activeTab === 'manual'"
-          class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-5"
-        >
-          <div class="border-b border-slate-700/70 pb-4">
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <Keyboard :size="22" class="text-emerald-400" />
-              Input Manual Kode Token QR
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">
-              Masukkan token string atau paste tautan check-in untuk pengujian langsung.
-            </p>
+        <!-- HARDWARE SCANNER PERPETUAL LISTENER STATUS CARD -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all"
+              :class="scannerSignalActive
+                ? 'bg-amber-100 border-amber-300 text-amber-700 shadow-sm animate-bounce'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-700'"
+            >
+              <Barcode :size="20" />
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-900">Mesin Scan Fisik (USB / Bluetooth HID)</span>
+                <span
+                  class="text-[10px] font-bold px-1.5 py-0.2 rounded-full uppercase"
+                  :class="scannerSignalActive ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'"
+                >
+                  {{ scannerSignalActive ? 'Data Terbaca!' : 'Selalu Siaga' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 truncate mt-0.5">
+                <template v-if="scannerSignalActive">
+                  Terdeteksi scan barcode: <strong class="text-slate-800 font-mono">{{ lastDetectedScanString }}</strong>
+                </template>
+                <template v-else>
+                  Tembakkan barcode scanner langsung ke QR tiket kapan saja tanpa perlu klik kursor.
+                </template>
+              </p>
+            </div>
           </div>
 
-          <form @submit.prevent="handleManualSubmit" class="space-y-4">
-            <div>
-              <label for="manual-token" class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                String Token QR:
-              </label>
-              <div class="relative">
-                <input
-                  id="manual-token"
-                  v-model="manualToken"
-                  type="text"
-                  required
-                  placeholder="Contoh: qr-ahmad-fauzi-004 atau token UUID"
-                  class="w-full rounded-xl bg-slate-950 border border-slate-700 py-2.5 pl-3.5 pr-10 text-sm font-mono text-emerald-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-                <button
-                  v-if="manualToken"
-                  type="button"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
-                  @click="manualToken = ''"
-                >
-                  <X :size="16" />
-                </button>
-              </div>
-            </div>
-
-            <!-- Quick Chips -->
-            <div class="flex flex-wrap items-center gap-1.5">
-              <span class="text-xs text-slate-400">Pilih Cepat:</span>
-              <button
-                v-for="token in quickChips"
-                :key="token.code"
-                type="button"
-                class="text-[11px] font-mono px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
-                @click="manualToken = token.code"
-              >
-                {{ token.label }}
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              class="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2"
-              :class="isCooldown
-                ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'"
-              :disabled="verifyingToken === manualToken || !manualToken.trim() || isCooldown"
-            >
-              <Loader2 v-if="verifyingToken === manualToken" :size="16" class="animate-spin" />
-              <CheckCircle2 v-else :size="16" />
-              {{ isCooldown ? `Jeda Sensor (${cooldownRemaining}s)` : 'Verifikasi Check-In' }}
-            </button>
-          </form>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 shrink-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="hidden sm:inline">Plug & Play Ready</span>
+          </div>
         </div>
       </section>
 
-      <!-- RIGHT COLUMN: KIOSK RESULT CARD & INSPECTOR (5 COLS) -->
-      <section class="lg:col-span-5 space-y-6">
-        <!-- PRIMARY RESULT CARD -->
-        <div class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-5 sm:p-6 shadow-xl space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-700/70 pb-3">
-            <h3 class="font-bold text-white flex items-center gap-2 text-base">
-              <Activity :size="18" class="text-emerald-400" />
-              Hasil Pemindaian Kios
-            </h3>
-            <span v-if="lastResult" class="text-xs font-mono text-slate-400">
-              {{ lastResultTime }} WIB
-            </span>
-          </div>
-
-          <!-- STATE 1: STANDBY / WAITING FOR SCAN -->
-          <div
-            v-if="!lastResult && !verifyingToken"
-            class="py-14 px-4 text-center text-slate-400 flex flex-col items-center justify-center gap-3"
-          >
-            <div class="p-4 rounded-2xl bg-slate-900 border border-slate-700 text-slate-500 relative">
-              <ScanLine :size="40" class="text-emerald-400/80 animate-pulse" />
-            </div>
-            <div class="space-y-1">
-              <p class="font-bold text-slate-200 text-base">Anjungan Siap Menerima Scan</p>
-              <p class="text-xs text-slate-400 max-w-xs leading-relaxed">
-                Arahkan lembar struk ke mesin barcode scanner USB atau kamera kios. Sistem akan merespon secara otomatis.
-              </p>
-            </div>
-          </div>
-
-          <!-- STATE 2: VERIFYING IN PROGRESS -->
-          <div
-            v-else-if="verifyingToken"
-            class="py-14 px-4 text-center flex flex-col items-center justify-center gap-3 text-emerald-400"
-          >
-            <div class="relative">
-              <div class="w-16 h-16 rounded-full border-4 border-emerald-950 border-t-emerald-400 animate-spin"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <QrCode :size="22" class="text-emerald-400" />
-              </div>
-            </div>
-            <p class="font-bold text-white text-base">Memvalidasi Tiket Pasien...</p>
-            <p class="text-xs text-slate-400 font-mono">Menghubungi database Supabase PostgreSQL...</p>
-          </div>
-
-          <!-- STATE 3A: SUCCESSFUL CHECK-IN (FIRST TIME) -->
-          <div
-            v-else-if="lastResult && lastResult.success && !lastResult.data?.already_checked_in"
-            class="rounded-2xl border-2 border-emerald-500/80 bg-gradient-to-br from-emerald-950/70 via-slate-900 to-teal-950/70 p-5 sm:p-6 space-y-4 shadow-xl shadow-emerald-950/40"
-          >
-            <!-- Header Pill -->
-            <div class="flex items-start gap-3">
-              <div class="p-3 rounded-2xl bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 shrink-0">
-                <CheckCircle2 :size="28" />
-              </div>
-              <div class="min-w-0">
-                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-slate-950 uppercase tracking-wider">
-                  Check-In Berhasil Diterima
-                </div>
-                <h4 class="text-xl font-black text-white mt-1 truncate">
-                  {{ lastResultPatientName || 'Pasien Terdaftar' }}
-                </h4>
-              </div>
+      <!-- RIGHT COLUMN: VERIFICATION RESULT CARD (5 COLS) -->
+      <section class="lg:col-span-5 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4 min-h-[420px] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2 text-base">
+                <Activity :size="18" class="text-emerald-600" />
+                Hasil Verifikasi Pasien
+              </h3>
+              <span v-if="lastResult" class="text-xs font-mono text-slate-400">
+                {{ lastResultTime }} WIB
+              </span>
             </div>
 
-            <!-- Big Ticket Number Box -->
-            <div class="p-4 rounded-xl bg-slate-950/90 border border-emerald-500/40 space-y-3 shadow-inner">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Nomor Antrean Anda</p>
-                  <p class="text-4xl sm:text-5xl font-mono font-black text-emerald-400 tracking-tight drop-shadow-[0_0_12px_rgba(52,211,153,0.3)]">
-                    {{ lastResult.data?.queue_code || 'A-001' }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Antrean</p>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Checked-In
-                  </span>
-                </div>
+            <!-- STATE 1: STANDBY / READY TO SCAN -->
+            <div
+              v-if="!lastResult && !verifyingToken"
+              class="py-16 px-4 text-center text-slate-400 flex flex-col items-center justify-center gap-3"
+            >
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400">
+                <ScanLine :size="42" class="text-emerald-600 animate-pulse" />
               </div>
-
-              <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
-                <div>
-                  <span class="text-slate-400">Poliklinik Tujuan:</span>
-                  <p class="font-bold text-white text-sm mt-0.5">{{ lastResultPolyclinic || 'Poli Umum' }}</p>
-                </div>
-                <div>
-                  <span class="text-slate-400">Waktu Check-In:</span>
-                  <p class="font-bold text-white text-sm mt-0.5">{{ lastResultCheckInTime }} WIB</p>
-                </div>
-              </div>
-
-              <!-- Wait Time Estimate Info (EMA) -->
-              <div v-if="queueEstimate" class="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-xs text-emerald-200 space-y-1">
-                <div class="flex items-center justify-between font-bold">
-                  <span>Estimasi Menunggu:</span>
-                  <span class="text-emerald-400 font-mono text-sm">~{{ queueEstimate.estimate_minutes }} Menit</span>
-                </div>
-                <p class="text-[11px] text-emerald-300/80">
-                  {{ queueEstimate.ahead_count }} pasien menunggu di depan antrean Anda.
+              <div class="space-y-1">
+                <p class="font-bold text-slate-800 text-base">Silakan Pindai Tiket Anda</p>
+                <p class="text-xs text-slate-500 max-w-xs leading-relaxed">
+                  Dekatkan QR tiket antrean ke kamera atau sorotkan laser mesin scanner fisik.
                 </p>
               </div>
-
-              <!-- Next Steps Prompt -->
-              <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300 leading-relaxed">
-                👉 <strong>Langkah Selanjutnya:</strong> Silakan simpan struk Anda dan langsung menuju ruang tunggu <strong>{{ lastResultPolyclinic }}</strong>.
-              </div>
             </div>
 
-            <!-- Action buttons -->
-            <div class="flex gap-2">
-              <RouterLink
-                to="/staff"
-                class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20"
-              >
-                <Users :size="15" /> Lihat di Dashboard Staf
-              </RouterLink>
-              <button
-                type="button"
-                class="py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-                @click="resetLastResult"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-
-          <!-- STATE 3B: ALREADY CHECKED-IN (PREVENT DOUBLE CHECK-IN) -->
-          <div
-            v-else-if="lastResult && lastResult.success && lastResult.data?.already_checked_in"
-            class="rounded-2xl border-2 border-sky-400/80 bg-gradient-to-br from-sky-950/70 via-slate-900 to-indigo-950/70 p-5 sm:p-6 space-y-4 shadow-xl shadow-sky-950/40"
-          >
-            <!-- Header Pill -->
-            <div class="flex items-start gap-3">
-              <div class="p-3 rounded-2xl bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/30 shrink-0">
-                <CheckCheck :size="28" />
-              </div>
-              <div class="min-w-0">
-                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black bg-sky-500 text-slate-950 uppercase tracking-wider">
-                  Sudah Check-In Sebelumnya
+            <!-- STATE 2: LOADING / VERIFYING -->
+            <div
+              v-else-if="verifyingToken"
+              class="py-16 px-4 text-center flex flex-col items-center justify-center gap-3 text-emerald-600"
+            >
+              <div class="relative">
+                <div class="w-14 h-14 rounded-full border-4 border-emerald-100 border-t-emerald-600 animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <QrCode :size="20" class="text-emerald-600" />
                 </div>
-                <h4 class="text-xl font-black text-white mt-1 truncate">
-                  {{ lastResultPatientName || 'Pasien AntriSehat' }}
-                </h4>
               </div>
+              <p class="font-bold text-slate-900 text-sm">Memvalidasi Tiket Pasien...</p>
+              <p class="text-xs text-slate-500">Menghubungi database Supabase PostgreSQL...</p>
             </div>
 
-            <!-- Big Ticket Number Box -->
-            <div class="p-4 rounded-xl bg-slate-950/90 border border-sky-400/40 space-y-3 shadow-inner">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Nomor Antrean Anda</p>
-                  <p class="text-4xl sm:text-5xl font-mono font-black text-sky-400 tracking-tight drop-shadow-[0_0_12px_rgba(56,189,248,0.3)]">
-                    {{ lastResult.data?.queue_code || 'A-001' }}
-                  </p>
+            <!-- STATE 3A: SUCCESS (NEW CHECK-IN) -->
+            <div
+              v-else-if="lastResult && lastResult.success && !lastResult.data?.already_checked_in"
+              class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50/30 to-white p-5 space-y-4 shadow-sm"
+            >
+              <div class="flex items-start gap-3">
+                <div class="p-2.5 rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 shrink-0">
+                  <CheckCircle2 :size="26" />
                 </div>
-                <div class="text-right">
-                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Antrean</p>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-400/40">
-                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-                    {{ formatStatus(lastResult.data?.status) }}
+                <div class="min-w-0">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-600 text-white uppercase tracking-wider">
+                    Check-In Berhasil
                   </span>
+                  <h4 class="text-xl font-bold text-slate-900 mt-1 truncate">
+                    {{ lastResultPatientName || 'Pasien AntriSehat' }}
+                  </h4>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
-                <div>
-                  <span class="text-slate-400">Poliklinik Tujuan:</span>
-                  <p class="font-bold text-white text-sm mt-0.5">{{ lastResultPolyclinic || 'Poli Umum' }}</p>
+              <!-- Patient ID & Ticket Code Box -->
+              <div class="p-4 rounded-xl bg-white border border-emerald-200/80 shadow-xs space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs text-slate-500 font-medium">Nomor Antrean Anda</span>
+                    <p class="text-4xl font-black text-emerald-700 tracking-tight">
+                      {{ lastResult.data?.queue_code || 'A-001' }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs text-slate-500 font-medium">Status</span>
+                    <div>
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        Checked-In
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span class="text-slate-400">Waktu Check-In Awal:</span>
-                  <p class="font-bold text-white text-sm mt-0.5">{{ lastResultCheckInTime }} WIB</p>
+
+                <!-- Patient ID and Polyclinic details -->
+                <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">ID Pasien:</span>
+                    <span class="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 truncate max-w-[210px]">
+                      {{ lastResultPatientId || lastResult.data?.patient_id || '-' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Nama Lengkap:</span>
+                    <span class="font-bold text-slate-900">{{ lastResultPatientName || '-' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Poli Tujuan:</span>
+                    <span class="font-semibold text-slate-800">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Waktu Check-In:</span>
+                    <span class="font-semibold text-slate-800">{{ lastResultCheckInTime }} WIB</span>
+                  </div>
+                </div>
+
+                <!-- Wait time estimate info -->
+                <div v-if="queueEstimate" class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-900 flex items-center justify-between font-semibold">
+                  <span>Estimasi Menunggu:</span>
+                  <span class="text-emerald-700 font-bold">~{{ queueEstimate.estimate_minutes }} Menit ({{ queueEstimate.ahead_count }} di depan)</span>
                 </div>
               </div>
 
-              <!-- Information Card on Duplicate Prevention -->
-              <div class="p-3 rounded-xl bg-sky-950/60 border border-sky-400/30 text-xs text-sky-200 flex items-start gap-2.5">
-                <Info :size="18" class="text-sky-400 shrink-0 mt-0.5" />
-                <div class="leading-relaxed">
-                  <strong class="font-bold text-white block">Mencegah Double Check-In:</strong>
-                  Tiket ini telah divalidasi sebelumnya. Nomor antrean Anda tetap aktif dan tidak digandakan. Silakan langsung menuju ruang tunggu poli tujuan.
+              <div class="p-2.5 rounded-xl bg-emerald-100/60 text-xs text-emerald-900 flex items-start gap-2">
+                <Info :size="15" class="text-emerald-700 shrink-0 mt-0.5" />
+                <p>Silakan simpan struk Anda dan langsung menuju ruang tunggu <strong>{{ lastResultPolyclinic }}</strong>.</p>
+              </div>
+            </div>
+
+            <!-- STATE 3B: DUPLICATE CHECK-IN PREVENTED -->
+            <div
+              v-else-if="lastResult && lastResult.success && lastResult.data?.already_checked_in"
+              class="rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 via-blue-50/40 to-white p-5 space-y-4 shadow-sm"
+            >
+              <div class="flex items-start gap-3">
+                <div class="p-2.5 rounded-xl bg-sky-600 text-white shadow-sm shadow-sky-600/30 shrink-0">
+                  <CheckCheck :size="26" />
+                </div>
+                <div class="min-w-0">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-sky-600 text-white uppercase tracking-wider">
+                    Sudah Check-In Sebelumnya
+                  </span>
+                  <h4 class="text-xl font-bold text-slate-900 mt-1 truncate">
+                    {{ lastResultPatientName || 'Pasien AntriSehat' }}
+                  </h4>
+                </div>
+              </div>
+
+              <!-- Ticket Info -->
+              <div class="p-4 rounded-xl bg-white border border-sky-200 shadow-xs space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs text-slate-500 font-medium">Nomor Antrean Anda</span>
+                    <p class="text-4xl font-black text-sky-700 tracking-tight">
+                      {{ lastResult.data?.queue_code || 'A-001' }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs text-slate-500 font-medium">Status</span>
+                    <div>
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-600"></span>
+                        {{ formatStatus(lastResult.data?.status) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">ID Pasien:</span>
+                    <span class="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 truncate max-w-[210px]">
+                      {{ lastResultPatientId || lastResult.data?.patient_id || '-' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Nama Lengkap:</span>
+                    <span class="font-bold text-slate-900">{{ lastResultPatientName || '-' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Poli Tujuan:</span>
+                    <span class="font-semibold text-slate-800">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Waktu Check-In Awal:</span>
+                    <span class="font-semibold text-slate-800">{{ lastResultCheckInTime }} WIB</span>
+                  </div>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-sky-100/60 text-xs text-sky-900 flex items-start gap-2">
+                  <Info :size="15" class="text-sky-700 shrink-0 mt-0.5" />
+                  <p><strong>Tidak Duplikat:</strong> Anda sudah terdaftar dan nomor antrean Anda tetap aktif. Silakan langsung menuju ruang tunggu.</p>
                 </div>
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <RouterLink
-                to="/staff"
-                class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20"
-              >
-                <Users :size="15" /> Buka di Dashboard Staf
-              </RouterLink>
-              <button
-                type="button"
-                class="py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-                @click="resetLastResult"
-              >
-                Selesai
-              </button>
+            <!-- STATE 4: ERROR / FAILED -->
+            <div
+              v-else-if="lastResult && !lastResult.success"
+              class="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 via-orange-50/20 to-white p-5 space-y-4 shadow-sm"
+            >
+              <div class="flex items-start gap-3">
+                <div class="p-2.5 rounded-xl bg-rose-600 text-white shadow-sm shrink-0">
+                  <XCircle :size="26" />
+                </div>
+                <div>
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-600 text-white uppercase tracking-wider">
+                    Check-In Gagal
+                  </span>
+                  <h4 class="text-base font-bold text-slate-900 mt-1">
+                    {{ lastResult.message || 'Verifikasi Tiket Tidak Berhasil' }}
+                  </h4>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-white border border-rose-200 text-xs space-y-1.5">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span>Kode Masalah:</span>
+                  <span class="font-mono font-bold text-rose-700">{{ lastResult.code || 'BAD_REQUEST' }}</span>
+                </div>
+                <div class="flex items-center justify-between text-slate-600">
+                  <span>Token Terpindai:</span>
+                  <span class="font-mono text-slate-800 truncate max-w-[200px]">{{ lastScannedToken }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- STATE 4: CHECK-IN FAILED / RESTRICTED -->
-          <div
-            v-else-if="lastResult && !lastResult.success"
-            class="rounded-2xl border-2 border-rose-500/80 bg-gradient-to-br from-rose-950/70 via-slate-900 to-orange-950/70 p-5 sm:p-6 space-y-4 shadow-xl shadow-rose-950/40"
-          >
-            <div class="flex items-start gap-3">
-              <div class="p-3 rounded-2xl bg-rose-600 text-white shadow-lg shadow-rose-600/30 shrink-0">
-                <XCircle :size="28" />
-              </div>
-              <div class="min-w-0">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white uppercase tracking-wider">
-                  Check-In Tidak Berhasil
-                </span>
-                <h4 class="text-base font-bold text-white mt-1 leading-snug">
-                  {{ lastResult.message || 'Verifikasi Tiket Gagal' }}
-                </h4>
-              </div>
-            </div>
-
-            <div class="p-4 rounded-xl bg-slate-950/90 border border-rose-500/40 text-xs space-y-2">
-              <div class="flex items-center justify-between text-slate-400">
-                <span>Kode Masalah:</span>
-                <span class="font-mono font-bold text-rose-400">{{ lastResult.code || 'BAD_REQUEST' }}</span>
-              </div>
-              <div class="flex items-center justify-between text-slate-400">
-                <span>Token Terpindai:</span>
-                <span class="font-mono text-slate-300 truncate max-w-[200px]">{{ lastScannedToken }}</span>
-              </div>
-
-              <!-- Date Restriction Context -->
-              <div
-                v-if="lastResult.message?.includes('hari kunjungan') || lastResult.message?.includes('kedaluwarsa')"
-                class="p-3 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs leading-relaxed flex items-start gap-2.5 mt-2"
-              >
-                <CalendarDays :size="18" class="text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong class="font-semibold block text-amber-300">Aturan Tanggal Tiket:</strong>
-                  Kode QR tiket antrean dibuat khusus untuk sistem keamanan puskesmas dan <strong>hanya aktif pada hari kunjungan</strong> yang tertera di tiket.
-                </div>
-              </div>
-            </div>
-
+          <!-- Bottom Dismiss Button -->
+          <div v-if="lastResult" class="pt-3 border-t border-slate-100 flex gap-2">
             <button
               type="button"
-              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+              class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
               @click="resetLastResult"
             >
-              Coba Token Lain
+              Tutup & Siapkan Pindai Berikutnya
             </button>
-          </div>
-        </div>
-
-        <!-- DEVELOPER JSON INSPECTOR -->
-        <div class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-4 sm:p-5 shadow-xl space-y-3">
-          <div class="flex items-center justify-between cursor-pointer" @click="showJsonInspector = !showJsonInspector">
-            <h3 class="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-wider">
-              <Code :size="15" class="text-slate-400" />
-              Developer Payload Inspector
-            </h3>
-            <span class="text-xs text-slate-400 flex items-center gap-1 font-mono">
-              {{ showJsonInspector ? 'Sembunyikan' : 'Tampilkan' }}
-              <ChevronDown :size="14" :class="{ 'rotate-180': showJsonInspector }" />
-            </span>
-          </div>
-
-          <div v-show="showJsonInspector" class="space-y-2 pt-1">
-            <div class="text-[11px] text-slate-400 flex justify-between font-mono">
-              <span>Endpoint:</span>
-              <span class="text-emerald-400">POST /api/v1/public/queues/checkin</span>
-            </div>
-            <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-xl text-[11px] font-mono overflow-x-auto max-h-52 leading-relaxed border border-slate-800">{{ formattedJsonResult }}</pre>
-          </div>
-        </div>
-
-        <!-- SESSION AUDIT LOG -->
-        <div class="bg-slate-800/90 rounded-2xl border border-slate-700/80 p-4 sm:p-5 shadow-xl space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-700/70 pb-2">
-            <h3 class="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-wider">
-              <History :size="15" class="text-slate-400" />
-              Riwayat Pemindaian Sesi Kios
-            </h3>
-            <span class="text-xs text-slate-400 font-mono">{{ scanHistory.length }} log</span>
-          </div>
-
-          <div v-if="scanHistory.length === 0" class="text-xs text-slate-500 text-center py-4">
-            Belum ada riwayat pemindaian pada sesi ini.
-          </div>
-          <div v-else class="space-y-2 max-h-48 overflow-y-auto pr-1">
-            <div
-              v-for="(hist, idx) in scanHistory"
-              :key="idx"
-              class="flex items-center justify-between p-2 rounded-xl text-xs border"
-              :class="hist.success
-                ? (hist.alreadyCheckedIn ? 'bg-sky-950/40 border-sky-500/30' : 'bg-emerald-950/40 border-emerald-500/30')
-                : 'bg-rose-950/40 border-rose-500/30'"
-            >
-              <div class="min-w-0 flex-1 pr-2">
-                <div class="flex items-center gap-1.5">
-                  <span
-                    class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase"
-                    :class="hist.success
-                      ? (hist.alreadyCheckedIn ? 'bg-sky-600 text-white' : 'bg-emerald-600 text-white')
-                      : 'bg-rose-600 text-white'"
-                  >
-                    {{ hist.success ? (hist.alreadyCheckedIn ? 'SUDAH CHECKIN' : 'BERHASIL') : 'GAGAL' }}
-                  </span>
-                  <span class="font-medium text-slate-200 truncate">{{ hist.source }}</span>
-                </div>
-                <p class="font-mono text-[10px] text-slate-400 truncate mt-0.5">{{ hist.token }}</p>
-              </div>
-              <div class="text-right text-[10px] text-slate-400 shrink-0 font-mono">
-                <p>{{ hist.time }}</p>
-                <p>{{ hist.durationMs }}ms</p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -1043,45 +649,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted } from "vue";
 import { Html5Qrcode } from "html5-qrcode";
-import QRCode from "qrcode";
 import {
-  QrCode, Camera, CameraOff, UploadCloud, FileImage, Sparkles,
-  Keyboard, Activity, CheckCircle2, XCircle, Code, History,
-  Volume2, VolumeX, ChevronLeft, ChevronDown, Check, X,
-  RotateCcw, RefreshCw, Play, Square, Loader2, Users,
-  AlertCircle, AlertTriangle, ScanLine, CalendarDays,
-  Maximize, Minimize, Barcode, CheckCheck, Info, Zap, Hourglass, Cpu
+  QrCode, Camera, CameraOff, Keyboard, Activity, CheckCircle2,
+  XCircle, Volume2, VolumeX, ChevronLeft, CheckCheck, Info,
+  Zap, Hourglass, Barcode, ScanLine, Maximize, Minimize,
+  Loader2, Square, Play, RefreshCw, X, AlertCircle, AlertTriangle
 } from "lucide-vue-next";
 import { api } from "../../services/api";
 import { useQueueStore } from "../../stores/queue";
-import { decodeQrFromImageFile, extractCheckInToken } from "../../utils/qrReader";
+import { extractCheckInToken } from "../../utils/qrReader";
 import jsQR from "jsqr";
 
-const router = useRouter();
 const queueStore = useQueueStore();
 
-// Polyclinic ID map for auto-registration
-const polyclinicIdMap: Record<string, string> = {
-  "Poli Umum": "11111111-1111-1111-1111-111111111111",
-  "Poli Gigi": "22222222-2222-2222-2222-222222222222",
-  "Poli KIA": "33333333-3333-3333-3333-333333333333",
-  "Poli KIA / Anak": "33333333-3333-3333-3333-333333333333",
-  "Poli Lansia": "44444444-4444-4444-4444-444444444444",
-  "Poli Lansia / Geriatri": "44444444-4444-4444-4444-444444444444",
-};
-
-// Tabs Configuration
-const tabs = [
-  { id: "hardware", label: "Mesin Scan Fisik", icon: Barcode, badge: "USB / HID" },
-  { id: "camera", label: "Kamera Kios", icon: Camera },
-  { id: "demo", label: "Simulasi Pasien Demo", icon: Sparkles, badge: "1-Click" },
-  { id: "upload", label: "Upload Berkas QR", icon: FileImage },
-  { id: "manual", label: "Input Manual", icon: Keyboard },
-];
-const activeTab = ref("hardware");
+// Scanner Display Mode: Camera or Manual
+const scannerMode = ref<"camera" | "manual">("camera");
 
 // Real-time Digital Clock
 const currentTimeString = ref("");
@@ -1105,7 +689,7 @@ function updateClock() {
 }
 
 // Fullscreen Kiosk Mode
-const kioskContainerRef = ref<HTMLElement | null>(null);
+const scannerContainerRef = ref<HTMLElement | null>(null);
 const isFullscreen = ref(false);
 
 function toggleFullscreen() {
@@ -1168,7 +752,6 @@ let barcodeKeystrokeBuffer = "";
 let lastKeystrokeTime = 0;
 const scannerSignalActive = ref(false);
 const lastDetectedScanString = ref("");
-const hardwareTestInput = ref("");
 let signalResetTimer: number | null = null;
 
 function flashScannerSignal(code: string) {
@@ -1189,13 +772,11 @@ function handleGlobalKeyDown(event: KeyboardEvent) {
   const timeSinceLastKey = now - lastKeystrokeTime;
   lastKeystrokeTime = now;
 
-  // Barcode scanners type rapid keystrokes (< 80ms per char).
-  // If the delay is more than 200ms, reset the buffer as it was human typing.
+  // Barcode scanners type rapidly (< 100ms per char).
   if (timeSinceLastKey > 200) {
     barcodeKeystrokeBuffer = "";
   }
 
-  // Active element check
   const activeEl = document.activeElement;
   const isExcludedInput = activeEl && (activeEl.id === "manual-token");
 
@@ -1221,18 +802,9 @@ function handleGlobalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  // Accumulate printable alphanumeric / symbol characters
   if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
     barcodeKeystrokeBuffer += event.key;
   }
-}
-
-function handleHardwareTestSubmit() {
-  if (!hardwareTestInput.value.trim() || isCooldown.value) return;
-  const token = hardwareTestInput.value.trim();
-  hardwareTestInput.value = "";
-  flashScannerSignal(token);
-  handleCheckIn(token, "Uji Mesin Barcode Fisik");
 }
 
 // ── CAMERA SCANNER STATE ────────────────────────────────────
@@ -1249,41 +821,13 @@ const selectedCameraId = ref("");
 const cameraDevices = ref<Array<{ id: string; label: string }>>([]);
 let html5QrCode: Html5Qrcode | null = null;
 
-// File Upload State
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const isDragging = ref(false);
-const fileScanning = ref(false);
-const fileError = ref("");
-const uploadedImagePreview = ref("");
-const uploadedFileName = ref("");
-
-// Demo Patients State
-interface DemoQueueItem {
-  qr_token: string;
-  patient_name: string;
-  queue_code: string;
-  queue_number: number;
-  polyclinic_name: string;
-  status: string;
-  checked_in_at?: string;
-}
-const demoQueues = ref<DemoQueueItem[]>([
-  { qr_token: "qr-ahmad-fauzi-004", patient_name: "Ahmad Fauzi", queue_code: "A-004", queue_number: 4, polyclinic_name: "Poli Umum", status: "waiting" },
-  { qr_token: "qr-dewi-lestari-003", patient_name: "Dewi Lestari", queue_code: "A-003", queue_number: 3, polyclinic_name: "Poli Umum", status: "checked_in" },
-  { qr_token: "qr-budi-santoso-002", patient_name: "Budi Santoso", queue_code: "A-002", queue_number: 2, polyclinic_name: "Poli Umum", status: "called" },
-  { qr_token: "qr-siti-aminah-001", patient_name: "Siti Aminah", queue_code: "A-001", queue_number: 1, polyclinic_name: "Poli Umum", status: "in_service" },
-]);
-const qrCodeDataUrls = ref<Record<string, string>>({});
-const resettingLoading = ref(false);
-
 // Manual Input State
 const manualToken = ref("");
 const quickChips = [
-  { label: "Ahmad Fauzi (Waiting)", code: "qr-ahmad-fauzi-004" },
-  { label: "Dewi Lestari (Already Checked In)", code: "qr-dewi-lestari-003" },
-  { label: "Budi Santoso (Called)", code: "qr-budi-santoso-002" },
-  { label: "Siti Aminah (In Service)", code: "qr-siti-aminah-001" },
-  { label: "Token Salah (Test 404)", code: "qr-invalid-token-test-404" },
+  { label: "Ahmad Fauzi", code: "qr-ahmad-fauzi-004" },
+  { label: "Dewi Lestari", code: "qr-dewi-lestari-003" },
+  { label: "Budi Santoso", code: "qr-budi-santoso-002" },
+  { label: "Siti Aminah", code: "qr-siti-aminah-001" },
 ];
 
 // Result & Audio Feedback State
@@ -1291,30 +835,14 @@ const verifyingToken = ref("");
 const lastScannedToken = ref("");
 const lastResult = ref<any>(null);
 const lastResultTime = ref("");
+const lastResultPatientId = ref("");
 const lastResultPatientName = ref("");
 const lastResultPolyclinic = ref("");
 const lastResultCheckInTime = ref("");
 const queueEstimate = ref<any>(null);
 const soundEnabled = ref(true);
-const showJsonInspector = ref(false);
 
-// Session History Log
-interface ScanHistoryItem {
-  source: string;
-  token: string;
-  success: boolean;
-  alreadyCheckedIn: boolean;
-  time: string;
-  durationMs: number;
-}
-const scanHistory = ref<ScanHistoryItem[]>([]);
-
-const formattedJsonResult = computed(() => {
-  if (!lastResult.value) return "// Belum ada respon scan.";
-  return JSON.stringify(lastResult.value, null, 2);
-});
-
-// Sound Generator using Web Audio API
+// Web Audio API feedback
 function playSound(type: "success" | "already_checked_in" | "error" | "scanner_beep") {
   if (!soundEnabled.value) return;
   try {
@@ -1325,7 +853,6 @@ function playSound(type: "success" | "already_checked_in" | "error" | "scanner_b
     gain.connect(ctx.destination);
 
     if (type === "success") {
-      // Pleasant high-pitch double chime
       osc.type = "sine";
       osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
       osc.frequency.setValueAtTime(880, ctx.currentTime + 0.09); // A5
@@ -1334,7 +861,6 @@ function playSound(type: "success" | "already_checked_in" | "error" | "scanner_b
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.35);
     } else if (type === "already_checked_in") {
-      // Friendly informational notification chord
       osc.type = "triangle";
       osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
       osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
@@ -1343,7 +869,6 @@ function playSound(type: "success" | "already_checked_in" | "error" | "scanner_b
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.35);
     } else if (type === "scanner_beep") {
-      // Fast crisp hardware beep
       osc.type = "sine";
       osc.frequency.setValueAtTime(1200, ctx.currentTime);
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
@@ -1351,7 +876,6 @@ function playSound(type: "success" | "already_checked_in" | "error" | "scanner_b
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.06);
     } else {
-      // Low alert buzzer
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(220, ctx.currentTime);
       osc.frequency.setValueAtTime(160, ctx.currentTime + 0.1);
@@ -1360,30 +884,17 @@ function playSound(type: "success" | "already_checked_in" | "error" | "scanner_b
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.25);
     }
-  } catch {
-    // Audio context may require user interaction
-  }
+  } catch {}
 }
 
-// Formatters
 function formatStatus(status: string) {
   switch (status) {
-    case "waiting": return "Menunggu (Waiting)";
+    case "waiting": return "Menunggu";
     case "checked_in": return "Sudah Check-In";
     case "called": return "Dipanggil ke Ruang Poli";
     case "in_service": return "Sedang Dilayani Dokter";
     case "done": return "Pemeriksaan Selesai";
     default: return status || "Checked-In";
-  }
-}
-
-function getStatusBadgeClass(status: string) {
-  switch (status) {
-    case "waiting": return "bg-blue-500/20 text-blue-300 border border-blue-500/30";
-    case "checked_in": return "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-    case "called": return "bg-amber-500/20 text-amber-300 border border-amber-500/30";
-    case "in_service": return "bg-purple-500/20 text-purple-300 border border-purple-500/30";
-    default: return "bg-slate-800 text-slate-300 border border-slate-700";
   }
 }
 
@@ -1398,59 +909,9 @@ async function handleCheckIn(rawToken: string, source: string) {
 
   verifyingToken.value = token;
   lastScannedToken.value = token;
-  const startTime = performance.now();
 
   try {
     let res = await api.checkInByQR(token);
-    const duration = Math.round(performance.now() - startTime);
-
-    // If check-in fails (e.g. 404 NOT_FOUND), check if this is an appointment in local store
-    if (!res || !res.success) {
-      const localPatient = queueStore.patients.find(
-        (p) => p.qr_token === token || p.id === token || p.number === token,
-      );
-
-      if (localPatient) {
-        // Auto-register to backend database on the fly!
-        try {
-          const polyId =
-            polyclinicIdMap[localPatient.poli] ||
-            "11111111-1111-1111-1111-111111111111";
-          const guarantor =
-            localPatient.insurance === "BPJS" ? "bpjs" : "umum";
-          const gender =
-            localPatient.gender === "Perempuan" ? "female" : "male";
-
-          const regRes = await api.createAppointment({
-            nik: localPatient.nik || "3201000000000001",
-            full_name: localPatient.name || "Pasien",
-            birth_date: localPatient.birth || "1995-01-01",
-            gender,
-            phone: localPatient.phone || "081234567890",
-            guarantor,
-            polyclinic_id: polyId,
-            visit_date:
-              localPatient.date || new Date().toISOString().slice(0, 10),
-            chief_complaint:
-              localPatient.complaint || "Pemeriksaan kesehatan",
-            symptoms:
-              localPatient.symptoms && localPatient.symptoms.length > 0
-                ? localPatient.symptoms
-                : ["Pemeriksaan"],
-            duration_days: 1,
-          });
-
-          if (regRes && regRes.success && regRes.data) {
-            localPatient.qr_token = regRes.data.qr_token;
-            localPatient.number = regRes.data.queue.queue_code || localPatient.number;
-            token = regRes.data.qr_token;
-            res = await api.checkInByQR(token);
-          }
-        } catch (e) {
-          console.warn("Auto-sync local patient failed:", e);
-        }
-      }
-    }
 
     lastResult.value = res;
     lastResultTime.value = new Date().toLocaleTimeString("id-ID", {
@@ -1468,12 +929,10 @@ async function handleCheckIn(rawToken: string, source: string) {
         playSound("success");
       }
 
-      const demoMatched = demoQueues.value.find((q) => q.qr_token === token);
-      const localMatched = queueStore.patients.find(
+      // Check localStorage or queueStore for fallback names
+      let localMatched = queueStore.patients.find(
         (p) => p.qr_token === token || p.id === token || p.number === token,
       );
-
-      // Also check localStorage
       let storedPatient: any = null;
       try {
         const storedStr = localStorage.getItem("antrisehat-patients");
@@ -1483,14 +942,21 @@ async function handleCheckIn(rawToken: string, source: string) {
         }
       } catch (_) {}
 
+      // Explicitly return and display ID and Name from backend or stored match
+      lastResultPatientId.value =
+        res.data?.patient_id ||
+        localMatched?.id ||
+        storedPatient?.id ||
+        "ID-" + (token.slice(0, 8).toUpperCase());
+
       lastResultPatientName.value =
-        demoMatched?.patient_name ||
+        res.data?.patient_name ||
         localMatched?.name ||
         storedPatient?.name ||
-        (token.includes("576b758f") ? "dasdadas" : "Pasien Terverifikasi");
+        "Pasien Terdaftar";
 
       lastResultPolyclinic.value =
-        demoMatched?.polyclinic_name ||
+        res.data?.polyclinic_name ||
         localMatched?.poli ||
         storedPatient?.poli ||
         "Poli Umum";
@@ -1513,47 +979,18 @@ async function handleCheckIn(rawToken: string, source: string) {
           queueEstimate.value = est;
         });
       }
-
-      scanHistory.value.unshift({
-        source,
-        token,
-        success: true,
-        alreadyCheckedIn: isDuplicate,
-        time: lastResultTime.value,
-        durationMs: duration,
-      });
-
-      loadDemoQueues();
     } else {
       playSound("error");
-      scanHistory.value.unshift({
-        source,
-        token,
-        success: false,
-        alreadyCheckedIn: false,
-        time: lastResultTime.value,
-        durationMs: duration,
-      });
     }
   } catch (err: any) {
     playSound("error");
-    const duration = Math.round(performance.now() - startTime);
     lastResult.value = {
       success: false,
       code: "NETWORK_ERROR",
       message: err.message || "Gagal menghubungi server",
     };
-    scanHistory.value.unshift({
-      source,
-      token,
-      success: false,
-      alreadyCheckedIn: false,
-      time: new Date().toLocaleTimeString("id-ID"),
-      durationMs: duration,
-    });
   } finally {
     verifyingToken.value = "";
-    // ALWAYS start cooldown of 3 seconds after scan attempt to prevent double-scanning
     triggerCooldown(cooldownDurationSeconds);
   }
 }
@@ -1657,7 +1094,6 @@ function startNativeScanLoop() {
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // IGNORE camera frames during cooldown to prevent double reads!
       if (!isCooldown.value && !verifyingToken.value) {
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -1777,111 +1213,9 @@ async function toggleCamera() {
   }
 }
 
-// ── Tab 4: Upload File QR ────────────────────────────────────
-function triggerFileInput() {
-  fileInputRef.value?.click();
-}
-
-async function handleFileChange(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    await processImageFile(file);
-  }
-}
-
-async function handleFileDrop(event: DragEvent) {
-  isDragging.value = false;
-  const file = event.dataTransfer?.files?.[0];
-  if (file && file.type.startsWith("image/")) {
-    await processImageFile(file);
-  }
-}
-
-async function processImageFile(file: File) {
-  fileScanning.value = true;
-  fileError.value = "";
-  uploadedFileName.value = file.name;
-
-  try {
-    uploadedImagePreview.value = URL.createObjectURL(file);
-  } catch (_) {}
-
-  try {
-    let decodedText = await decodeQrFromImageFile(file);
-
-    if (!decodedText) {
-      try {
-        if (!html5QrCode) {
-          html5QrCode = new Html5Qrcode("qr-camera-reader");
-        }
-        decodedText = await html5QrCode.scanFile(file, true);
-      } catch (_) {}
-    }
-
-    if (decodedText) {
-      await handleCheckIn(decodedText, "Upload File (" + file.name + ")");
-    } else {
-      fileError.value =
-        "Tidak menemukan kode QR yang jelas dalam gambar tersebut. Pastikan pola kotak QR terlihat kontras.";
-      playSound("error");
-    }
-  } catch (err: any) {
-    fileError.value =
-      "Gagal memproses gambar: " + (err?.message || "Format file tidak didukung.");
-    playSound("error");
-  } finally {
-    fileScanning.value = false;
-  }
-}
-
-// ── Tab 3: Demo Patients ────────────────────────────────────
-async function loadDemoQueues() {
-  const list = await api.getDemoQueues();
-  if (list && list.length) {
-    demoQueues.value = list;
-    for (const q of list) {
-      if (!qrCodeDataUrls.value[q.qr_token]) {
-        try {
-          qrCodeDataUrls.value[q.qr_token] = await QRCode.toDataURL(q.qr_token, {
-            width: 140,
-            margin: 1,
-            color: { dark: "#0f172a", light: "#ffffff" },
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }
-}
-
-async function resetAllDemoQueues() {
-  resettingLoading.value = true;
-  await api.resetDemoQueue("all");
-  await loadDemoQueues();
-  resettingLoading.value = false;
-}
-
-async function resetSingleQueue(token: string) {
-  await api.resetDemoQueue(token);
-  await loadDemoQueues();
-}
-
-// ── Tab 5: Manual Input ─────────────────────────────────────
 function handleManualSubmit() {
   if (manualToken.value.trim() && !isCooldown.value) {
     handleCheckIn(manualToken.value, "Input Manual");
-  }
-}
-
-function switchTab(tabId: string) {
-  if (activeTab.value === "camera" && tabId !== "camera") {
-    stopCamera();
-  }
-  activeTab.value = tabId;
-  if (tabId === "camera" && !isCameraActive.value) {
-    initCamera();
   }
 }
 
@@ -1893,13 +1227,13 @@ onMounted(async () => {
   window.addEventListener("keydown", handleGlobalKeyDown);
   document.addEventListener("fullscreenchange", onFullscreenChange);
 
-  await loadDemoQueues();
   await refreshCameras();
+  await initCamera();
 
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get("token") || params.get("checkin");
   if (urlToken) {
-    switchTab("manual");
+    scannerMode.value = "manual";
     manualToken.value = urlToken;
     handleCheckIn(urlToken, "Tautan URL / Parameter");
   }

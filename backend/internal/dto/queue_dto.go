@@ -9,20 +9,23 @@ type UpdateQueueStatusRequest struct {
 
 // QueueResponse is the public representation of a queue entry.
 type QueueResponse struct {
-	ID            string     `json:"id"`
-	FacilityID    string     `json:"facility_id"`
-	AppointmentID string     `json:"appointment_id"`
-	PolyclinicID  string     `json:"polyclinic_id"`
-	QueueNumber   int        `json:"queue_number"`
-	QueueCode     string     `json:"queue_code,omitempty"`
+	ID               string     `json:"id"`
+	FacilityID       string     `json:"facility_id"`
+	AppointmentID    string     `json:"appointment_id"`
+	PatientID        string     `json:"patient_id,omitempty"`
+	PatientName      string     `json:"patient_name,omitempty"`
+	PolyclinicID     string     `json:"polyclinic_id"`
+	PolyclinicName   string     `json:"polyclinic_name,omitempty"`
+	QueueNumber      int        `json:"queue_number"`
+	QueueCode        string     `json:"queue_code,omitempty"`
 	Status           string     `json:"status"`
 	AlreadyCheckedIn bool       `json:"already_checked_in"`
 	CheckedInAt      *time.Time `json:"checked_in_at,omitempty"`
-	CallCount     int        `json:"call_count"`
-	CalledAt      *time.Time `json:"called_at,omitempty"`
-	ServiceStart  *time.Time `json:"service_start,omitempty"`
-	ServiceEnd    *time.Time `json:"service_end,omitempty"`
-	QueueDate     string     `json:"queue_date"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	CallCount        int        `json:"call_count"`
+	CalledAt         *time.Time `json:"called_at,omitempty"`
+	ServiceStart     *time.Time `json:"service_start,omitempty"`
+	ServiceEnd       *time.Time `json:"service_end,omitempty"`
+	QueueDate        string     `json:"queue_date"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 }

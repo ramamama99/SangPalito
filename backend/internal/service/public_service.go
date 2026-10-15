@@ -398,16 +398,21 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 			`, qID, appID, polyclinicID, queueNum, queueCode, now.Format("2006-01-02"), now)
 
 			if errQ == nil {
+				var pName string
+				_ = s.pool.QueryRow(ctx, `SELECT full_name FROM patients WHERE id = $1`, patientID).Scan(&pName)
 				return &dto.QueueResponse{
-					ID:            qID.String(),
-					AppointmentID: appID.String(),
-					PolyclinicID:  polyclinicID.String(),
-					QueueNumber:   queueNum,
-					QueueCode:     queueCode,
-					Status:        "checked_in",
-					QueueDate:     now.Format("2006-01-02"),
-					CallCount:     0,
-					CheckedInAt:   &now,
+					ID:             qID.String(),
+					AppointmentID:  appID.String(),
+					PatientID:      patientID.String(),
+					PatientName:    pName,
+					PolyclinicID:   polyclinicID.String(),
+					PolyclinicName: "Poli Umum",
+					QueueNumber:    queueNum,
+					QueueCode:      queueCode,
+					Status:         "checked_in",
+					QueueDate:      now.Format("2006-01-02"),
+					CallCount:      0,
+					CheckedInAt:    &now,
 				}, nil
 			}
 		}
@@ -437,6 +442,15 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 		)
 	}
 
+	enrichResponse := func(resp *dto.QueueResponse) {
+		if resp == nil {
+			return
+		}
+		resp.PatientID = appointment.PatientID.String()
+		_ = s.pool.QueryRow(ctx, `SELECT full_name FROM patients WHERE id = $1`, appointment.PatientID).Scan(&resp.PatientName)
+		_ = s.pool.QueryRow(ctx, `SELECT name FROM polyclinics WHERE id = $1`, appointment.PolyclinicID).Scan(&resp.PolyclinicName)
+	}
+
 	// Find the queue for this appointment and advance it
 	queues, err := s.queueRepo.FindActiveByPolyclinic(ctx, appointment.PolyclinicID, appointment.VisitDate)
 	if err != nil {
@@ -449,6 +463,7 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 				// Already checked in: do NOT double check-in! Return response with AlreadyCheckedIn = true
 				resp := toQueueResponse(q)
 				resp.AlreadyCheckedIn = true
+				enrichResponse(resp)
 				return resp, nil
 			}
 			if !q.Status.CanTransitionTo(entity.StatusCheckedIn) {
@@ -462,6 +477,7 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 			}
 			resp := toQueueResponse(q)
 			resp.AlreadyCheckedIn = false
+			enrichResponse(resp)
 			return resp, nil
 		}
 	}
@@ -475,6 +491,7 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 		if q.Status == entity.StatusCheckedIn || q.Status == entity.StatusCalled || q.Status == entity.StatusInService || q.Status == entity.StatusDone {
 			resp := toQueueResponse(&q)
 			resp.AlreadyCheckedIn = true
+			enrichResponse(resp)
 			return resp, nil
 		}
 		now := time.Now()
@@ -483,6 +500,7 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 		_ = s.queueRepo.UpdateStatus(ctx, &q)
 		resp := toQueueResponse(&q)
 		resp.AlreadyCheckedIn = false
+		enrichResponse(resp)
 		return resp, nil
 	}
 
@@ -492,8 +510,10 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 	_ = s.pool.QueryRow(ctx, `SELECT COALESCE(MAX(queue_number), 15) + 1 FROM queues WHERE polyclinic_id = $1 AND queue_date = $2`, appointment.PolyclinicID, appointment.VisitDate).Scan(&queueNum)
 	poly, _ := s.polyclinicRepo.FindByID(ctx, appointment.PolyclinicID)
 	prefix := "A"
+	polyName := "Poli Umum"
 	if poly != nil && poly.QueuePrefix != "" {
 		prefix = poly.QueuePrefix
+		polyName = poly.Name
 	}
 	queueCode := fmt.Sprintf("%s-%03d", prefix, queueNum)
 	qID := uuid.New()
@@ -503,17 +523,20 @@ func (s *publicService) CheckIn(ctx context.Context, qrToken string) (*dto.Queue
 	`, qID, appointment.ID, appointment.PolyclinicID, queueNum, queueCode, appointment.VisitDate, now)
 
 	if errCreateQueue == nil {
-		return &dto.QueueResponse{
-			ID:            qID.String(),
-			AppointmentID: appointment.ID.String(),
-			PolyclinicID:  appointment.PolyclinicID.String(),
-			QueueNumber:   queueNum,
-			QueueCode:     queueCode,
-			Status:        "checked_in",
-			QueueDate:     appointment.VisitDate.Format("2006-01-02"),
-			CallCount:     0,
-			CheckedInAt:   &now,
-		}, nil
+		resp := &dto.QueueResponse{
+			ID:             qID.String(),
+			AppointmentID:  appointment.ID.String(),
+			PolyclinicID:   appointment.PolyclinicID.String(),
+			PolyclinicName: polyName,
+			QueueNumber:    queueNum,
+			QueueCode:      queueCode,
+			Status:         "checked_in",
+			QueueDate:      appointment.VisitDate.Format("2006-01-02"),
+			CallCount:      0,
+			CheckedInAt:    &now,
+		}
+		enrichResponse(resp)
+		return resp, nil
 	}
 
 	return nil, apperror.NotFound("Antrean untuk appointment ini", nil)
