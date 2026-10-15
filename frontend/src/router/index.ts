@@ -48,6 +48,16 @@ const router = createRouter({
       component: StaffView,
     },
     {
+      path: "/database-obat",
+      name: "database-obat",
+      component: StaffView,
+    },
+    {
+      path: "/database-pasien",
+      name: "database-pasien",
+      component: StaffView,
+    },
+    {
       path: "/medical-record",
       name: "medical-record",
       component: MedicalRecordView,

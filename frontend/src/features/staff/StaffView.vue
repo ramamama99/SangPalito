@@ -1134,7 +1134,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import {
   Menu,
   Users,
@@ -1167,7 +1167,27 @@ import StaffSidebar from "./StaffSidebar.vue";
 import { api } from "../../services/api";
 
 const router = useRouter();
+const route = useRoute();
 const queueStore = useQueueStore();
+
+onMounted(() => {
+  if (route.path === "/database-obat" || route.query.tab === "obat") {
+    queueStore.role = "database_obat";
+  } else if (route.path === "/database-pasien" || route.query.tab === "pasien") {
+    queueStore.role = "database_pasien";
+  }
+});
+
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath === "/database-obat") {
+      queueStore.role = "database_obat";
+    } else if (newPath === "/database-pasien") {
+      queueStore.role = "database_pasien";
+    }
+  }
+);
 
 const currentUser = api.getCurrentUser();
 const doctorName = ref(
