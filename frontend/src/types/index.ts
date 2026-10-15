@@ -1,44 +1,51 @@
-import type { Component } from 'vue'
-
 export type Patient = {
-  id: string
-  number: string
-  name: string
-  nik: string
-  phone: string
-  birth: string
-  gender: string
-  insurance: string
-  bpjs: string
-  date: string
-  poli: string
-  complaint: string
-  allergy: string
-  symptoms: string[]
-  status: string
-  source: string
-  soap?: string
-}
+  id: string;
+  number: string;
+  name: string;
+  nik: string;
+  phone: string;
+  birth: string;
+  gender: string;
+  insurance: string;
+  bpjs: string;
+  date: string;
+  poli: string;
+  complaint: string;
+  allergy: string;
+  symptoms: string[];
+  status: string;
+  source: string;
+  soap?: string;
+};
 
 export type Service = {
-  name: string
-  desc: string
-  icon: Component
-  quota: number
-}
+  name: string;
+  desc: string;
+  iconName: string;
+  quota: number;
+};
 
-export type SoapFormData = {
-  bp_sys?: string
-  bp_dia?: string
-  hr?: string
-  temp?: string
-  spo2?: string
-  weight?: string
-  height?: string
-  doctor?: string
-  subjective?: string
-  objective?: string
-  diagnosis?: string
-  plan?: string
-  [key: string]: unknown
-}
+export type SoapData = {
+  subjective: string;
+  objective: string;
+  diagnosis: string;
+  plan: string;
+  temperature: string;
+  pressure: string;
+  pulse: string;
+};
+
+export type RegistrationForm = {
+  name: string;
+  nik: string;
+  phone: string;
+  birth: string;
+  gender: string;
+  insurance: string;
+  bpjs: string;
+  date: string;
+  poli: string;
+  complaint: string;
+  allergy: string;
+  symptoms: string[];
+};
