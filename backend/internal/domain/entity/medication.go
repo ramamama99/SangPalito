@@ -18,8 +18,9 @@ type Medication struct {
 	Route                  string    `json:"route"`
 	DefaultFrequency       string    `json:"default_frequency"` // 3 x 1 tablet sehari
 	DefaultTiming          string    `json:"default_timing"`    // Sesudah makan, Sebelum makan
-
+	UsageInstruction       string    `json:"usage_instruction"` // Petunjuk detail penggunaan
 	Indication             string    `json:"indication"`        // Indikasi
+	Stock                  int       `json:"stock"`
 	Unit                   string    `json:"unit"`
 	IsPrescriptionRequired bool      `json:"is_prescription_required"`
 	CreatedAt              time.Time `json:"created_at"`
