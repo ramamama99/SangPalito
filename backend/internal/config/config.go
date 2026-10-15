@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -53,11 +54,13 @@ type AuthConfig struct {
 
 // DBConfig holds PostgreSQL connection parameters.
 type DBConfig struct {
+	URL      string
 	Host     string
 	Port     string
 	Name     string
 	User     string
 	Password string
+	SSLMode  string
 	MaxConns int32
 	MinConns int32
 }
@@ -76,10 +79,25 @@ type SecurityConfig struct {
 
 // DSN returns the PostgreSQL connection string.
 func (db DBConfig) DSN() string {
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		db.User, db.Password, db.Host, db.Port, db.Name,
-	)
+	if db.URL != "" {
+		return db.URL
+	}
+	sslMode := db.SSLMode
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+	u := &url.URL{
+		Scheme:   "postgres",
+		Host:     fmt.Sprintf("%s:%s", db.Host, db.Port),
+		Path:     db.Name,
+		RawQuery: fmt.Sprintf("sslmode=%s", sslMode),
+	}
+	if db.Password != "" {
+		u.User = url.UserPassword(db.User, db.Password)
+	} else if db.User != "" {
+		u.User = url.User(db.User)
+	}
+	return u.String()
 }
 
 // Load reads configuration from environment variables, loading from .env if present.
@@ -118,11 +136,13 @@ func Load() (*Config, error) {
 	defaultFacility := getEnv("DEFAULT_FACILITY_ID", "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 
 	dbCfg := DBConfig{
+		URL:      getEnv("DATABASE_URL", ""),
 		Host:     getEnv("DB_HOST", "localhost"),
 		Port:     getEnv("DB_PORT", "5432"),
 		Name:     getEnv("DB_NAME", "antri_sehat"),
 		User:     getEnv("DB_USER", "postgres"),
 		Password: getEnv("DB_PASSWORD", "postgres"),
+		SSLMode:  getEnv("DB_SSLMODE", "disable"),
 		MaxConns: int32(maxConns),
 		MinConns: int32(minConns),
 	}
