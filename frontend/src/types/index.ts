@@ -72,7 +72,6 @@ export type Patient = {
   symptoms: string[];
   status: string;
   source: string;
-  address?: string;
   soap?: string;
   medication_plan?: string;
   prescription_no?: string;
