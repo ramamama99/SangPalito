@@ -20,6 +20,7 @@ tmp/
 # Environment
 .env
 *.env.local
+.env.example
 
 # Markdown planning files (gunakan root .gitignore juga)
 *.md
