@@ -164,6 +164,13 @@ func seedDefaultFacility(ctx context.Context, repo domainRepo.FacilityRepository
 }
 
 func seedTestingData(ctx context.Context, pool *pgxpool.Pool, facID uuid.UUID) {
+	// Auto-ensure user columns exist
+	_, _ = pool.Exec(ctx, `
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30);
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS polyclinic_id UUID REFERENCES polyclinics(id) ON DELETE SET NULL;
+		CREATE INDEX IF NOT EXISTS idx_users_polyclinic ON users (polyclinic_id);
+	`)
+
 	var polyID, docID, patientID uuid.UUID
 
 	// 1. Ambil atau Buat Poliklinik

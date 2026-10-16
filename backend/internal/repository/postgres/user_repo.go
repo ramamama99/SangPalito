@@ -26,10 +26,12 @@ func NewUserRepo(pool *pgxpool.Pool) *userRepo {
 const userSelectQuery = `
 	SELECT u.id, u.facility_id, u.email, u.password_hash, u.full_name,
 	       COALESCE(r.name, 'registrar') AS role,
-	       u.is_active, u.last_login_at, u.refresh_token_hash, u.created_at, u.created_at AS updated_at
+	       u.is_active, u.last_login_at, u.refresh_token_hash, u.created_at, u.created_at AS updated_at,
+	       u.phone, u.polyclinic_id, COALESCE(p.name, '') AS polyclinic_name
 	FROM users u
 	LEFT JOIN user_roles ur ON ur.user_id = u.id
 	LEFT JOIN roles r ON r.id = ur.role_id
+	LEFT JOIN polyclinics p ON p.id = u.polyclinic_id
 `
 
 // FindByID retrieves a user by their UUID.
@@ -40,6 +42,7 @@ func (r *userRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, er
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
+		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -58,6 +61,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string, facilityID uui
 	err := r.pool.QueryRow(ctx, query, email, facilityID).Scan(
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
+		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -91,6 +95,7 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 		if err := rows.Scan(
 			&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 			&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
+			&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
 		); err != nil {
 			return nil, 0, fmt.Errorf("userRepo.FindByFacilityID scan: %w", err)
 		}
@@ -101,8 +106,8 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 
 // Create inserts a new user into the database.
 func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, is_active, created_at)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, phone, polyclinic_id, is_active, created_at)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	now := time.Now()
 	user.ID = uuid.New()
@@ -111,7 +116,7 @@ func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.FacilityID, user.Email, user.PasswordHash, user.FullName,
-		user.IsActive, user.CreatedAt,
+		user.Phone, user.PolyclinicID, user.IsActive, user.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("userRepo.Create: %w", err)
@@ -129,10 +134,10 @@ func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
 
 // Update modifies an existing user's data.
 func (r *userRepo) Update(ctx context.Context, user *entity.User) error {
-	query := `UPDATE users SET full_name = $1, is_active = $2 WHERE id = $3`
+	query := `UPDATE users SET full_name = $1, phone = $2, polyclinic_id = $3, is_active = $4 WHERE id = $5`
 	user.UpdatedAt = time.Now()
 
-	_, err := r.pool.Exec(ctx, query, user.FullName, user.IsActive, user.ID)
+	_, err := r.pool.Exec(ctx, query, user.FullName, user.Phone, user.PolyclinicID, user.IsActive, user.ID)
 	if err != nil {
 		return fmt.Errorf("userRepo.Update: %w", err)
 	}
@@ -148,6 +153,19 @@ func (r *userRepo) Update(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
+// Delete removes a user and their role assignments.
+func (r *userRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	_, _ = r.pool.Exec(ctx, `DELETE FROM user_roles WHERE user_id = $1`, id)
+	cmd, err := r.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("userRepo.Delete: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return apperror.NotFound("User", nil)
+	}
+	return nil
+}
+
 // FindByRefreshTokenHash retrieves an active user matching the given refresh token SHA-256 hash.
 func (r *userRepo) FindByRefreshTokenHash(ctx context.Context, tokenHash string) (*entity.User, error) {
 	query := userSelectQuery + ` WHERE u.refresh_token_hash = $1 AND u.is_active = true`
@@ -156,6 +174,7 @@ func (r *userRepo) FindByRefreshTokenHash(ctx context.Context, tokenHash string)
 	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
+		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

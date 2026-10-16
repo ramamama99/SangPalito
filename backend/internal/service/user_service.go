@@ -20,6 +20,7 @@ type UserService interface {
 	ListUsers(ctx context.Context, facilityID uuid.UUID, page, limit int) ([]*dto.UserResponse, int, error)
 	CreateUser(ctx context.Context, req dto.UserCreateRequest, facilityID uuid.UUID) (*dto.UserResponse, error)
 	UpdateUser(ctx context.Context, id uuid.UUID, req dto.UserUpdateRequest) (*dto.UserResponse, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
 	ResetPassword(ctx context.Context, id uuid.UUID, req dto.UserResetPasswordRequest) error
 }
 
@@ -30,6 +31,27 @@ type userService struct {
 // NewUserService creates a new user service.
 func NewUserService(userRepo repository.UserRepository) UserService {
 	return &userService{userRepo: userRepo}
+}
+
+func toUserResponse(u *entity.User) *dto.UserResponse {
+	var polyIDStr *string
+	if u.PolyclinicID != nil {
+		s := u.PolyclinicID.String()
+		polyIDStr = &s
+	}
+	return &dto.UserResponse{
+		ID:             u.ID.String(),
+		FacilityID:     u.FacilityID.String(),
+		Email:          u.Email,
+		FullName:       u.FullName,
+		Phone:          u.Phone,
+		PolyclinicID:   polyIDStr,
+		PolyclinicName: u.PolyclinicName,
+		Role:           u.Role,
+		IsActive:       u.IsActive,
+		LastLogin:      u.LastLoginAt,
+		CreatedAt:      u.CreatedAt,
+	}
 }
 
 // ListUsers returns paginated staff users for a facility.
@@ -48,16 +70,7 @@ func (s *userService) ListUsers(ctx context.Context, facilityID uuid.UUID, page,
 
 	var results []*dto.UserResponse
 	for _, u := range users {
-		results = append(results, &dto.UserResponse{
-			ID:         u.ID.String(),
-			FacilityID: u.FacilityID.String(),
-			Email:      u.Email,
-			FullName:   u.FullName,
-			Role:       u.Role,
-			IsActive:   u.IsActive,
-			LastLogin:  u.LastLoginAt,
-			CreatedAt:  u.CreatedAt,
-		})
+		results = append(results, toUserResponse(u))
 	}
 	return results, total, nil
 }
@@ -80,6 +93,8 @@ func (s *userService) CreateUser(ctx context.Context, req dto.UserCreateRequest,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
 		FullName:     req.FullName,
+		Phone:        req.Phone,
+		PolyclinicID: req.PolyclinicID,
 		Role:         req.Role,
 		IsActive:     true,
 	}
@@ -90,15 +105,12 @@ func (s *userService) CreateUser(ctx context.Context, req dto.UserCreateRequest,
 
 	slog.Info("user created", "user_id", user.ID, "facility_id", facilityID, "role", user.Role)
 
-	return &dto.UserResponse{
-		ID:         user.ID.String(),
-		FacilityID: user.FacilityID.String(),
-		Email:      user.Email,
-		FullName:   user.FullName,
-		Role:       user.Role,
-		IsActive:   user.IsActive,
-		CreatedAt:  user.CreatedAt,
-	}, nil
+	// Refresh user with joins
+	if refreshed, err := s.userRepo.FindByID(ctx, user.ID); err == nil {
+		return toUserResponse(refreshed), nil
+	}
+
+	return toUserResponse(user), nil
 }
 
 // UpdateUser modifies a staff user's profile or status.
@@ -114,6 +126,12 @@ func (s *userService) UpdateUser(ctx context.Context, id uuid.UUID, req dto.User
 		}
 		user.FullName = sanitize.CleanText(*req.FullName)
 	}
+	if req.Phone != nil {
+		user.Phone = req.Phone
+	}
+	if req.PolyclinicID != nil {
+		user.PolyclinicID = req.PolyclinicID
+	}
 	if req.Role != nil {
 		user.Role = *req.Role
 	}
@@ -125,16 +143,20 @@ func (s *userService) UpdateUser(ctx context.Context, id uuid.UUID, req dto.User
 		return nil, apperror.Internal(fmt.Errorf("userService.UpdateUser: %w", err))
 	}
 
-	return &dto.UserResponse{
-		ID:         user.ID.String(),
-		FacilityID: user.FacilityID.String(),
-		Email:      user.Email,
-		FullName:   user.FullName,
-		Role:       user.Role,
-		IsActive:   user.IsActive,
-		LastLogin:  user.LastLoginAt,
-		CreatedAt:  user.CreatedAt,
-	}, nil
+	if refreshed, err := s.userRepo.FindByID(ctx, user.ID); err == nil {
+		return toUserResponse(refreshed), nil
+	}
+
+	return toUserResponse(user), nil
+}
+
+// DeleteUser deletes a staff user account.
+func (s *userService) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	if err := s.userRepo.Delete(ctx, id); err != nil {
+		return apperror.Internal(fmt.Errorf("userService.DeleteUser: %w", err))
+	}
+	slog.Info("user deleted", "user_id", id)
+	return nil
 }
 
 // ResetPassword resets a staff user's password.

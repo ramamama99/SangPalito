@@ -129,7 +129,6 @@ func (s *queueService) AdvanceQueueStatus(ctx context.Context, queueID uuid.UUID
 	// Record audit log
 	if s.auditLogRepo != nil {
 		entry := &entity.AuditLog{
-			ID:        uuid.New(),
 			Action:    "update_status",
 			Entity:    "queue",
 			EntityID:  &queue.ID,

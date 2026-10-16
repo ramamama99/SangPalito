@@ -13,6 +13,9 @@ type User struct {
 	Email            string
 	PasswordHash     string
 	FullName         string
+	Phone            *string
+	PolyclinicID     *uuid.UUID
+	PolyclinicName   string
 	Role             string // "admin", "registrar", "medic", "head"
 	IsActive         bool
 	LastLoginAt      *time.Time

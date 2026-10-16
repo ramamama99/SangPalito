@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // PublicAppointmentRequest is the payload for POST /api/v1/public/appointments.
 type PublicAppointmentRequest struct {
@@ -114,34 +118,41 @@ type QueueEstimateResponse struct {
 
 // UserCreateRequest is the payload for POST /api/v1/users.
 type UserCreateRequest struct {
-	Email    string `json:"email"     validate:"required,email,max=100"`
-	FullName string `json:"full_name" validate:"required,min=2,max=150"`
-	Password string `json:"password"  validate:"required,min=8,max=72"`
-	Role     string `json:"role"      validate:"required,oneof=admin registrar medic head"`
+	Email        string     `json:"email"         validate:"required,email,max=100"`
+	FullName     string     `json:"full_name"     validate:"required,min=2,max=150"`
+	Phone        *string    `json:"phone"         validate:"omitempty,max=30"`
+	Password     string     `json:"password"      validate:"required,min=6,max=72"`
+	Role         string     `json:"role"          validate:"required,oneof=admin registrar medic head"`
+	PolyclinicID *uuid.UUID `json:"polyclinic_id" validate:"omitempty"`
 }
 
 // UserUpdateRequest is the payload for PATCH /api/v1/users/:id.
 type UserUpdateRequest struct {
-	FullName *string `json:"full_name" validate:"omitempty,min=2,max=150"`
-	Role     *string `json:"role"      validate:"omitempty,oneof=admin registrar medic head"`
-	IsActive *bool   `json:"is_active"`
+	FullName     *string    `json:"full_name"     validate:"omitempty,min=2,max=150"`
+	Phone        *string    `json:"phone"         validate:"omitempty,max=30"`
+	Role         *string    `json:"role"          validate:"omitempty,oneof=admin registrar medic head"`
+	PolyclinicID *uuid.UUID `json:"polyclinic_id" validate:"omitempty"`
+	IsActive     *bool      `json:"is_active"`
 }
 
 // UserResetPasswordRequest is the payload for PATCH /api/v1/users/:id/password.
 type UserResetPasswordRequest struct {
-	NewPassword string `json:"new_password" validate:"required,min=8,max=72"`
+	NewPassword string `json:"new_password" validate:"required,min=6,max=72"`
 }
 
 // UserResponse is the public representation of a user.
 type UserResponse struct {
-	ID         string     `json:"id"`
-	FacilityID string     `json:"facility_id"`
-	Email      string     `json:"email"`
-	FullName   string     `json:"full_name"`
-	Role       string     `json:"role"`
-	IsActive   bool       `json:"is_active"`
-	LastLogin  *time.Time `json:"last_login_at,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
+	ID             string     `json:"id"`
+	FacilityID     string     `json:"facility_id"`
+	Email          string     `json:"email"`
+	FullName       string     `json:"full_name"`
+	Phone          *string    `json:"phone,omitempty"`
+	PolyclinicID   *string    `json:"polyclinic_id,omitempty"`
+	PolyclinicName string     `json:"polyclinic_name,omitempty"`
+	Role           string     `json:"role"`
+	IsActive       bool       `json:"is_active"`
+	LastLogin      *time.Time `json:"last_login_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
 
 // VitalsDTO holds clinical vital signs measured during patient triage or exam.

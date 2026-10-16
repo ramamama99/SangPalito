@@ -101,6 +101,48 @@
         <span v-if="!collapsed" class="nav-text">Database Obat</span>
       </button>
 
+      <!-- Group: Administrator & Eksekutif -->
+      <div v-if="!collapsed && (canAccessUserManagement || canAccessAuditLog || canAccessAnalytics)" class="nav-group-title">
+        MANAJEMEN & AUDIT
+      </div>
+
+      <button
+        v-if="canAccessUserManagement"
+        type="button"
+        class="nav-link"
+        :class="{ active: queueStore.role === 'user_management' }"
+        :title="collapsed ? 'Manajemen User' : undefined"
+        @click="selectRole('user_management')"
+      >
+        <UserCog :size="19" class="nav-icon" />
+        <span v-if="!collapsed" class="nav-text">Manajemen User</span>
+      </button>
+
+      <button
+        v-if="canAccessAuditLog"
+        type="button"
+        class="nav-link"
+        :class="{ active: queueStore.role === 'audit_log' }"
+        :title="collapsed ? 'Log Audit Realtime' : undefined"
+        @click="selectRole('audit_log')"
+      >
+        <ClipboardList :size="19" class="nav-icon" />
+        <span v-if="!collapsed" class="nav-text">Log Audit</span>
+        <span v-if="!collapsed" class="badge-counter badge-live">LIVE</span>
+      </button>
+
+      <button
+        v-if="canAccessAnalytics"
+        type="button"
+        class="nav-link"
+        :class="{ active: queueStore.role === 'analytics' }"
+        :title="collapsed ? 'Dashboard Analitik' : undefined"
+        @click="selectRole('analytics')"
+      >
+        <BarChart3 :size="19" class="nav-icon" />
+        <span v-if="!collapsed" class="nav-text">Analitik Eksekutif</span>
+      </button>
+
       <!-- Group: Display & Akses Publik -->
       <div v-if="!collapsed" class="nav-group-title">AKSES & DISPLAY</div>
 
@@ -164,6 +206,9 @@ import {
   LogOut,
   Activity,
   CalendarClock,
+  UserCog,
+  ClipboardList,
+  BarChart3,
 } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
 import { todayDate } from "../../constants/initialData";
@@ -195,7 +240,24 @@ function toggleCollapse() {
   emit("toggle");
 }
 
-function selectRole(role: "loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter") {
+const userRole = computed(() => {
+  const currentUser = api.getCurrentUser();
+  return currentUser?.role || 'admin';
+});
+
+const canAccessUserManagement = computed(() => {
+  return userRole.value === 'admin';
+});
+
+const canAccessAuditLog = computed(() => {
+  return userRole.value === 'admin' || userRole.value === 'head';
+});
+
+const canAccessAnalytics = computed(() => {
+  return userRole.value === 'admin' || userRole.value === 'head' || userRole.value === 'medic';
+});
+
+function selectRole(role: "loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter" | "user_management" | "audit_log" | "analytics") {
   queueStore.role = role;
   if (typeof window !== "undefined" && window.innerWidth < 768) {
     emit("update:collapsed", true);
@@ -218,6 +280,12 @@ const staffDisplayName = computed(() => {
       return "apt. Dimas Prasetyo, S.Farm";
     case "shift_dokter":
       return "dr. Hendra (Koordinator Medis)";
+    case "user_management":
+      return "Administrator Sistem";
+    case "audit_log":
+      return "Auditor Keamanan";
+    case "analytics":
+      return "dr. Hendra (Kepala Puskesmas)";
     default:
       return "Petugas Klinik";
   }
@@ -235,6 +303,12 @@ const currentRoleBadge = computed(() => {
       return "Farmasi & Apoteker";
     case "shift_dokter":
       return "Admin Shift & SDM";
+    case "user_management":
+      return "Admin User";
+    case "audit_log":
+      return "Audit Trail";
+    case "analytics":
+      return "Kepala Faskes";
     default:
       return "Staff Klinik";
   }

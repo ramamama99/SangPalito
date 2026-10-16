@@ -28,7 +28,13 @@
                 ? "Database Master Pasien"
                 : queueStore.role === "database_obat"
                 ? "Database Katalog Obat & Farmasi"
-                : "Manajemen Shift & Jadwal Dokter"
+                : queueStore.role === "shift_dokter"
+                ? "Manajemen Shift & Jadwal Dokter"
+                : queueStore.role === "user_management"
+                ? "Manajemen Pengguna & Staf"
+                : queueStore.role === "audit_log"
+                ? "Log Audit Realtime"
+                : "Dashboard Analitik Eksekutif"
             }}
           </h2>
           <p>
@@ -1105,6 +1111,15 @@
           </div>
         </div>
       </section>
+
+      <!-- Role: Manajemen Pengguna / Staf (Admin) -->
+      <UserManagementPanel v-else-if="queueStore.role === 'user_management'" />
+
+      <!-- Role: Log Audit Realtime (Head & Admin) -->
+      <AuditLogPanel v-else-if="queueStore.role === 'audit_log'" />
+
+      <!-- Role: Dashboard Analitik Eksekutif (Head & Admin) -->
+      <AnalyticsDashboardPanel v-else-if="queueStore.role === 'analytics'" />
     </div>
 
     <!-- Modals -->
@@ -1534,6 +1549,9 @@ import { useQueueStore } from "../../stores/queue";
 import type { Patient, Medication, PrescriptionItem, Prescription } from "../../types";
 import VerifyModal from "./VerifyModal.vue";
 import StaffSidebar from "./StaffSidebar.vue";
+import UserManagementPanel from "./UserManagementPanel.vue";
+import AuditLogPanel from "./AuditLogPanel.vue";
+import AnalyticsDashboardPanel from "./AnalyticsDashboardPanel.vue";
 import { api } from "../../services/api";
 
 const router = useRouter();
@@ -1547,6 +1565,12 @@ onMounted(() => {
     queueStore.role = "database_pasien";
   } else if (route.path === "/shift-dokter" || route.query.tab === "shift") {
     queueStore.role = "shift_dokter";
+  } else if (route.path === "/manajemen-user" || route.query.tab === "users" || route.query.tab === "user_management") {
+    queueStore.role = "user_management";
+  } else if (route.path === "/audit-log" || route.query.tab === "audit" || route.query.tab === "audit_log") {
+    queueStore.role = "audit_log";
+  } else if (route.path === "/analytics" || route.query.tab === "analytics") {
+    queueStore.role = "analytics";
   }
 });
 
@@ -1559,6 +1583,12 @@ watch(
       queueStore.role = "database_pasien";
     } else if (newPath === "/shift-dokter") {
       queueStore.role = "shift_dokter";
+    } else if (newPath === "/manajemen-user") {
+      queueStore.role = "user_management";
+    } else if (newPath === "/audit-log") {
+      queueStore.role = "audit_log";
+    } else if (newPath === "/analytics") {
+      queueStore.role = "analytics";
     }
   }
 );

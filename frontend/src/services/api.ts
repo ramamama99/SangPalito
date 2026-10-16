@@ -495,4 +495,169 @@ export const api = {
   isAuthenticated(): boolean {
     return !!localStorage.getItem('antrisehat-token')
   },
+
+  // ── 6. Master Poliklinik ─────────────────────────────────
+  async getPolyclinics() {
+    try {
+      const res = await authFetch(`${BASE_URL}/polyclinics`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get polyclinics:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  // ── 7. Manajemen User (Admin) ────────────────────────────
+  async getUsers(page = 1, limit = 50) {
+    try {
+      const res = await authFetch(`${BASE_URL}/users?page=${page}&limit=${limit}`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get users:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  async createUser(payload: {
+    email: string
+    full_name: string
+    phone?: string
+    password: string
+    role: string
+    polyclinic_id?: string
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/users`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to create user:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async updateUser(id: string, payload: {
+    full_name?: string
+    phone?: string
+    role?: string
+    polyclinic_id?: string
+    is_active?: boolean
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to update user:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async deleteUser(id: string) {
+    try {
+      const res = await authFetch(`${BASE_URL}/users/${id}`, {
+        method: 'DELETE',
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to delete user:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async resetUserPassword(id: string, newPassword: string) {
+    try {
+      const res = await authFetch(`${BASE_URL}/users/${id}/password`, {
+        method: 'PATCH',
+        body: JSON.stringify({ new_password: newPassword }),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to reset password:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  // ── 8. Log Audit Realtime (Admin & Kepala Puskesmas) ──────
+  async getAuditLogs(params: { entity?: string; entity_id?: string; page?: number; limit?: number } = {}) {
+    try {
+      const queryParams = new URLSearchParams()
+      if (params.entity) queryParams.append('entity', params.entity)
+      if (params.entity_id) queryParams.append('entity_id', params.entity_id)
+      if (params.page) queryParams.append('page', String(params.page))
+      if (params.limit) queryParams.append('limit', String(params.limit || 50))
+
+      const res = await authFetch(`${BASE_URL}/audit-logs?${queryParams.toString()}`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get audit logs:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  // ── 9. Dashboard Analitik (Kepala Puskesmas & Admin) ──────
+  async getWeeklyPatients() {
+    try {
+      const res = await authFetch(`${BASE_URL}/analytics/weekly-patients`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get weekly patients:', err)
+      return { success: false, data: null }
+    }
+  },
+
+  async getDoctorPerformance() {
+    try {
+      const res = await authFetch(`${BASE_URL}/analytics/doctor-performance`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get doctor performance:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  async getAnalyticsSummary(dateFrom?: string, dateTo?: string) {
+    try {
+      const query = new URLSearchParams()
+      if (dateFrom) query.append('date_from', dateFrom)
+      if (dateTo) query.append('date_to', dateTo)
+      const res = await authFetch(`${BASE_URL}/analytics/summary?${query.toString()}`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get analytics summary:', err)
+      return { success: false, data: null }
+    }
+  },
+
+  async getBusyHours(polyclinicId?: string, dateFrom?: string, dateTo?: string) {
+    try {
+      const query = new URLSearchParams()
+      if (polyclinicId) query.append('polyclinic_id', polyclinicId)
+      if (dateFrom) query.append('date_from', dateFrom)
+      if (dateTo) query.append('date_to', dateTo)
+      const res = await authFetch(`${BASE_URL}/analytics/busy-hours?${query.toString()}`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get busy hours:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  async getTopDiagnoses(limit = 10, dateFrom?: string, dateTo?: string) {
+    try {
+      const query = new URLSearchParams()
+      query.append('limit', String(limit))
+      if (dateFrom) query.append('date_from', dateFrom)
+      if (dateTo) query.append('date_to', dateTo)
+      const res = await authFetch(`${BASE_URL}/analytics/top-diagnoses?${query.toString()}`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get top diagnoses:', err)
+      return { success: false, data: [] }
+    }
+  },
 }

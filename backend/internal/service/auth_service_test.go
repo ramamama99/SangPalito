@@ -101,6 +101,11 @@ func (m *mockUserRepo) UpdatePassword(ctx context.Context, userID uuid.UUID, pas
 	return apperror.NotFound("User", nil)
 }
 
+func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	delete(m.usersByID, id)
+	return nil
+}
+
 // mockAuditLogRepo is a mock implementation of AuditLogRepository for unit testing.
 type mockAuditLogRepo struct {
 	logs []*entity.AuditLog

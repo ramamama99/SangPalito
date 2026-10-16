@@ -115,3 +115,19 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.OK(map[string]string{"message": "Password berhasil direset"}))
 }
+
+// Delete handles DELETE /api/v1/users/:id.
+func (h *UserHandler) Delete(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		_ = c.Error(apperror.BadRequest("ID tidak valid", err))
+		return
+	}
+
+	if err := h.userService.DeleteUser(c.Request.Context(), id); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(map[string]string{"message": "Pengguna berhasil dihapus"}))
+}

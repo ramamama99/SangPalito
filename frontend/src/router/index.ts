@@ -63,6 +63,21 @@ const router = createRouter({
       component: StaffView,
     },
     {
+      path: "/manajemen-user",
+      name: "manajemen-user",
+      component: StaffView,
+    },
+    {
+      path: "/audit-log",
+      name: "audit-log",
+      component: StaffView,
+    },
+    {
+      path: "/analytics",
+      name: "analytics",
+      component: StaffView,
+    },
+    {
       path: "/medical-record",
       name: "medical-record",
       component: MedicalRecordView,

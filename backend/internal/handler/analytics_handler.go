@@ -88,3 +88,25 @@ func (h *AnalyticsHandler) GetTopDiagnoses(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.OK(res))
 }
+
+// GET /api/v1/analytics/weekly-patients - Statistik Pasien Minggu Ini
+func (h *AnalyticsHandler) GetWeeklyPatients(c *gin.Context) {
+	facilityID := h.getFacilityID(c)
+	res, err := h.analyticsService.GetWeeklyPatients(c.Request.Context(), facilityID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(res))
+}
+
+// GET /api/v1/analytics/doctor-performance - Laporan Performa Dokter
+func (h *AnalyticsHandler) GetDoctorPerformance(c *gin.Context) {
+	facilityID := h.getFacilityID(c)
+	res, err := h.analyticsService.GetDoctorPerformance(c.Request.Context(), facilityID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(res))
+}

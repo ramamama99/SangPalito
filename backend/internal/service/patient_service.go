@@ -347,12 +347,11 @@ func safeDeref(s *string) string {
 	return *s
 }
 
-func (s *patientService) logAudit(ctx context.Context, userID *uuid.UUID, action, entityType string, entityID *uuid.UUID, ip string, meta map[string]interface{}) {
+func (s *patientService) logAudit(ctx context.Context, userID *uuid.UUID, action, entityName string, entityID *uuid.UUID, ip string, meta map[string]interface{}) {
 	entry := &entity.AuditLog{
-		ID:        uuid.New(),
 		UserID:    userID,
 		Action:    action,
-		Entity:    entityType,
+		Entity:    entityName,
 		EntityID:  entityID,
 		IPAddress: ip,
 		Meta:      meta,

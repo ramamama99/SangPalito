@@ -62,7 +62,7 @@ func Setup(
 	userService := service.NewUserService(userRepo)
 	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
 	apptService := service.NewAppointmentService(appointmentRepo, preRepo, polyclinicRepo, facilityRepo)
-	visitService := service.NewVisitService(visitRepo, icd10Repo, prescriptionRepo)
+	visitService := service.NewVisitService(visitRepo, icd10Repo, prescriptionRepo, auditLogRepo)
 	prescriptionService := service.NewPrescriptionService(prescriptionRepo, medicationRepo)
 	analyticsService := service.NewAnalyticsService(pool)
 
@@ -205,6 +205,7 @@ func Setup(
 			users.GET("", userHandler.List)
 			users.POST("", userHandler.Create)
 			users.PATCH("/:id", userHandler.Update)
+			users.DELETE("/:id", userHandler.Delete)
 			users.PATCH("/:id/password", userHandler.ResetPassword)
 		}
 
@@ -215,9 +216,11 @@ func Setup(
 			analytics.GET("/summary", analyticsHandler.GetSummary)
 			analytics.GET("/busy-hours", analyticsHandler.GetBusyHours)
 			analytics.GET("/top-diagnoses", analyticsHandler.GetTopDiagnoses)
+			analytics.GET("/weekly-patients", analyticsHandler.GetWeeklyPatients)
+			analytics.GET("/doctor-performance", analyticsHandler.GetDoctorPerformance)
 		}
 
-		// Audit Logs (admin only - F-12)
-		authenticated.GET("/audit-logs", middleware.RequireRoles("admin"), auditLogHandler.List)
+		// Audit Logs (admin and head only)
+		authenticated.GET("/audit-logs", middleware.RequireRoles("admin", "head"), auditLogHandler.List)
 	}
 }

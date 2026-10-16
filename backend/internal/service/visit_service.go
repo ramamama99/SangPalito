@@ -25,16 +25,18 @@ type VisitService interface {
 }
 
 type visitService struct {
-	visitRepo repository.VisitRepository
-	icd10Repo repository.ICD10Repository
-	rxRepo    repository.PrescriptionRepository
+	visitRepo    repository.VisitRepository
+	icd10Repo    repository.ICD10Repository
+	rxRepo       repository.PrescriptionRepository
+	auditLogRepo repository.AuditLogRepository
 }
 
-func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.ICD10Repository, rxRepo repository.PrescriptionRepository) VisitService {
+func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.ICD10Repository, rxRepo repository.PrescriptionRepository, auditLogRepo repository.AuditLogRepository) VisitService {
 	return &visitService{
-		visitRepo: visitRepo,
-		icd10Repo: icd10Repo,
-		rxRepo:    rxRepo,
+		visitRepo:    visitRepo,
+		icd10Repo:    icd10Repo,
+		rxRepo:       rxRepo,
+		auditLogRepo: auditLogRepo,
 	}
 }
 
@@ -132,6 +134,33 @@ func (s *visitService) CreateVisit(ctx context.Context, req *dto.CreateVisitRequ
 
 	if err := s.visitRepo.Create(ctx, visit, diagnoses); err != nil {
 		return nil, apperror.Internal(fmt.Errorf("failed to record clinical visit: %w", err))
+	}
+
+	if s.auditLogRepo != nil {
+		diagSummary := ""
+		for _, d := range diagnoses {
+			if d.IsPrimary {
+				diagSummary = d.ICD10Code
+				break
+			}
+		}
+		meta := map[string]interface{}{
+			"action_detail": "Dokter menangani pemeriksaan klinis dan menyimpan rekam medis",
+			"patient_id":    visit.PatientID.String(),
+			"diagnosis":     diagSummary,
+		}
+		if visit.DoctorID != nil {
+			meta["doctor_id"] = visit.DoctorID.String()
+		}
+		entry := &entity.AuditLog{
+			UserID:    createdBy,
+			Action:    "tangani_pasien",
+			Entity:    "visit",
+			EntityID:  &visit.ID,
+			Meta:      meta,
+			CreatedAt: time.Now(),
+		}
+		_ = s.auditLogRepo.Create(ctx, entry)
 	}
 
 	return s.GetVisitByID(ctx, visit.ID)

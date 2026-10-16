@@ -57,7 +57,7 @@ export const useQueueStore = defineStore("queue", () => {
   const notice = ref<string>("");
   let noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const role = ref<"loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter">("loket");
+  const role = ref<"loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter" | "user_management" | "audit_log" | "analytics">("loket");
   const selected = ref<string>("demo-1");
   const verify = ref<Patient | null>(null);
   const search = ref<string>("");

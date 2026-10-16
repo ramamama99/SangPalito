@@ -51,27 +51,33 @@ func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uu
 	argIdx := 1
 
 	if entityName != "" {
-		whereClause += fmt.Sprintf(" AND entity = $%d", argIdx)
+		whereClause += fmt.Sprintf(" AND a.entity = $%d", argIdx)
 		args = append(args, entityName)
 		argIdx++
 	}
 	if entityID != nil {
-		whereClause += fmt.Sprintf(" AND entity_id = $%d", argIdx)
+		whereClause += fmt.Sprintf(" AND a.entity_id = $%d", argIdx)
 		args = append(args, *entityID)
 		argIdx++
 	}
 
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM audit_logs %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM audit_logs a %s", whereClause)
 	var total int
 	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("auditLogRepo.Find count: %w", err)
 	}
 
 	query := fmt.Sprintf(`
-		SELECT id, user_id, action, entity, entity_id, ip_address, metadata, created_at
-		FROM audit_logs
+		SELECT a.id, a.user_id, a.action, a.entity, a.entity_id, a.ip_address, a.metadata, a.created_at,
+		       COALESCE(u.full_name, 'Sistem / Anonim') AS user_name,
+		       COALESCE(u.email, '-') AS user_email,
+		       COALESCE(r.name, '-') AS user_role
+		FROM audit_logs a
+		LEFT JOIN users u ON u.id = a.user_id
+		LEFT JOIN user_roles ur ON ur.user_id = u.id
+		LEFT JOIN roles r ON r.id = ur.role_id
 		%s
-		ORDER BY created_at DESC
+		ORDER BY a.created_at DESC
 		LIMIT $%d OFFSET $%d
 	`, whereClause, argIdx, argIdx+1)
 
@@ -87,7 +93,10 @@ func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uu
 	for rows.Next() {
 		var l entity.AuditLog
 		var metaJSON []byte
-		if err := rows.Scan(&l.ID, &l.UserID, &l.Action, &l.Entity, &l.EntityID, &l.IPAddress, &metaJSON, &l.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&l.ID, &l.UserID, &l.Action, &l.Entity, &l.EntityID, &l.IPAddress, &metaJSON, &l.CreatedAt,
+			&l.UserName, &l.UserEmail, &l.UserRole,
+		); err != nil {
 			return nil, 0, fmt.Errorf("auditLogRepo.Find scan: %w", err)
 		}
 		if len(metaJSON) > 0 {

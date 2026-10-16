@@ -134,7 +134,6 @@ func (s *authService) Logout(ctx context.Context, userID uuid.UUID) error {
 
 func (s *authService) logAudit(ctx context.Context, userID *uuid.UUID, action, entityType string, entityID *uuid.UUID, ip string, meta map[string]interface{}) {
 	entry := &entity.AuditLog{
-		ID:        uuid.New(),
 		UserID:    userID,
 		Action:    action,
 		Entity:    entityType,

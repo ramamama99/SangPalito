@@ -19,4 +19,5 @@ type UserRepository interface {
 	UpdateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash *string) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }

@@ -58,6 +58,10 @@ async function handleLogin() {
       const user = res.data.user;
       if (user?.role === "medic") {
         queueStore.role = "medis";
+      } else if (user?.role === "head") {
+        queueStore.role = "analytics";
+      } else if (user?.role === "admin") {
+        queueStore.role = "user_management";
       } else {
         queueStore.role = "loket";
       }
