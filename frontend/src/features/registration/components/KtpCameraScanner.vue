@@ -28,7 +28,7 @@
         <button
           type="button"
           @click="initCamera"
-          class="px-4 py-2 bg-[var(--teal,#12b8b0)] hover:brightness-110 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-md"
+          class="px-5 py-2.5 bg-[var(--teal,#12b8b0)] hover:bg-[#0ea59e] text-white text-xs font-semibold rounded-full transition flex items-center gap-1.5 cursor-pointer shadow-md"
         >
           <RefreshCw class="w-3.5 h-3.5" />
           Coba Lagi
@@ -36,7 +36,7 @@
         <button
           type="button"
           @click="$emit('switch-to-upload')"
-          class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+          class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-full transition flex items-center gap-1.5 cursor-pointer"
         >
           <UploadCloud class="w-3.5 h-3.5" />
           Gunakan Upload File
@@ -53,24 +53,20 @@
       <div
         ref="frameEl"
         class="relative w-[92%] max-w-[400px] aspect-[85.6/54] rounded-2xl border-2 transition-all duration-300 overflow-hidden pointer-events-auto shadow-2xl"
-        :class="autoCatchSuccess ? 'border-emerald-400 ring-4 ring-emerald-400/50 shadow-[0_0_40px_rgba(16,185,129,0.7)]' : isDetecting ? 'border-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.5)]' : 'border-[var(--teal,#12b8b0)] shadow-[0_0_30px_rgba(18,184,176,0.4)]'"
+        :class="autoCatchSuccess ? 'border-[var(--teal,#12b8b0)] ring-4 ring-[#12b8b040] shadow-[0_0_40px_rgba(18,184,176,0.6)]' : isDetecting ? 'border-[var(--coral,#d97f6c)] shadow-[0_0_30px_rgba(217,127,108,0.5)]' : 'border-[var(--teal,#12b8b0)] shadow-[0_0_30px_rgba(18,184,176,0.4)]'"
       >
         <!-- Corner Markers (Sudut Penunjuk KTP) -->
         <div
-          class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 rounded-tl-xl transition-colors"
-          :class="autoCatchSuccess ? 'border-emerald-300' : 'border-[var(--teal,#12b8b0)]'"
+          class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 rounded-tl-xl transition-colors border-[var(--teal,#12b8b0)]"
         ></div>
         <div
-          class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 rounded-tr-xl transition-colors"
-          :class="autoCatchSuccess ? 'border-emerald-300' : 'border-[var(--teal,#12b8b0)]'"
+          class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 rounded-tr-xl transition-colors border-[var(--teal,#12b8b0)]"
         ></div>
         <div
-          class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 rounded-bl-xl transition-colors"
-          :class="autoCatchSuccess ? 'border-emerald-300' : 'border-[var(--teal,#12b8b0)]'"
+          class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 rounded-bl-xl transition-colors border-[var(--teal,#12b8b0)]"
         ></div>
         <div
-          class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 rounded-br-xl transition-colors"
-          :class="autoCatchSuccess ? 'border-emerald-300' : 'border-[var(--teal,#12b8b0)]'"
+          class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 rounded-br-xl transition-colors border-[var(--teal,#12b8b0)]"
         ></div>
 
         <!-- Laser Scan Animation (Berhenti ketika autoCatchSuccess) -->
@@ -81,8 +77,8 @@
 
         <!-- Guidance Watermark di dalam Frame KTP -->
         <div class="absolute inset-0 flex flex-col items-center justify-between p-2.5 sm:p-3 text-center pointer-events-none">
-          <div class="flex items-center gap-1.5 bg-slate-950/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80">
-            <span class="w-2 h-2 rounded-full animate-ping" :class="autoCatchSuccess ? 'bg-emerald-400' : 'bg-[var(--teal,#12b8b0)]'"></span>
+          <div class="flex items-center gap-1.5 bg-slate-950/75 backdrop-blur-md px-3 py-1 rounded-full border border-slate-700/80">
+            <span class="w-2 h-2 rounded-full animate-ping bg-[var(--teal,#12b8b0)]"></span>
             <span class="text-[11px] font-bold tracking-wide uppercase text-teal-300">
               {{ autoCatchSuccess ? 'KTP Terbaca Jelas' : 'Auto-Read Aktif' }}
             </span>
@@ -90,12 +86,12 @@
 
           <!-- Status deteksi dinamis -->
           <div class="bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/80 max-w-[92%]">
-            <p v-if="autoCatchSuccess" class="text-xs font-bold text-emerald-300 flex items-center gap-1.5 justify-center">
-              <CheckCircle2 class="w-4 h-4 text-emerald-400" />
+            <p v-if="autoCatchSuccess" class="text-xs font-bold text-teal-300 flex items-center gap-1.5 justify-center">
+              <CheckCircle2 class="w-4 h-4 text-[var(--teal,#12b8b0)]" />
               Berhasil Ditangkap Otomatis!
             </p>
             <p v-else-if="detectedNikPreview" class="text-xs font-semibold text-amber-300 flex items-center gap-1.5 justify-center">
-              <Loader2 class="w-3.5 h-3.5 animate-spin text-amber-400" />
+              <Loader2 class="w-3.5 h-3.5 animate-spin text-[var(--teal,#12b8b0)]" />
               NIK Terdeteksi: {{ detectedNikPreview }}... Menstabilkan
             </p>
             <p v-else-if="isDetecting" class="text-xs font-medium text-slate-200 flex items-center gap-1.5 justify-center">

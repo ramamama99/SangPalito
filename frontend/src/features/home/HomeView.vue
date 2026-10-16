@@ -4,7 +4,6 @@
     <ServicesSection />
     <HowItWorksSection />
     <FaqSection />
-    <CtaSection />
     <LookupModal />
   </div>
 </template>
@@ -14,6 +13,5 @@ import HeroSection from "./HeroSection.vue";
 import ServicesSection from "./ServicesSection.vue";
 import HowItWorksSection from "./HowItWorksSection.vue";
 import FaqSection from "./FaqSection.vue";
-import CtaSection from "./CtaSection.vue";
 import LookupModal from "./LookupModal.vue";
 </script>

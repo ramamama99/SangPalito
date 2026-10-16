@@ -92,25 +92,30 @@ p {
   padding-right: 36px;
 }
 .header {
-  height: 94px;
-  background: #fff;
+  height: 96px;
+  background: transparent;
 }
 .nav-wrap {
   position: fixed;
-  top: 0;
+  top: 12px;
   left: 50%;
   z-index: 40;
-  width: 100%;
-  max-width: 1200px;
+  width: calc(100% - 32px);
+  max-width: 1180px;
   margin: auto;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 94px;
-  padding: 0 36px;
-  border-bottom: 1px solid var(--line);
-  background: #fff;
+  height: 76px;
+  padding: 0 30px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px -4px rgba(25, 90, 95, 0.07);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .brand {
   display: inline-flex;
@@ -1219,6 +1224,7 @@ textarea.input-error,
 }
 .login-card .back-link {
   margin: 20px auto 0;
+  text-align: center;
 }
 .dashboard {
   display: flex;
@@ -1792,11 +1798,14 @@ td small {
     padding-right: 22px;
   }
   .header {
-    height: 76px;
+    height: 80px;
   }
   .nav-wrap {
-    height: 76px;
-    padding: 0 22px;
+    top: 8px;
+    width: calc(100% - 20px);
+    height: 64px;
+    padding: 0 16px;
+    border-radius: 14px;
   }
   .brand {
     font-size: 24px;
@@ -1808,14 +1817,17 @@ td small {
   .nav {
     display: none;
     position: absolute;
-    top: 76px;
+    top: 72px;
     left: 0;
     right: 0;
-    background: white;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 20;
     padding: 20px;
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 15px 25px #00000008;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(25, 90, 95, 0.14);
   }
   .nav.open {
     display: flex;

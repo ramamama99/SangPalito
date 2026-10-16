@@ -4,9 +4,6 @@
     <header class="flex items-center justify-between gap-4 pb-2.5 border-b border-[var(--line)] shrink-0">
       <div class="flex items-center gap-3">
         <Brand />
-        <span class="badge !py-1 !px-2.5 !text-xs !font-bold flex items-center gap-1.5">
-          <span class="live-dot" /> Layar TV Antrean
-        </span>
       </div>
 
       <!-- Real-time Clock Widget (UTC+7 / WIB) - Diperbesar untuk Layar TV -->
@@ -29,17 +26,13 @@
         v-for="poli in polyclinics"
         :key="poli.id"
         class="dashboard-panel !overflow-hidden !p-0 flex flex-col justify-between h-full min-h-0 transition-all duration-200"
-        :class="{ '!border-[var(--deep)] !shadow-xl !ring-2 !ring-[var(--deep)]/50': isPoliCalling(poli.name, poli.code) }"
         :aria-label="`Antrean ${poli.name}`"
       >
-        <!-- Column Header with Poli Title & Badge -->
-        <div class="flex items-center justify-between gap-2 border-b border-[var(--line)] bg-[var(--deep)] px-4 py-3 text-white shrink-0">
-          <span class="inline-flex items-center gap-2.5 font-bold text-base truncate">
+        <!-- Column Header with Poli Title -->
+        <div class="flex items-center justify-center border-b border-[var(--line)] bg-[var(--deep)] px-4 py-3 text-white shrink-0 text-center">
+          <span class="inline-flex items-center justify-center gap-2.5 font-bold text-base truncate">
             <component :is="poli.icon" :size="20" aria-hidden="true" class="shrink-0" />
             <span class="truncate">{{ poli.name }}</span>
-          </span>
-          <span class="rounded-lg bg-white/20 px-2.5 py-1 text-sm font-black font-mono tracking-wider shrink-0">
-            {{ poli.code }}
           </span>
         </div>
 
@@ -78,12 +71,12 @@
               <div
                 v-for="p in poli.nextPatients.slice(0, 5)"
                 :key="p.id"
-                class="flex items-center justify-between gap-3 border-b border-[var(--line)] py-2.5 px-2 text-sm last:border-0 rounded-lg transition-colors hover:bg-slate-50"
+                class="flex items-center justify-between gap-3 border-b border-[var(--line)] py-2.5 px-2 text-sm last:border-0 rounded-lg transition-colors hover:bg-[#f6f8f5]"
               >
-                <strong class="rounded-lg bg-[var(--deep)]/10 px-3 py-1.5 text-base sm:text-lg tabular-nums text-[var(--deep)] font-black shrink-0 tracking-wide">
+                <strong class="rounded-lg bg-[var(--deep)]/10 px-3 py-1.5 text-base sm:text-lg tabular-nums text-[var(--deep)] font-black shrink-0 tracking-wide font-['Manrope']">
                   {{ p.number }}
                 </strong>
-                <span class="truncate text-slate-800 font-semibold text-right text-xs sm:text-sm">
+                <span class="truncate text-[#243e40] font-semibold text-right text-xs sm:text-sm">
                   {{ p.name }}
                 </span>
               </div>
@@ -96,10 +89,10 @@
 
           <!-- 3. Doctor & Room Info -->
           <div class="pt-2.5 border-t border-[var(--line)] flex items-center justify-between text-xs sm:text-sm text-[var(--muted)] shrink-0">
-            <span class="truncate max-w-[150px] font-semibold text-slate-600" :title="poli.doctorName">
+            <span class="truncate flex-1 pr-2 font-semibold text-[var(--deep)]" :title="poli.doctorName">
               {{ poli.doctorName }}
             </span>
-            <span class="font-mono text-slate-600 shrink-0 font-bold bg-slate-100 px-2 py-0.5 rounded">{{ poli.room }}</span>
+            <span class="font-mono text-[var(--deep)] shrink-0 font-bold bg-[#f6f8f5] px-2 py-0.5 rounded border border-[var(--line)]">{{ poli.room }}</span>
           </div>
         </div>
       </section>
@@ -233,16 +226,6 @@ const polyclinics = computed(() => {
     };
   });
 });
-
-function isPoliCalling(poliName: string, code: string) {
-  if (!queueStore.active) return false;
-  const activePoli = (queueStore.active.poli || "").toLowerCase();
-  const activeNum = (queueStore.active.number || "").toUpperCase();
-  return (
-    activePoli.includes(poliName.toLowerCase().slice(0, 6)) ||
-    activeNum.startsWith(code + "-")
-  );
-}
 
 onMounted(() => {
   updateUtc7Clock();

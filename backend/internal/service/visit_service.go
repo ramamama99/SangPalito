@@ -16,12 +16,13 @@ import (
 )
 
 type VisitService interface {
-	CreateVisit(ctx context.Context, req *dto.CreateVisitRequest, createdBy *uuid.UUID) (*dto.VisitResponse, error)
+	CreateVisit(ctx context.Context, req *dto.CreateVisitRequest, createdBy *uuid.UUID, ip string, role string) (*dto.VisitResponse, error)
 	GetVisitByID(ctx context.Context, id uuid.UUID) (*dto.VisitResponse, error)
 	GetVisitsByPatientID(ctx context.Context, patientID uuid.UUID) ([]dto.VisitResponse, error)
 	UpdateVisit(ctx context.Context, id uuid.UUID, req *dto.UpdateVisitRequest) error
 	SearchICD10(ctx context.Context, query string, limit int) ([]dto.ICD10Response, error)
 	SeedICD10(ctx context.Context) error
+	LogVisitAudit(ctx context.Context, req *dto.LogVisitAuditRequest, userID *uuid.UUID, userRole, userFullName, ip string) error
 }
 
 type visitService struct {
@@ -31,7 +32,12 @@ type visitService struct {
 	auditLogRepo repository.AuditLogRepository
 }
 
-func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.ICD10Repository, rxRepo repository.PrescriptionRepository, auditLogRepo repository.AuditLogRepository) VisitService {
+func NewVisitService(
+	visitRepo repository.VisitRepository,
+	icd10Repo repository.ICD10Repository,
+	rxRepo repository.PrescriptionRepository,
+	auditLogRepo repository.AuditLogRepository,
+) VisitService {
 	return &visitService{
 		visitRepo:    visitRepo,
 		icd10Repo:    icd10Repo,
@@ -40,7 +46,7 @@ func NewVisitService(visitRepo repository.VisitRepository, icd10Repo repository.
 	}
 }
 
-func (s *visitService) CreateVisit(ctx context.Context, req *dto.CreateVisitRequest, createdBy *uuid.UUID) (*dto.VisitResponse, error) {
+func (s *visitService) CreateVisit(ctx context.Context, req *dto.CreateVisitRequest, createdBy *uuid.UUID, ip string, role string) (*dto.VisitResponse, error) {
 	// Pastikan minimal ada 1 diagnosa yang di-set sebagai diagnosa primer
 	hasPrimary := false
 	for _, d := range req.Diagnoses {
@@ -136,34 +142,87 @@ func (s *visitService) CreateVisit(ctx context.Context, req *dto.CreateVisitRequ
 		return nil, apperror.Internal(fmt.Errorf("failed to record clinical visit: %w", err))
 	}
 
-	if s.auditLogRepo != nil {
-		diagSummary := ""
-		for _, d := range diagnoses {
-			if d.IsPrimary {
-				diagSummary = d.ICD10Code
-				break
-			}
-		}
+	// Catat ke audit_logs di database
+	if s.auditLogRepo != nil && createdBy != nil {
 		meta := map[string]interface{}{
-			"action_detail": "Dokter menangani pemeriksaan klinis dan menyimpan rekam medis",
-			"patient_id":    visit.PatientID.String(),
-			"diagnosis":     diagSummary,
+			"action_detail":  "Simpan & Tutup Kunjungan Poli",
+			"patient_id":     req.PatientID.String(),
+			"appointment_id": req.AppointmentID.String(),
+			"diagnosis":      req.Assessment,
+			"plan":           req.Plan,
+			"user_role":      role,
 		}
-		if visit.DoctorID != nil {
-			meta["doctor_id"] = visit.DoctorID.String()
+		if rxNo != "" {
+			meta["prescription_no"] = rxNo
 		}
-		entry := &entity.AuditLog{
+		_ = s.auditLogRepo.Create(ctx, &entity.AuditLog{
 			UserID:    createdBy,
-			Action:    "tangani_pasien",
+			Action:    "create",
 			Entity:    "visit",
 			EntityID:  &visit.ID,
+			IPAddress: ip,
 			Meta:      meta,
 			CreatedAt: time.Now(),
-		}
-		_ = s.auditLogRepo.Create(ctx, entry)
+		})
 	}
 
 	return s.GetVisitByID(ctx, visit.ID)
+}
+
+func (s *visitService) LogVisitAudit(ctx context.Context, req *dto.LogVisitAuditRequest, userID *uuid.UUID, userRole, userFullName, ip string) error {
+	if s.auditLogRepo == nil {
+		return nil
+	}
+
+	var entityID *uuid.UUID
+	if req.VisitID != "" {
+		if uid, err := uuid.Parse(req.VisitID); err == nil {
+			entityID = &uid
+		}
+	}
+	if entityID == nil && req.AppointmentID != "" {
+		if uid, err := uuid.Parse(req.AppointmentID); err == nil {
+			entityID = &uid
+		}
+	}
+	if entityID == nil && req.PatientID != "" {
+		if uid, err := uuid.Parse(req.PatientID); err == nil {
+			entityID = &uid
+		}
+	}
+	if entityID == nil {
+		gen := uuid.New()
+		entityID = &gen
+	}
+
+	meta := map[string]interface{}{
+		"action_detail":   "Simpan & Tutup Kunjungan Poli",
+		"patient_id":      req.PatientID,
+		"patient_name":    req.PatientName,
+		"polyclinic":      req.Polyclinic,
+		"doctor_name":     req.DoctorName,
+		"diagnosis":       req.Diagnosis,
+		"prescription_no": req.PrescriptionNo,
+		"vitals":          req.Vitals,
+		"subjective":      req.Subjective,
+		"objective":       req.Objective,
+		"plan":            req.Plan,
+		"medication_plan": req.MedicationPlan,
+		"user_role":       userRole,
+		"user_full_name":  userFullName,
+	}
+
+	entry := &entity.AuditLog{
+		UserID:    userID,
+		Action:    "create",
+		Entity:    "visit",
+		EntityID:  entityID,
+		IPAddress: ip,
+		Meta:      meta,
+		CreatedAt: time.Now(),
+	}
+
+	return s.auditLogRepo.Create(ctx, entry)
 }
 
 func (s *visitService) GetVisitByID(ctx context.Context, id uuid.UUID) (*dto.VisitResponse, error) {

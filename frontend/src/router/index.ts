@@ -10,6 +10,8 @@ import StaffView from "../features/staff/StaffView.vue";
 import MedicalRecordView from "../features/medical-record/MedicalRecordView.vue";
 import PatientScanner from "../features/scanner/PatientScanner.vue";
 
+import { verifyStaffAuth, isJwtValid } from "../utils/auth";
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -37,6 +39,7 @@ const router = createRouter({
       path: "/tv",
       name: "tv",
       component: TvView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/login",
@@ -52,21 +55,25 @@ const router = createRouter({
       path: "/staff",
       name: "staff",
       component: StaffView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/database-obat",
       name: "database-obat",
       component: StaffView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/database-pasien",
       name: "database-pasien",
       component: StaffView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/shift-dokter",
       name: "shift-dokter",
       component: StaffView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/manajemen-user",
@@ -87,16 +94,19 @@ const router = createRouter({
       path: "/medical-record",
       name: "medical-record",
       component: MedicalRecordView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/scan",
       name: "scan",
       component: PatientScanner,
+      meta: { requiresAuth: true },
     },
     {
       path: "/qr-test",
       name: "qr-test",
       component: PatientScanner,
+      meta: { requiresAuth: true },
     },
     {
       path: "/:pathMatch(.*)*",
@@ -110,6 +120,32 @@ const router = createRouter({
       return { top: 0 };
     }
   },
+});
+
+router.beforeEach(async (to, _from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);
+
+  if (requiresAuth) {
+    const isValid = await verifyStaffAuth();
+    if (!isValid) {
+      next({
+        path: "/login",
+        query: { redirect: to.fullPath },
+      });
+      return;
+    }
+  }
+
+  // Jika sudah terotentikasi dan mencoba buka /login, arahkan langsung ke /staff
+  if (to.path === "/login") {
+    const token = localStorage.getItem("antrisehat-token");
+    if (isJwtValid(token)) {
+      next({ path: "/staff" });
+      return;
+    }
+  }
+
+  next();
 });
 
 export default router;

@@ -9,14 +9,11 @@
         :class="{ '!border-[var(--deep)] !shadow-xl !ring-2 !ring-[var(--deep)]/50': isPoliHighlighted(poli.code) }"
         :aria-label="`Antrean ${poli.name}`"
       >
-        <!-- Column Header with Poli Title & Badge -->
-        <div class="flex items-center justify-between gap-2 border-b border-[var(--line)] bg-[var(--deep)] px-4 py-3 text-white shrink-0">
-          <span class="inline-flex items-center gap-2.5 font-bold text-base truncate">
+        <!-- Column Header with Poli Title (Centered) -->
+        <div class="flex items-center justify-center gap-2 border-b border-[var(--line)] bg-[var(--deep)] px-4 py-3 text-white shrink-0 text-center">
+          <span class="inline-flex items-center justify-center gap-2.5 font-bold text-base truncate">
             <component :is="poli.icon" :size="20" aria-hidden="true" class="shrink-0" />
             <span class="truncate">{{ poli.name }}</span>
-          </span>
-          <span class="rounded-lg bg-white/20 px-2.5 py-1 text-sm font-black font-mono tracking-wider shrink-0">
-            {{ poli.code }}
           </span>
         </div>
 
@@ -56,12 +53,12 @@
                 v-for="p in poli.nextPatients.slice(0, 5)"
                 :key="p.id"
                 class="flex items-center justify-between gap-3 border-b border-[var(--line)] py-2.5 px-2 text-sm last:border-0 rounded-lg transition-colors"
-                :class="p.number === searchQuery.toUpperCase() ? 'bg-emerald-100 font-bold ring-2 ring-emerald-400' : 'hover:bg-slate-50'"
+                :class="p.number === searchQuery.toUpperCase() ? 'bg-[#eaf6f2] text-[var(--deep)] font-bold ring-2 ring-[var(--teal)]' : 'hover:bg-[#f6f8f5]'"
               >
-                <strong class="rounded-lg bg-[var(--deep)]/10 px-3 py-1.5 text-base sm:text-lg tabular-nums text-[var(--deep)] font-black shrink-0 tracking-wide">
+                <strong class="rounded-lg bg-[var(--deep)]/10 px-3 py-1.5 text-base sm:text-lg tabular-nums text-[var(--deep)] font-black shrink-0 tracking-wide font-['Manrope']">
                   {{ p.number }}
                 </strong>
-                <span class="truncate text-slate-800 font-semibold text-right text-xs sm:text-sm">
+                <span class="truncate text-[#243e40] font-semibold text-right text-xs sm:text-sm">
                   {{ p.name }}
                 </span>
               </div>
@@ -74,21 +71,21 @@
 
           <!-- 3. Doctor & Room Info -->
           <div class="pt-2.5 border-t border-[var(--line)] flex items-center justify-between text-xs sm:text-sm text-[var(--muted)] shrink-0">
-            <span class="truncate max-w-[150px] font-semibold text-slate-600" :title="poli.doctorName">
+            <span class="truncate max-w-[150px] font-semibold text-[var(--deep)]" :title="poli.doctorName">
               {{ poli.doctorName }}
             </span>
-            <span class="font-mono text-slate-600 shrink-0 font-bold bg-slate-100 px-2 py-0.5 rounded">{{ poli.room }}</span>
+            <span class="font-mono text-[var(--deep)] shrink-0 font-bold bg-[#f6f8f5] px-2 py-0.5 rounded border border-[var(--line)]">{{ poli.room }}</span>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- FLOATING SEARCH BUTTON AT BOTTOM RIGHT -->
-    <div class="fixed bottom-3 right-6 z-50">
+    <!-- FLOATING SEARCH BUTTON AT BOTTOM CENTER -->
+    <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
       <!-- Search Trigger Button -->
       <button
         type="button"
-        class="flex items-center gap-2 bg-[var(--deep)] hover:bg-[#124246] text-white shadow-xl shadow-[var(--deep)]/25 px-4 py-2.5 rounded-full font-bold text-xs transition-all transform hover:scale-105 active:scale-95 border-2 border-white"
+        class="flex items-center gap-2 bg-[var(--deep)] hover:bg-[#237079] text-white shadow-xl shadow-[var(--deep)]/25 px-5 py-2.5 rounded-full font-bold text-xs transition-all transform hover:scale-105 active:scale-95 border-2 border-white whitespace-nowrap"
         @click="toggleSearchModal"
         title="Lacak Posisi Antrean Saya"
       >
@@ -96,22 +93,22 @@
         <span>Lacak Antrean Saya</span>
         <span
           v-if="searchedResult"
-          class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"
+          class="w-2 h-2 rounded-full bg-[var(--teal)] animate-ping"
         ></span>
       </button>
 
       <!-- Floating Search Popover -->
       <div
         v-if="isSearchModalOpen"
-        class="absolute bottom-12 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-[var(--line)] p-4 space-y-3"
+        class="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 sm:w-96 bg-white rounded-[19px] shadow-2xl border border-[var(--line)] p-4 space-y-3"
       >
         <div class="flex items-center justify-between border-b border-[var(--line)] pb-2">
-          <span class="text-xs font-bold text-[var(--deep)] flex items-center gap-1.5">
-            <Search :size="14" /> Lacak Posisi Antrean
+          <span class="text-xs font-bold text-[var(--deep)] flex items-center gap-1.5 font-['Manrope']">
+            <Search :size="14" class="text-[var(--teal)]" /> Lacak Posisi Antrean
           </span>
           <button
             type="button"
-            class="text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors"
+            class="text-[var(--muted)] hover:text-[var(--deep)] p-1 rounded-full transition-colors"
             @click="isSearchModalOpen = false"
           >
             <X :size="15" />
@@ -124,12 +121,12 @@
             v-model="searchQuery"
             type="text"
             placeholder="Ketik nomor tiket (contoh: A-002, B-001)..."
-            class="w-full rounded-xl border border-[var(--line)] bg-[var(--warm)]/40 py-2.5 pl-3 pr-8 text-xs font-mono font-bold text-[var(--deep)] uppercase focus:outline-none focus:ring-2 focus:ring-[var(--deep)]"
+            class="w-full rounded-[9px] border border-[#dce5df] bg-white py-2.5 pl-3 pr-8 text-xs font-mono font-bold text-[#243e40] uppercase focus:outline-none focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030]"
           />
           <button
             v-if="searchQuery"
             type="button"
-            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[#243e40]"
             @click="searchQuery = ''"
           >
             <X :size="13" />
@@ -139,19 +136,19 @@
         <!-- Matched Result Display -->
         <div
           v-if="searchedResult"
-          class="rounded-xl border border-emerald-300 bg-emerald-50/80 p-3 text-xs text-slate-800 space-y-1 shadow-2xs"
+          class="rounded-[14px] border border-[#c8e8df] bg-[#eaf6f2] p-3 text-xs text-[#243e40] space-y-1 shadow-2xs"
         >
           <div class="flex items-center justify-between">
-            <span class="font-bold text-emerald-800">{{ searchedResult.poliName }}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-emerald-800 border border-emerald-200">
+            <span class="font-bold text-[var(--deep)]">{{ searchedResult.poliName }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-[var(--deep)] border border-[#c8e8df]">
               {{ searchedResult.positionText }}
             </span>
           </div>
-          <div class="text-sm font-mono font-black text-[var(--deep)]">
+          <div class="text-sm font-mono font-black font-['Manrope'] text-[var(--deep)]">
             {{ searchedResult.patient.number }}
           </div>
-          <p class="text-[11px] text-slate-600 truncate">
-            Atas nama: <strong>{{ searchedResult.patient.name }}</strong>
+          <p class="text-[11px] text-[var(--muted)] truncate">
+            Atas nama: <strong class="text-[#243e40]">{{ searchedResult.patient.name }}</strong>
           </p>
         </div>
 

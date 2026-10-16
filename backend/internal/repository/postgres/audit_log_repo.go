@@ -68,7 +68,7 @@ func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uu
 	}
 
 	query := fmt.Sprintf(`
-		SELECT a.id, a.user_id, a.action, a.entity, a.entity_id, a.ip_address, a.metadata, a.created_at,
+		SELECT a.id, a.user_id, a.action, a.entity, a.entity_id, a.ip_address::text, a.metadata, a.created_at,
 		       COALESCE(u.full_name, 'Sistem / Anonim') AS user_name,
 		       COALESCE(u.email, '-') AS user_email,
 		       COALESCE(r.name, '-') AS user_role
@@ -93,11 +93,15 @@ func (r *auditLogRepo) Find(ctx context.Context, entityName string, entityID *uu
 	for rows.Next() {
 		var l entity.AuditLog
 		var metaJSON []byte
+		var ipStr *string
 		if err := rows.Scan(
-			&l.ID, &l.UserID, &l.Action, &l.Entity, &l.EntityID, &l.IPAddress, &metaJSON, &l.CreatedAt,
+			&l.ID, &l.UserID, &l.Action, &l.Entity, &l.EntityID, &ipStr, &metaJSON, &l.CreatedAt,
 			&l.UserName, &l.UserEmail, &l.UserRole,
 		); err != nil {
 			return nil, 0, fmt.Errorf("auditLogRepo.Find scan: %w", err)
+		}
+		if ipStr != nil {
+			l.IPAddress = *ipStr
 		}
 		if len(metaJSON) > 0 {
 			_ = json.Unmarshal(metaJSON, &l.Meta)

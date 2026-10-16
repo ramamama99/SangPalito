@@ -189,18 +189,19 @@ func Setup(
 			queues.PATCH("/:id/status", middleware.RequireRoles("medic", "registrar"), queueHandler.UpdateStatus)
 		}
 
-		// Clinical Visits / Rekam Medis SOAP (medic, admin)
+		// Clinical Visits / Rekam Medis SOAP (medic, head, admin)
 		visits := authenticated.Group("/visits")
 		{
-			visits.POST("", middleware.RequireRoles("medic", "admin"), visitHandler.CreateVisit)
-			visits.GET("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.GetVisitByID)
-			visits.PATCH("/:id", middleware.RequireRoles("medic", "admin"), visitHandler.UpdateVisit)
+			visits.POST("", middleware.RequireRoles("medic", "head", "admin"), visitHandler.CreateVisit)
+			visits.POST("/audit-log", middleware.RequireRoles("medic", "head", "admin"), visitHandler.LogVisitAudit)
+			visits.GET("/:id", middleware.RequireRoles("medic", "head", "admin"), visitHandler.GetVisitByID)
+			visits.PATCH("/:id", middleware.RequireRoles("medic", "head", "admin"), visitHandler.UpdateVisit)
 		}
 
 		// Prescriptions / e-Resep Obat (medic, registrar, admin)
 		prescriptions := authenticated.Group("/prescriptions")
 		{
-			prescriptions.POST("", middleware.RequireRoles("medic", "admin"), prescriptionHandler.Create)
+			prescriptions.POST("", middleware.RequireRoles("medic", "head", "admin"), prescriptionHandler.Create)
 			prescriptions.PATCH("/:id/dispense", middleware.RequireRoles("medic", "registrar", "admin"), prescriptionHandler.Dispense)
 		}
 
@@ -226,7 +227,7 @@ func Setup(
 			analytics.GET("/doctor-performance", analyticsHandler.GetDoctorPerformance)
 		}
 
-		// Audit Logs (admin and head only)
+		// Audit Logs (admin, head - F-12)
 		authenticated.GET("/audit-logs", middleware.RequireRoles("admin", "head"), auditLogHandler.List)
 	}
 }
