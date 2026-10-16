@@ -278,23 +278,12 @@ cd SangPalito
 2. Konfigurasi Environment (`.env`):
    Salin atau buat file `.env` di dalam folder `backend`:
    ```env
-   APP_ENV=development
-   APP_PORT=8080
-   APP_SECRET_KEY=f4a8c2e1b7d5a9f3e6c0d8b2a4f6e1d3c5b7a9f2e4d6c8b0a1f3e5d7c9b1a3e5
-   NIK_ENCRYPTION_KEY=7e2b9f4a1c8d5e0b3a6c9d2f5e8b1a4d7c0e3f6a9b2d5e8c1f4a7d0b3e6a9c2f
-   BCRYPT_COST=12
-   JWT_ACCESS_EXPIRE=15m
-   JWT_REFRESH_EXPIRE=168h
-
-   # Konfigurasi Database (Gunakan PostgreSQL lokal atau Cloud)
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=antri_sehat
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_SSLMODE=disable
-   DB_MAX_CONNS=20
-   DB_MIN_CONNS=2
+   PORT=5000
+    DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_KEY=your_public_anon_key_here
+    OPENAI_API_KEY=your_openai_api_key_here
+   (ini contoh)
    ```
 
 3. Jalankan Database via Docker (Opsional jika belum punya Postgres):
