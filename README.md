@@ -53,14 +53,6 @@ Fasilitas Kesehatan Tingkat Pertama (Puskesmas dan Klinik Pratama) merupakan gar
 └─────────────────────────────────────────────────────────────┘
 ```
 
-| Tantangan Konvensional | Dampak pada Pasien & Faskes | Solusi SangPalito |
-| :--- | :--- | :--- |
-| **Waktu Tunggu Buta** | Pasien datang pagi-pagi buta hanya untuk ambil kertas antrean | **Pendaftaran Online + E-Ticket QR + Real-Time Live Queue** |
-| **Estimasi Waktu Meleset** | Ketidakpuasan pasien tinggi saat antrean lambat bergerak | **Smart Wait-Time Engine (EMA + Koefisien Klinis)** |
-| **Verifikasi Loket Lambat** | Antrean mengular hanya untuk verifikasi berkas KTP | **Client-side OCR Scan KTP Otomatis (Tesseract.js)** |
-| **Panggilan Manual Hilang** | Pasien tidak dengar panggilan saat keluar ruang tunggu | **Display TV + Voice Announcer + Notifikasi Real-time** |
-| **Rekam Medis Terpisah** | Dokter kesulitan mengevaluasi riwayat kunjungan berkala | **EMR Terintegrasi (SOAP, Tanda Vital, ICD-10, E-Resep)** |
-
 ---
 
 ## ✨ Solusi: Apa itu SangPalito?
