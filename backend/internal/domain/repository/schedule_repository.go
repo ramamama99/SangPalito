@@ -19,4 +19,6 @@ type ScheduleRepository interface {
 	GetRemainingQuota(ctx context.Context, tx pgx.Tx, scheduleID uuid.UUID, date time.Time) (int, error)
 	Create(ctx context.Context, s *entity.Schedule) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	FindAll(ctx context.Context) ([]*entity.Schedule, error)
+	DeleteBySlot(ctx context.Context, polyclinicID uuid.UUID, dayOfWeek int, startTime string) error
 }

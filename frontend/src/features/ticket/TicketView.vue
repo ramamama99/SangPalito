@@ -94,7 +94,7 @@
               <span>Wajib Hadir 15 Menit Lebih Awal</span>
             </div>
             <p class="warning-text">
-              Harap hadir paling lambat pukul <strong class="time-highlight">{{ recommendedArrivalTime }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
+              Harap hadir disarankan pukul <strong class="time-highlight">{{ recommendedArrivalTime }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
             </p>
           </div>
         </div>

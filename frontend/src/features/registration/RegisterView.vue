@@ -448,16 +448,23 @@
                 v-for="shift in shiftList"
                 :key="shift.id"
                 type="button"
-                :disabled="getShiftInfo(shift.id).isFull"
+                :disabled="isShiftExpired(shift.id, queueStore.form.date) || getShiftInfo(shift.id).isFull"
                 :class="[
                   'shift-card',
-                  { selected: queueStore.form.shift === shift.id, full: getShiftInfo(shift.id).isFull }
+                  {
+                    selected: queueStore.form.shift === shift.id && !isShiftExpired(shift.id, queueStore.form.date),
+                    full: getShiftInfo(shift.id).isFull,
+                    expired: isShiftExpired(shift.id, queueStore.form.date),
+                  }
                 ]"
-                @click="queueStore.updateForm('shift', shift.id)"
+                @click="!isShiftExpired(shift.id, queueStore.form.date) && queueStore.updateForm('shift', shift.id)"
               >
                 <div class="shift-card-top">
                   <span class="shift-name-tag">{{ shift.label }}</span>
-                  <span v-if="getShiftInfo(shift.id).isFull" class="status-tag-full">
+                  <span v-if="isShiftExpired(shift.id, queueStore.form.date)" class="status-tag-expired">
+                    Waktu Berakhir
+                  </span>
+                  <span v-else-if="getShiftInfo(shift.id).isFull" class="status-tag-full">
                     Penuh
                   </span>
                   <span v-else class="status-tag-avail">
@@ -471,15 +478,23 @@
                 </div>
 
                 <div class="shift-doctor-line">
-                  <UserCheck :size="14" class="text-slate-400 shrink-0" />
+                  <UserCheck :size="14" class="text-teal-700 shrink-0" />
                   <span>{{ getShiftInfo(shift.id).doctorName }}</span>
                 </div>
 
                 <div class="shift-card-bottom">
-                  <span class="est-tag">
+                  <span v-if="!isShiftExpired(shift.id, queueStore.form.date)" class="est-tag">
                     Estimasi tiba: <strong>{{ getShiftInfo(shift.id).estimatedArrival }}</strong>
                   </span>
-                  <CheckCircle2 v-if="queueStore.form.shift === shift.id" :size="17" class="check-icon" />
+                  <span v-else class="est-tag text-slate-400">
+                    Sesi telah berakhir
+                  </span>
+
+                  <CheckCircle2
+                    v-if="queueStore.form.shift === shift.id && !isShiftExpired(shift.id, queueStore.form.date)"
+                    :size="17"
+                    class="check-icon"
+                  />
                 </div>
               </button>
             </div>
@@ -506,7 +521,7 @@
               <div class="summary-notice-bar">
                 <Clock3 :size="15" class="notice-icon shrink-0" />
                 <span>
-                  Harap hadir paling lambat pukul <strong>{{ selectedShiftInfo.recommendedArrival }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
+                  Harap hadir disarankan pukul <strong>{{ selectedShiftInfo.recommendedArrival }}</strong> untuk verifikasi berkas dan skrining awal di loket klinik.
                 </span>
               </div>
             </div>
@@ -611,7 +626,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { api } from "../../services/api";
 import { useRouter } from "vue-router";
 import {
   Check,
@@ -626,6 +642,7 @@ import {
   Heart,
   Scan,
   UserCheck,
+  UserX,
   AlertCircle,
 } from "lucide-vue-next";
 import { services } from "../../constants/services";
@@ -707,6 +724,26 @@ const symptomList = [
   "Sesak napas",
 ];
 
+function isShiftExpired(shiftId: "pagi" | "siang" | "sore" | string, dateStr?: string): boolean {
+  const checkDate = dateStr || queueStore.form.date || dateToday;
+  if (checkDate !== dateToday) {
+    return false;
+  }
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  if (shiftId === "pagi" && currentMinutes >= 11 * 60) {
+    return true;
+  }
+  if (shiftId === "siang" && currentMinutes >= 16 * 60) {
+    return true;
+  }
+  if (shiftId === "sore" && currentMinutes >= 21 * 60) {
+    return true;
+  }
+  return false;
+}
+
 const shiftList = [
   {
     id: "pagi" as const,
@@ -746,6 +783,32 @@ function getTotalPoliRemainingQuota(poliName: string) {
   const sore = queueStore.getShiftQuotaInfo(poliName, "sore", queueStore.form.date).remainingQuota;
   return pagi + siang + sore;
 }
+
+function autoSelectValidShift() {
+  const currentShift = (queueStore.form.shift as "pagi" | "siang" | "sore") || "pagi";
+  const currentInfo = getShiftInfo(currentShift);
+
+  if (isShiftExpired(currentShift, queueStore.form.date) || currentInfo.isFull) {
+    const nextValid = shiftList.find((s) => {
+      const info = getShiftInfo(s.id);
+      return !isShiftExpired(s.id, queueStore.form.date) && !info.isFull;
+    });
+    if (nextValid) {
+      queueStore.updateForm("shift", nextValid.id);
+    }
+  }
+}
+
+onMounted(() => {
+  autoSelectValidShift();
+});
+
+watch(
+  () => [queueStore.form.date, queueStore.form.poli],
+  () => {
+    autoSelectValidShift();
+  }
+);
 
 function getPoliIcon(name: string) {
   switch (name) {
@@ -966,6 +1029,20 @@ async function handleSubmit() {
     queueStore.step++;
     window.scrollTo({ top: 150, behavior: "smooth" });
   } else if (queueStore.step === 2) {
+    const currentShift = queueStore.form.shift as any;
+    if (!currentShift) {
+      alert("Silakan pilih salah satu shift kedatangan.");
+      return;
+    }
+    if (isShiftExpired(queueStore.form.shift as any, queueStore.form.date)) {
+      alert("Waktu pelayanan untuk shift ini telah berakhir. Silakan pilih sesi shift berikutnya.");
+      return;
+    }
+    const shiftInfo = getShiftInfo(currentShift);
+    if (shiftInfo.isFull) {
+      alert("Kuota untuk shift ini sudah penuh. Silakan pilih shift lain.");
+      return;
+    }
     queueStore.step++;
     window.scrollTo({ top: 150, behavior: "smooth" });
   } else {
@@ -1116,6 +1193,25 @@ async function handleSubmit() {
   background: #f6f8f5;
   cursor: not-allowed;
   border-color: var(--line);
+}
+.shift-card.expired {
+  filter: blur(1.5px);
+  opacity: 0.42;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.status-tag-expired {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 .shift-card-top {
   display: flex;

@@ -202,3 +202,43 @@ func (r *scheduleRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *scheduleRepo) FindAll(ctx context.Context) ([]*entity.Schedule, error) {
+	query := `
+		SELECT s.id, s.polyclinic_id, s.doctor_id, s.day_of_week, s.start_time::text, s.end_time::text, s.quota,
+		       d.full_name AS doctor_name, p.name AS polyclinic_name
+		FROM schedules s
+		JOIN doctors d ON d.id = s.doctor_id
+		JOIN polyclinics p ON p.id = s.polyclinic_id
+		ORDER BY s.polyclinic_id, s.day_of_week, s.start_time
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("scheduleRepo.FindAll: %w", err)
+	}
+	defer rows.Close()
+
+	var list []*entity.Schedule
+	for rows.Next() {
+		sc := &entity.Schedule{}
+		if err := rows.Scan(
+			&sc.ID, &sc.PolyclinicID, &sc.DoctorID, &sc.DayOfWeek,
+			&sc.StartTime, &sc.EndTime, &sc.Quota,
+			&sc.DoctorName, &sc.PolyclinicName,
+		); err != nil {
+			return nil, fmt.Errorf("scheduleRepo.FindAll scan: %w", err)
+		}
+		list = append(list, sc)
+	}
+	return list, nil
+}
+
+func (r *scheduleRepo) DeleteBySlot(ctx context.Context, polyclinicID uuid.UUID, dayOfWeek int, startTime string) error {
+	query := `DELETE FROM schedules WHERE polyclinic_id = $1 AND day_of_week = $2 AND (start_time = $3::time OR start_time::text LIKE $4)`
+	startPrefix := startTime
+	if len(startTime) >= 2 {
+		startPrefix = startTime[:2] + "%"
+	}
+	_, err := r.pool.Exec(ctx, query, polyclinicID, dayOfWeek, startTime, startPrefix)
+	return err
+}

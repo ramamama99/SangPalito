@@ -758,7 +758,8 @@
         <div class="panel-heading">
           <div>
             <h3>Database Katalog Obat & Farmasi</h3>
-            <p class="muted text-xs">Kelola master sediaan obat, rute penggunaan, aturan pakai, dan indikasi terapi sesuai standar e-FORNAS Kemenkes.</p>
+            <p class="muted text-xs">Kelola master sediaan obat, rute penggunaan, aturan pakai,<br/> 
+              dan indikasi terapi sesuai standar e-FORNAS Kemenkes.</p>
           </div>
           <div class="flex items-center gap-2">
             <a

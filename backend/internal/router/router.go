@@ -108,6 +108,9 @@ func Setup(
 	api.GET("/polyclinics", masterHandler.GetPolyclinics)
 	api.GET("/doctors", masterHandler.GetDoctors)
 	api.GET("/schedules", masterHandler.GetSchedules)
+	api.POST("/schedules/assign", masterHandler.AssignShift)
+	api.POST("/schedules/unassign", masterHandler.UnassignShift)
+	api.DELETE("/schedules/:id", masterHandler.DeleteSchedule)
 	api.GET("/icd10", visitHandler.SearchICD10)
 	api.GET("/medications", prescriptionHandler.ListMedications)
 	api.POST("/medications", prescriptionHandler.CreateMedication)
@@ -148,7 +151,7 @@ func Setup(
 
 		// Master Data Management (Admin / Staff)
 		master := authenticated.Group("")
-		master.Use(middleware.RequireRoles("admin"))
+		master.Use(middleware.RequireRoles("admin", "head"))
 		{
 			master.POST("/polyclinics", masterHandler.CreatePolyclinic)
 			master.PATCH("/polyclinics/:id", masterHandler.UpdatePolyclinic)
@@ -156,8 +159,6 @@ func Setup(
 			master.PUT("/doctors/:id", masterHandler.UpdateDoctor)
 			master.DELETE("/doctors/:id", masterHandler.DeleteDoctor)
 			master.POST("/schedules", masterHandler.CreateSchedule)
-			master.POST("/schedules/assign", masterHandler.AssignShift)
-			master.DELETE("/schedules/:id", masterHandler.DeleteSchedule)
 		}
 
 		// Appointments & Pre-anamnesis (Registrar, Medic)

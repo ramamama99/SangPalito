@@ -72,6 +72,8 @@ export interface DoctorShift {
   fixedQuota: number; // 240 min / smartAvgServiceMin (Fixed cap, no increment if finished early)
   isActive: boolean;
   notes?: string;
+  doctorId?: string;
+  scheduleId?: string;
 }
 
 export const initialDoctorShifts: DoctorShift[] = [

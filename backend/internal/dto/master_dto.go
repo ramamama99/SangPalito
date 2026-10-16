@@ -49,11 +49,20 @@ type CreateScheduleRequest struct {
 }
 
 type SaveShiftAssignmentRequest struct {
-	PolyclinicID uuid.UUID `json:"polyclinic_id" validate:"required"`
-	DoctorID     uuid.UUID `json:"doctor_id" validate:"required"`
-	DayOfWeek    int       `json:"day_of_week" validate:"required,min=1,max=7"`
-	ShiftID      string    `json:"shift_id" validate:"required"` // "pagi", "siang", "sore"
-	StartTime    string    `json:"start_time"`
-	EndTime      string    `json:"end_time"`
-	Quota        int       `json:"quota"`
+	ID           *uuid.UUID `json:"id,omitempty"`
+	PolyclinicID uuid.UUID  `json:"polyclinic_id" validate:"required"`
+	DoctorID     uuid.UUID  `json:"doctor_id" validate:"required"`
+	DayOfWeek    int        `json:"day_of_week" validate:"required,min=1,max=7"`
+	ShiftID      string     `json:"shift_id"` // "pagi", "siang", "sore"
+	StartTime    string     `json:"start_time"`
+	EndTime      string     `json:"end_time"`
+	Quota        int        `json:"quota"`
+}
+
+type UnassignShiftRequest struct {
+	ScheduleID   *uuid.UUID `json:"schedule_id,omitempty"`
+	PolyclinicID uuid.UUID  `json:"polyclinic_id"`
+	DayOfWeek    int        `json:"day_of_week"`
+	ShiftID      string     `json:"shift_id,omitempty"`
+	StartTime    string     `json:"start_time,omitempty"`
 }

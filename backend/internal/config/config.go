@@ -102,8 +102,8 @@ func (db DBConfig) DSN() string {
 
 // Load reads configuration from environment variables, loading from .env if present.
 func Load() (*Config, error) {
-	// Load .env file if it exists (ignore error if not found)
-	_ = godotenv.Load()
+	// Load .env file if it exists from candidate locations
+	_ = godotenv.Load(".env", "SangPalito/backend/.env", "backend/.env", "../.env")
 
 	bcryptCost, _ := strconv.Atoi(getEnv("BCRYPT_COST", "12"))
 	maxConns, _ := strconv.Atoi(getEnv("DB_MAX_CONNS", "20"))

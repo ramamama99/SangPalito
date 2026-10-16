@@ -122,18 +122,17 @@ func (h *MasterHandler) CreateDoctor(c *gin.Context) {
 
 func (h *MasterHandler) GetSchedules(c *gin.Context) {
 	polyIDStr := c.Query("polyclinic_id")
-	if polyIDStr == "" {
-		c.Error(apperror.BadRequest("polyclinic_id wajib disertakan", nil))
-		return
+	var polyID *uuid.UUID
+	if polyIDStr != "" {
+		id, err := uuid.Parse(polyIDStr)
+		if err != nil {
+			c.Error(apperror.BadRequest("polyclinic_id tidak valid", err))
+			return
+		}
+		polyID = &id
 	}
 
-	polyID, err := uuid.Parse(polyIDStr)
-	if err != nil {
-		c.Error(apperror.BadRequest("polyclinic_id tidak valid", err))
-		return
-	}
-
-	dateStr := c.Query("date") // Format: YYYY-MM-DD
+	dateStr := c.Query("date") // Format: YYYY-MM-DD atau "all"
 	list, err := h.service.GetSchedules(c.Request.Context(), polyID, dateStr)
 	if err != nil {
 		c.Error(err)
@@ -208,7 +207,7 @@ func (h *MasterHandler) DeleteDoctor(c *gin.Context) {
 func (h *MasterHandler) AssignShift(c *gin.Context) {
 	var req dto.SaveShiftAssignmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(apperror.BadRequest("Data shift tidak valid", err))
+		c.Error(apperror.BadRequest("Data shift tidak valid: "+err.Error(), err))
 		return
 	}
 
@@ -218,4 +217,19 @@ func (h *MasterHandler) AssignShift(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response.OK(sch))
-}
+}
+
+func (h *MasterHandler) UnassignShift(c *gin.Context) {
+	var req dto.UnassignShiftRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.BadRequest("Data unassign tidak valid: "+err.Error(), err))
+		return
+	}
+
+	if err := h.service.UnassignShift(c.Request.Context(), req); err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK("Shift jadwal berhasil dihapus"))
+}
+

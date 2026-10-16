@@ -681,9 +681,10 @@ const editingSlotQuota = ref(24);
 onMounted(async () => {
   await fetchDoctors();
   loadWeeklyScheduleFromLocal();
+  await loadSchedulesFromDB();
 });
 
-// Load doctors from backend API (or fallback to presets)
+// Load doctors from backend API (or fallback to presets with valid UUIDs)
 async function fetchDoctors() {
   try {
     const res = await api.getDoctors();
@@ -695,14 +696,14 @@ async function fetchDoctors() {
     console.warn("Backend doctors endpoint unreachable, using standard seed roster");
   }
 
-  // Fallback preset doctors
+  // Fallback preset doctors with valid PostgreSQL UUIDs
   doctorsList.value = [
     {
-      id: "doc-1",
+      id: "d1111111-1111-1111-1111-111111111111",
       full_name: "dr. Rama Palito",
       specialty: "Dokter Umum",
       str_no: "31.1.1.100.1.20.001928",
-      polyclinic_id: "poli-umum",
+      polyclinic_id: "11111111-1111-1111-1111-111111111111",
       polyclinic_name: "Poli Umum",
       email: "dr.rama@antrisehat.id",
       phone: "081234567890",
@@ -710,11 +711,11 @@ async function fetchDoctors() {
       is_first_login: false,
     },
     {
-      id: "doc-2",
+      id: "d5555555-5555-5555-5555-555555555555",
       full_name: "dr. Aditya Rahman",
       specialty: "Dokter Umum",
       str_no: "31.1.1.100.1.21.004812",
-      polyclinic_id: "poli-umum",
+      polyclinic_id: "11111111-1111-1111-1111-111111111111",
       polyclinic_name: "Poli Umum",
       email: "dr.aditya@antrisehat.id",
       phone: "081398765432",
@@ -722,11 +723,11 @@ async function fetchDoctors() {
       is_first_login: true,
     },
     {
-      id: "doc-3",
+      id: "d2222222-2222-2222-2222-222222222222",
       full_name: "dr. Maya Putri",
       specialty: "Dokter Umum",
       str_no: "31.1.1.100.1.22.008914",
-      polyclinic_id: "poli-umum",
+      polyclinic_id: "11111111-1111-1111-1111-111111111111",
       polyclinic_name: "Poli Umum",
       email: "dr.maya@antrisehat.id",
       phone: "081287654321",
@@ -734,11 +735,11 @@ async function fetchDoctors() {
       is_first_login: false,
     },
     {
-      id: "doc-4",
+      id: "d3333333-3333-3333-3333-333333333333",
       full_name: "drg. Rani Prameswari",
       specialty: "Dokter Gigi",
       str_no: "31.2.1.200.1.19.003411",
-      polyclinic_id: "poli-gigi",
+      polyclinic_id: "22222222-2222-2222-2222-222222222222",
       polyclinic_name: "Poli Gigi",
       email: "drg.rani@antrisehat.id",
       phone: "081901234567",
@@ -746,11 +747,11 @@ async function fetchDoctors() {
       is_first_login: false,
     },
     {
-      id: "doc-5",
+      id: "d6666666-6666-6666-6666-666666666666",
       full_name: "drg. Fajar Hidayat",
       specialty: "Dokter Gigi",
       str_no: "31.2.1.200.1.21.006789",
-      polyclinic_id: "poli-gigi",
+      polyclinic_id: "22222222-2222-2222-2222-222222222222",
       polyclinic_name: "Poli Gigi",
       email: "drg.fajar@antrisehat.id",
       phone: "081812345678",
@@ -758,11 +759,11 @@ async function fetchDoctors() {
       is_first_login: true,
     },
     {
-      id: "doc-6",
+      id: "d4444444-4444-4444-4444-444444444444",
       full_name: "dr. Siti Rahmawati, Sp.A",
       specialty: "Spesialis Anak",
       str_no: "31.1.2.300.1.18.005123",
-      polyclinic_id: "poli-kia",
+      polyclinic_id: "33333333-3333-3333-3333-333333333333",
       polyclinic_name: "Poli KIA",
       email: "dr.siti@antrisehat.id",
       phone: "081223344556",
@@ -770,11 +771,11 @@ async function fetchDoctors() {
       is_first_login: false,
     },
     {
-      id: "doc-7",
+      id: "d7777777-7777-7777-7777-777777777777",
       full_name: "dr. Hendra Prasetyo",
       specialty: "Spesialis Penyakit Dalam",
       str_no: "31.1.2.400.1.17.009871",
-      polyclinic_id: "poli-lansia",
+      polyclinic_id: "44444444-4444-4444-4444-444444444444",
       polyclinic_name: "Poli Lansia",
       email: "dr.hendra@antrisehat.id",
       phone: "081334455667",
@@ -782,6 +783,107 @@ async function fetchDoctors() {
       is_first_login: false,
     },
   ];
+}
+
+function resolveDoctorUuid(idOrDoc: string | DoctorRecord | undefined): string {
+  if (!idOrDoc) return "d1111111-1111-1111-1111-111111111111";
+  const id = typeof idOrDoc === "string" ? idOrDoc : idOrDoc.id;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return id;
+  }
+  const fallbackMap: Record<string, string> = {
+    "doc-1": "d1111111-1111-1111-1111-111111111111",
+    "doc-2": "d5555555-5555-5555-5555-555555555555",
+    "doc-3": "d2222222-2222-2222-2222-222222222222",
+    "doc-4": "d3333333-3333-3333-3333-333333333333",
+    "doc-5": "d6666666-6666-6666-6666-666666666666",
+    "doc-6": "d4444444-4444-4444-4444-444444444444",
+    "doc-7": "d7777777-7777-7777-7777-777777777777",
+  };
+  if (fallbackMap[id]) return fallbackMap[id];
+
+  const doc = doctorsList.value.find(
+    (d) => d.id === id || (typeof idOrDoc === "object" && d.full_name === idOrDoc.full_name)
+  );
+  if (doc && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(doc.id)) {
+    return doc.id;
+  }
+  return "d1111111-1111-1111-1111-111111111111";
+}
+
+function getShiftTimeRange(shiftId: string): { start_time: string; end_time: string } {
+  switch (shiftId) {
+    case "siang":
+      return { start_time: "12:00:00", end_time: "17:00:00" };
+    case "sore":
+      return { start_time: "17:00:00", end_time: "22:00:00" };
+    default:
+      return { start_time: "07:00:00", end_time: "12:00:00" };
+  }
+}
+
+async function loadSchedulesFromDB() {
+  try {
+    const res = await api.getSchedules(undefined, "all");
+    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+      for (const item of res.data) {
+        let shiftId: "pagi" | "siang" | "sore" = "pagi";
+        const st = item.start_time || "";
+        if (
+          st.startsWith("12:") ||
+          st.startsWith("13:") ||
+          st.startsWith("14:") ||
+          st.startsWith("15:") ||
+          st.startsWith("16:")
+        ) {
+          shiftId = "siang";
+        } else if (
+          st.startsWith("17:") ||
+          st.startsWith("18:") ||
+          st.startsWith("19:") ||
+          st.startsWith("20:") ||
+          st.startsWith("21:") ||
+          st.startsWith("22:")
+        ) {
+          shiftId = "sore";
+        } else {
+          shiftId = "pagi";
+        }
+
+        const poly = polyclinics.value.find((p) => p.id === item.polyclinic_id);
+        const polySlug = poly?.slug || item.polyclinic_id;
+        const keyWithId = `${item.polyclinic_id}-${item.day_of_week}-${shiftId}`;
+        const keyWithSlug = `${polySlug}-${item.day_of_week}-${shiftId}`;
+
+        const doc = doctorsList.value.find((d) => d.id === item.doctor_id);
+        const docName = item.doctor_name || doc?.full_name || "Dokter Bertugas";
+        const docSpec = item.specialty || doc?.specialty || "Dokter Bertugas";
+
+        const shiftObj: DoctorShift = {
+          id: keyWithId,
+          scheduleId: item.id,
+          doctorId: item.doctor_id,
+          poliId: item.polyclinic_id,
+          poliName: poly?.name || item.polyclinic_name || "Poliklinik",
+          poliCode: poly?.code || "A",
+          shiftId: shiftId,
+          doctorName: docName,
+          doctorSpecialty: docSpec,
+          room: "Ruang 01",
+          smartAvgServiceMin: 10,
+          fixedQuota: item.quota && item.quota > 0 ? item.quota : 10,
+          isActive: true,
+          notes: `Shift ${shiftId} hari ${weekDays.find((d) => d.id === item.day_of_week)?.name || ""}`,
+        };
+
+        weeklyScheduleMatrix.value[keyWithId] = shiftObj;
+        weeklyScheduleMatrix.value[keyWithSlug] = shiftObj;
+      }
+      saveWeeklyScheduleToLocal();
+    }
+  } catch (err) {
+    console.warn("Could not load schedules from DB:", err);
+  }
 }
 
 // Helper pencocokan dokter ke poliklinik aktif secara akurat
@@ -996,8 +1098,12 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
 
   const targetKey = getSlotKey(targetDay, targetShiftId);
   const targetExisting = weeklyScheduleMatrix.value[targetKey];
-  const selectedPoli = polyclinics.value.find((p) => p.id === selectedPoliId.value);
+  const selectedPoli = polyclinics.value.find(
+    (p) => p.id === selectedPoliId.value || p.slug === selectedPoliId.value
+  );
+  const targetPolyUuid = selectedPoli?.id || "11111111-1111-1111-1111-111111111111";
   const targetDayName = weekDays.find((d) => d.id === targetDay)?.name || "";
+  const targetTimes = getShiftTimeRange(targetShiftId);
 
   // CASE 1: Dragging from another SLOT in the schedule (Swap or Move)
   if (activeDragSource.value.type === "slot") {
@@ -1005,41 +1111,113 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
     const sourceData = activeDragSource.value.shiftData!;
     const sourceDay = activeDragSource.value.day!;
     const sourceShiftId = activeDragSource.value.shiftId!;
+    const sourceTimes = getShiftTimeRange(sourceShiftId);
 
     // Dropped onto same slot
     if (sourceKey === targetKey) return;
 
     if (targetExisting) {
       // ── SWAP CARDS! ───────────────────────────────────────────
+      const sourceDocUuid = resolveDoctorUuid(sourceData.doctorId || sourceData.doctorName);
+      const targetDocUuid = resolveDoctorUuid(targetExisting.doctorId || targetExisting.doctorName);
+      const sourceQuota = sourceData.fixedQuota && sourceData.fixedQuota > 0 ? sourceData.fixedQuota : 10;
+      const targetQuota = targetExisting.fixedQuota && targetExisting.fixedQuota > 0 ? targetExisting.fixedQuota : 10;
+      const sourceSchId = sourceData.scheduleId || crypto.randomUUID();
+      const targetSchId = targetExisting.scheduleId || crypto.randomUUID();
+
       weeklyScheduleMatrix.value[targetKey] = {
         ...sourceData,
-        poliId: selectedPoliId.value,
+        scheduleId: sourceSchId,
+        doctorId: sourceDocUuid,
+        poliId: targetPolyUuid,
         shiftId: targetShiftId as "pagi" | "siang" | "sore",
         id: targetKey,
+        fixedQuota: sourceQuota,
       };
       weeklyScheduleMatrix.value[sourceKey] = {
         ...targetExisting,
-        poliId: selectedPoliId.value,
+        scheduleId: targetSchId,
+        doctorId: targetDocUuid,
+        poliId: targetPolyUuid,
         shiftId: sourceShiftId as "pagi" | "siang" | "sore",
         id: sourceKey,
+        fixedQuota: targetQuota,
       };
 
       saveWeeklyScheduleToLocal();
+
+      // Sync both to backend DB
+      try {
+        await api.assignShiftSchedule({
+          id: sourceSchId,
+          polyclinic_id: targetPolyUuid,
+          doctor_id: sourceDocUuid,
+          day_of_week: targetDay,
+          shift_id: targetShiftId,
+          start_time: targetTimes.start_time,
+          end_time: targetTimes.end_time,
+          quota: sourceQuota,
+        });
+        await api.assignShiftSchedule({
+          id: targetSchId,
+          polyclinic_id: targetPolyUuid,
+          doctor_id: targetDocUuid,
+          day_of_week: sourceDay,
+          shift_id: sourceShiftId,
+          start_time: sourceTimes.start_time,
+          end_time: sourceTimes.end_time,
+          quota: targetQuota,
+        });
+      } catch (err) {
+        console.warn("DB sync on swap error:", err);
+      }
+
       showToast(
         `Jadwal ditukar: ${sourceData.doctorName} (${targetDayName} ${targetShiftId.toUpperCase()}) ⇄ ${targetExisting.doctorName} (${weekDays.find((d) => d.id === sourceDay)?.name} ${sourceShiftId.toUpperCase()})`,
         "success"
       );
     } else {
       // ── MOVE TO EMPTY SLOT! ──────────────────────────────────
+      const docUuid = resolveDoctorUuid(sourceData.doctorId || sourceData.doctorName);
+      const newSchId = sourceData.scheduleId || crypto.randomUUID();
+      const quota = sourceData.fixedQuota && sourceData.fixedQuota > 0 ? sourceData.fixedQuota : 10;
+
       weeklyScheduleMatrix.value[targetKey] = {
         ...sourceData,
-        poliId: selectedPoliId.value,
+        scheduleId: newSchId,
+        doctorId: docUuid,
+        poliId: targetPolyUuid,
         shiftId: targetShiftId as "pagi" | "siang" | "sore",
         id: targetKey,
+        fixedQuota: quota,
       };
       delete weeklyScheduleMatrix.value[sourceKey];
 
       saveWeeklyScheduleToLocal();
+
+      // DB Sync: assign target & unassign source
+      try {
+        await api.assignShiftSchedule({
+          id: newSchId,
+          polyclinic_id: targetPolyUuid,
+          doctor_id: docUuid,
+          day_of_week: targetDay,
+          shift_id: targetShiftId,
+          start_time: targetTimes.start_time,
+          end_time: targetTimes.end_time,
+          quota: quota,
+        });
+        await api.unassignShiftSchedule({
+          schedule_id: sourceData.scheduleId,
+          polyclinic_id: targetPolyUuid,
+          day_of_week: sourceDay,
+          shift_id: sourceShiftId,
+          start_time: sourceTimes.start_time,
+        });
+      } catch (err) {
+        console.warn("DB sync on move error:", err);
+      }
+
       showToast(
         `Jadwal ${sourceData.doctorName} dipindahkan ke ${targetDayName} (Shift ${targetShiftId.toUpperCase()})`,
         "success"
@@ -1050,10 +1228,18 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
   // CASE 2: Dragging from DOCTOR POOL
   else if (activeDragSource.value.type === "pool") {
     const doc = activeDragSource.value.doctor!;
+    const docUuid = resolveDoctorUuid(doc);
+    const targetQuota =
+      targetExisting?.fixedQuota && targetExisting.fixedQuota > 0
+        ? targetExisting.fixedQuota
+        : 10;
+    const scheduleId = targetExisting?.scheduleId || crypto.randomUUID();
 
     const newAssignment: DoctorShift = {
       id: targetKey,
-      poliId: selectedPoliId.value,
+      scheduleId: scheduleId,
+      doctorId: docUuid,
+      poliId: targetPolyUuid,
       poliName: selectedPoli?.name || "Poliklinik",
       poliCode: selectedPoli?.code || "A",
       shiftId: targetShiftId as "pagi" | "siang" | "sore",
@@ -1061,7 +1247,7 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
       doctorSpecialty: doc.specialty || "Dokter Bertugas",
       room: targetExisting?.room || "Ruang 01",
       smartAvgServiceMin: 10,
-      fixedQuota: targetExisting?.fixedQuota || 24,
+      fixedQuota: targetQuota,
       isActive: true,
       notes: `Shift ${targetShiftId} hari ${targetDayName}`,
     };
@@ -1069,16 +1255,24 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
     weeklyScheduleMatrix.value[targetKey] = newAssignment;
     saveWeeklyScheduleToLocal();
 
-    // Sync to backend API if available
+    // Sync to backend DB
     try {
-      await api.assignShiftSchedule({
-        polyclinic_id: doc.polyclinic_id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-        doctor_id: doc.id,
+      const res = await api.assignShiftSchedule({
+        id: scheduleId,
+        polyclinic_id: targetPolyUuid,
+        doctor_id: docUuid,
         day_of_week: targetDay,
         shift_id: targetShiftId,
-        quota: 24,
+        start_time: targetTimes.start_time,
+        end_time: targetTimes.end_time,
+        quota: targetQuota,
       });
-    } catch {}
+      if (res && res.data && res.data.id) {
+        newAssignment.scheduleId = res.data.id;
+      }
+    } catch (err) {
+      console.warn("DB assignShiftSchedule error:", err);
+    }
 
     showToast(
       `Berhasil menugaskan ${doc.full_name} pada Shift ${targetShiftId.toUpperCase()} (${targetDayName})`,
@@ -1105,23 +1299,40 @@ async function handleDrop(targetDay: number, targetShiftId: string) {
   activeDragSource.value = null;
 }
 
-function removeDoctorFromSlot(day: number, shiftId: string) {
+async function removeDoctorFromSlot(day: number, shiftId: string) {
   if (!canEdit.value) return;
   const key = getSlotKey(day, shiftId);
   const doc = getAssignedDoctor(day, shiftId);
   if (doc) {
+    const selectedPoli = polyclinics.value.find(
+      (p) => p.id === selectedPoliId.value || p.slug === selectedPoliId.value
+    );
+    const polyUuid = selectedPoli?.id || "11111111-1111-1111-1111-111111111111";
+    const times = getShiftTimeRange(shiftId);
+
+    try {
+      await api.unassignShiftSchedule({
+        schedule_id: doc.scheduleId,
+        polyclinic_id: polyUuid,
+        day_of_week: day,
+        shift_id: shiftId,
+        start_time: times.start_time,
+      });
+    } catch (err) {
+      console.warn("Failed to unassign schedule from DB:", err);
+    }
+
     delete weeklyScheduleMatrix.value[key];
-    const poli = polyclinics.value.find((p) => p.id === selectedPoliId.value || p.slug === selectedPoliId.value);
-    if (poli) {
-      delete weeklyScheduleMatrix.value[`${poli.id}-${day}-${shiftId}`];
-      delete weeklyScheduleMatrix.value[`${poli.slug}-${day}-${shiftId}`];
+    if (selectedPoli) {
+      delete weeklyScheduleMatrix.value[`${selectedPoli.id}-${day}-${shiftId}`];
+      delete weeklyScheduleMatrix.value[`${selectedPoli.slug}-${day}-${shiftId}`];
     }
     saveWeeklyScheduleToLocal();
 
     const todayDayOfWeek = getTodayDayOfWeek();
     if (day === todayDayOfWeek) {
       const idx = queueStore.doctorShifts.findIndex(
-        (s) => (s.poliId === selectedPoliId.value || s.poliId === poli?.slug) && s.shiftId === shiftId
+        (s) => (s.poliId === selectedPoliId.value || s.poliId === selectedPoli?.slug) && s.shiftId === shiftId
       );
       if (idx >= 0) {
         queueStore.doctorShifts.splice(idx, 1);
@@ -1139,24 +1350,74 @@ function openEditSlotModal(day: number, shiftId: string) {
   editingSlotDay.value = day;
   editingSlotShift.value = shiftId;
   editingSlotRoom.value = slot?.room || "Ruang 01";
-  editingSlotQuota.value = slot?.fixedQuota || 24;
+  editingSlotQuota.value = slot?.fixedQuota || 10;
   showSlotEditModal.value = true;
 }
 
-function saveSlotConfig() {
+async function saveSlotConfig() {
   if (!canEdit.value) return;
-  const key = getSlotKey(editingSlotDay.value, editingSlotShift.value);
-  if (weeklyScheduleMatrix.value[key]) {
-    weeklyScheduleMatrix.value[key].fixedQuota = editingSlotQuota.value;
+  const day = editingSlotDay.value;
+  const shiftId = editingSlotShift.value;
+  const key = getSlotKey(day, shiftId);
+  const slot = weeklyScheduleMatrix.value[key];
+  if (slot) {
+    const newQuota = editingSlotQuota.value && editingSlotQuota.value > 0 ? editingSlotQuota.value : 10;
+    slot.fixedQuota = newQuota;
     saveWeeklyScheduleToLocal();
+
+    const selectedPoli = polyclinics.value.find(
+      (p) => p.id === selectedPoliId.value || p.slug === selectedPoliId.value
+    );
+    const polyUuid = selectedPoli?.id || "11111111-1111-1111-1111-111111111111";
+    const times = getShiftTimeRange(shiftId);
+    const docUuid = resolveDoctorUuid(slot.doctorId || slot.doctorName);
+
+    try {
+      await api.assignShiftSchedule({
+        id: slot.scheduleId || crypto.randomUUID(),
+        polyclinic_id: polyUuid,
+        doctor_id: docUuid,
+        day_of_week: day,
+        shift_id: shiftId,
+        start_time: times.start_time,
+        end_time: times.end_time,
+        quota: newQuota,
+      });
+    } catch (err) {
+      console.warn("Failed to update slot quota in DB:", err);
+    }
+
     showToast("Pengaturan kuota berhasil disimpan.", "success");
   }
   showSlotEditModal.value = false;
 }
 
-function resetScheduleToDefault() {
+async function resetScheduleToDefault() {
   if (!canEdit.value) return;
   if (confirm("Apakah Anda yakin ingin mengosongkan seluruh slot jadwal shift?")) {
+    const selectedPoli = polyclinics.value.find(
+      (p) => p.id === selectedPoliId.value || p.slug === selectedPoliId.value
+    );
+    const polyUuid = selectedPoli?.id || "11111111-1111-1111-1111-111111111111";
+
+    for (const day of weekDays) {
+      for (const shift of shiftDefinitions) {
+        const doc = getAssignedDoctor(day.id, shift.id);
+        if (doc) {
+          const times = getShiftTimeRange(shift.id);
+          try {
+            await api.unassignShiftSchedule({
+              schedule_id: doc.scheduleId,
+              polyclinic_id: polyUuid,
+              day_of_week: day.id,
+              shift_id: shift.id,
+              start_time: times.start_time,
+            });
+          } catch {}
+        }
+      }
+    }
+
     weeklyScheduleMatrix.value = {};
     saveWeeklyScheduleToLocal();
     showToast("Seluruh slot jadwal shift berhasil dikosongkan.", "success");

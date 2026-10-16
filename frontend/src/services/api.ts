@@ -639,11 +639,26 @@ export const api = {
     }
   },
 
+  async getSchedules(polyclinicId?: string, date = 'all') {
+    try {
+      const params = new URLSearchParams()
+      if (polyclinicId) params.append('polyclinic_id', polyclinicId)
+      if (date) params.append('date', date)
+      const res = await fetch(`${BASE_URL}/schedules?${params.toString()}`)
+      if (!res.ok) return { success: false, data: [] }
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get schedules:', err)
+      return { success: false, data: [] }
+    }
+  },
+
   async assignShiftSchedule(data: {
+    id?: string
     polyclinic_id: string
     doctor_id: string
     day_of_week: number
-    shift_id: string
+    shift_id?: string
     start_time?: string
     end_time?: string
     quota?: number
@@ -656,6 +671,37 @@ export const api = {
       return await res.json()
     } catch (err) {
       console.error('Failed to assign schedule:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async unassignShiftSchedule(data: {
+    schedule_id?: string
+    polyclinic_id?: string
+    day_of_week?: number
+    shift_id?: string
+    start_time?: string
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/schedules/unassign`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to unassign schedule:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async deleteSchedule(id: string) {
+    try {
+      const res = await authFetch(`${BASE_URL}/schedules/${id}`, {
+        method: 'DELETE',
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to delete schedule:', err)
       return { success: false, error: 'Koneksi ke backend gagal' }
     }
   },

@@ -22,10 +22,11 @@ type MasterService interface {
 	UpdateDoctor(ctx context.Context, id uuid.UUID, req dto.UpdateDoctorRequest) error
 	DeleteDoctor(ctx context.Context, id uuid.UUID) error
 
-	GetSchedules(ctx context.Context, polyclinicID uuid.UUID, dateStr string) ([]entity.Schedule, error)
+	GetSchedules(ctx context.Context, polyclinicID *uuid.UUID, dateStr string) ([]entity.Schedule, error)
 	CreateSchedule(ctx context.Context, req dto.CreateScheduleRequest) (*entity.Schedule, error)
 	DeleteSchedule(ctx context.Context, id uuid.UUID) error
 	AssignShift(ctx context.Context, req dto.SaveShiftAssignmentRequest) (*entity.Schedule, error)
+	UnassignShift(ctx context.Context, req dto.UnassignShiftRequest) error
 }
 
 type masterService struct {
@@ -184,12 +185,38 @@ func (s *masterService) DeleteDoctor(ctx context.Context, id uuid.UUID) error {
 	return s.doctorRepo.Delete(ctx, id)
 }
 
-func (s *masterService) GetSchedules(ctx context.Context, polyclinicID uuid.UUID, dateStr string) ([]entity.Schedule, error) {
-	targetDate := time.Now()
-	if dateStr != "" {
-		if parsed, err := time.Parse("2006-01-02", dateStr); err == nil {
-			targetDate = parsed
+func (s *masterService) GetSchedules(ctx context.Context, polyclinicID *uuid.UUID, dateStr string) ([]entity.Schedule, error) {
+	if polyclinicID == nil || *polyclinicID == uuid.Nil {
+		list, err := s.scheduleRepo.FindAll(ctx)
+		if err != nil {
+			return nil, err
 		}
+		var result []entity.Schedule
+		for _, item := range list {
+			if item != nil {
+				result = append(result, *item)
+			}
+		}
+		return result, nil
+	}
+
+	if dateStr == "" || dateStr == "all" {
+		list, err := s.scheduleRepo.FindByPolyclinic(ctx, *polyclinicID)
+		if err != nil {
+			return nil, err
+		}
+		var result []entity.Schedule
+		for _, item := range list {
+			if item != nil {
+				result = append(result, *item)
+			}
+		}
+		return result, nil
+	}
+
+	targetDate := time.Now()
+	if parsed, err := time.Parse("2006-01-02", dateStr); err == nil {
+		targetDate = parsed
 	}
 
 	// Konversi hari: Go Weekday 0=Minggu, 1=Senin ... 6=Sabtu
@@ -199,7 +226,7 @@ func (s *masterService) GetSchedules(ctx context.Context, polyclinicID uuid.UUID
 		dayOfWeek = 7
 	}
 
-	return s.scheduleRepo.FindWithRemainingSlot(ctx, polyclinicID, targetDate, dayOfWeek)
+	return s.scheduleRepo.FindWithRemainingSlot(ctx, *polyclinicID, targetDate, dayOfWeek)
 }
 
 func (s *masterService) CreateSchedule(ctx context.Context, req dto.CreateScheduleRequest) (*entity.Schedule, error) {
@@ -225,28 +252,41 @@ func (s *masterService) AssignShift(ctx context.Context, req dto.SaveShiftAssign
 	startTime := req.StartTime
 	endTime := req.EndTime
 	if startTime == "" || endTime == "" {
-		switch req.ShiftID {
+		shiftLower := ""
+		if req.ShiftID != "" {
+			shiftLower = req.ShiftID
+		}
+		switch shiftLower {
 		case "pagi":
-			startTime = "08:00:00"
+			startTime = "07:00:00"
 			endTime = "12:00:00"
 		case "siang":
 			startTime = "12:00:00"
-			endTime = "15:00:00"
+			endTime = "17:00:00"
 		case "sore":
-			startTime = "15:00:00"
-			endTime = "18:00:00"
+			startTime = "17:00:00"
+			endTime = "22:00:00"
 		default:
-			startTime = "08:00:00"
-			endTime = "14:00:00"
+			startTime = "07:00:00"
+			endTime = "12:00:00"
 		}
 	}
 
 	quota := req.Quota
 	if quota <= 0 {
-		quota = 30
+		quota = 10
 	}
 
+	scheduleID := uuid.New()
+	if req.ID != nil && *req.ID != uuid.Nil {
+		scheduleID = *req.ID
+	}
+
+	// Hapus jadwal lama di slot yang sama agar tidak duplikat
+	_ = s.scheduleRepo.DeleteBySlot(ctx, req.PolyclinicID, req.DayOfWeek, startTime)
+
 	sch := &entity.Schedule{
+		ID:           scheduleID,
 		PolyclinicID: req.PolyclinicID,
 		DoctorID:     req.DoctorID,
 		DayOfWeek:    req.DayOfWeek,
@@ -258,4 +298,27 @@ func (s *masterService) AssignShift(ctx context.Context, req dto.SaveShiftAssign
 		return nil, err
 	}
 	return sch, nil
+}
+
+func (s *masterService) UnassignShift(ctx context.Context, req dto.UnassignShiftRequest) error {
+	startTime := req.StartTime
+	if startTime == "" && req.ShiftID != "" {
+		switch req.ShiftID {
+		case "pagi":
+			startTime = "07:00:00"
+		case "siang":
+			startTime = "12:00:00"
+		case "sore":
+			startTime = "17:00:00"
+		}
+	}
+
+	if req.ScheduleID != nil && *req.ScheduleID != uuid.Nil {
+		_ = s.scheduleRepo.Delete(ctx, *req.ScheduleID)
+	}
+
+	if req.PolyclinicID != uuid.Nil && req.DayOfWeek > 0 && startTime != "" {
+		_ = s.scheduleRepo.DeleteBySlot(ctx, req.PolyclinicID, req.DayOfWeek, startTime)
+	}
+	return nil
 }

@@ -252,7 +252,7 @@ func (s *analyticsService) GetDoctorPerformance(ctx context.Context, facilityID 
 			COUNT(v.id) AS total_handled,
 			COALESCE(AVG(EXTRACT(EPOCH FROM (q.service_end - q.service_start))/60), 12.0) AS avg_service_min,
 			COALESCE(
-				(COUNT(CASE WHEN q.status = 'completed' THEN 1 END)::float / NULLIF(COUNT(q.id), 0)) * 100,
+				(COUNT(CASE WHEN q.status::text IN ('done', 'completed') THEN 1 END)::float / NULLIF(COUNT(q.id), 0)) * 100,
 				96.0
 			) AS completion_rate_pct
 		FROM doctors d
