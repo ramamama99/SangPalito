@@ -249,6 +249,7 @@ Jika Anda ingin menjalankan seluruh ekosistem SangPalito di lingkungan lokal:
 - **Go** v1.22 atau lebih baru
 - **PostgreSQL 16** (bisa menggunakan Docker Compose bawaan atau PostgreSQL lokal)
 - **Git**
+- **Wajib Sambungkan Frontend dan Backend Terlebih Dahulu**
 
 ---
 
