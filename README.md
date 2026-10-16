@@ -313,20 +313,6 @@ cd SangPalito
 
 ---
 
-## 🧗‍♂️ Tantangan Selama Hackathon & Solusi
-
-1. **Akurasi Estimasi Waktu Tunggu Tanpa Lonjakan Ekstrem:**
-   - *Tantangan:* Ketika seorang dokter memeriksa pasien darurat yang memakan waktu lama atau sebaliknya menyelesaikan konsultasi kilat, rumus estimasi waktu tunggu konvensional akan melonjak kacau.
-   - *Solusi:* Menerapkan Exponential Moving Average (EMA) dengan *smoothing factor* $\alpha=0.30$ dikombinasikan dengan batasan ambang (*clamping*) durasi 3–45 menit dan pengali koefisien klinis per pasien.
-
-2. **OCR KTP yang Cepat Tanpa Membebani Server:**
-   - *Tantangan:* Pengiriman foto KTP berukuran besar ke server berpotensi membuat *bottleneck* dan memicu risiko privasi data.
-   - *Solusi:* Mengimplementasikan **Tesseract.js** langsung pada sisi browser (*client-side*). Gambar diproses di perangkat lokal pengguna, dan hanya teks terverifikasi yang dikirim ke backend.
-
-3. **Sinkronisasi Multi-Layar Realtime Zero-Latency:**
-   - *Tantangan:* Memastikan pemanggilan antrean dari ruang dokter langsung merefleksikan perubahan status di ponsel pasien dan layar TV ruang tunggu secara instan.
-   - *Solusi:* Merancang arsitektur **Gorilla WebSocket Hub** dengan *room-based event broadcast* per poliklinik di backend Go, menghasilkan *delay* di bawah 200 ms.
-
 ---
 
 ## 🔮 Rencana Pengembangan (What's Next)
