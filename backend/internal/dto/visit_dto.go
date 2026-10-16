@@ -68,3 +68,20 @@ type ICD10Response struct {
 	Code        string `json:"code"`
 	Description string `json:"description"`
 }
+
+type LogVisitAuditRequest struct {
+	VisitID        string                 `json:"visit_id"`
+	AppointmentID  string                 `json:"appointment_id"`
+	PatientID      string                 `json:"patient_id"`
+	PatientName    string                 `json:"patient_name"`
+	Polyclinic     string                 `json:"polyclinic"`
+	DoctorName     string                 `json:"doctor_name"`
+	Diagnosis      string                 `json:"diagnosis"`
+	PrescriptionNo string                 `json:"prescription_no"`
+	Vitals         map[string]interface{} `json:"vitals"`
+	Subjective     string                 `json:"subjective"`
+	Objective      string                 `json:"objective"`
+	Plan           string                 `json:"plan"`
+	MedicationPlan string                 `json:"medication_plan"`
+}
+

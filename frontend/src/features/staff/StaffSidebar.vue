@@ -49,6 +49,7 @@
       </button>
 
       <button
+        v-if="canAccessPoli"
         type="button"
         class="nav-link"
         :class="{ active: queueStore.role === 'medis' }"
@@ -214,6 +215,7 @@ import { useQueueStore } from "../../stores/queue";
 import { todayDate } from "../../constants/initialData";
 import { isSameDate } from "../../utils/dateHelper";
 import { api } from "../../services/api";
+import { canAccessPoliDashboard } from "../../utils/auth";
 
 const props = withDefaults(
   defineProps<{
@@ -245,6 +247,8 @@ const userRole = computed(() => {
   return currentUser?.role || 'admin';
 });
 
+const canAccessPoli = computed(() => canAccessPoliDashboard());
+
 const canAccessUserManagement = computed(() => {
   return userRole.value === 'admin';
 });
@@ -258,6 +262,9 @@ const canAccessAnalytics = computed(() => {
 });
 
 function selectRole(role: "loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter" | "user_management" | "audit_log" | "analytics") {
+  if (role === "medis" && !canAccessPoli.value) {
+    return;
+  }
   queueStore.role = role;
   if (typeof window !== "undefined" && window.innerWidth < 768) {
     emit("update:collapsed", true);

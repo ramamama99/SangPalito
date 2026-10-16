@@ -100,7 +100,8 @@ async function handleLogin() {
       } else {
         queueStore.role = "loket";
       }
-      router.push("/staff");
+      const redirectPath = (router.currentRoute.value.query.redirect as string) || "/staff";
+      router.push(redirectPath);
       window.scrollTo(0, 0);
     } else {
       errorMessage.value =

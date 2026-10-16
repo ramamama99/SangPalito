@@ -281,7 +281,7 @@
       </section>
 
       <!-- Role: Medis / Poli View -->
-      <template v-else-if="queueStore.role === 'medis'">
+      <template v-else-if="queueStore.role === 'medis' && canAccessPoli">
         <div class="poli-toolbar">
           <label>
             Poli Anda
@@ -1550,10 +1550,13 @@ import UserManagementPanel from "./UserManagementPanel.vue";
 import AuditLogPanel from "./AuditLogPanel.vue";
 import AnalyticsDashboardPanel from "./AnalyticsDashboardPanel.vue";
 import { api } from "../../services/api";
+import { canAccessPoliDashboard, parseJwt } from "../../utils/auth";
 
 const router = useRouter();
 const route = useRoute();
 const queueStore = useQueueStore();
+
+const canAccessPoli = computed(() => canAccessPoliDashboard());
 
 onMounted(() => {
   if (route.path === "/database-obat" || route.query.tab === "obat") {
@@ -1568,8 +1571,20 @@ onMounted(() => {
     queueStore.role = "audit_log";
   } else if (route.path === "/analytics" || route.query.tab === "analytics") {
     queueStore.role = "analytics";
+  } else if (queueStore.role === "medis" && !canAccessPoli.value) {
+    queueStore.role = "loket";
   }
 });
+
+watch(
+  () => queueStore.role,
+  (newRole) => {
+    if (newRole === "medis" && !canAccessPoli.value) {
+      queueStore.role = "loket";
+      queueStore.setNotice("Akses ditolak: Dashboard Poli hanya dapat diakses oleh role Medic, Head, atau Admin.");
+    }
+  }
+);
 
 watch(
   () => route.path,
@@ -2461,6 +2476,16 @@ function selectPatient(p: Patient) {
 
 async function saveMedicalRecord() {
   if (!activePatient.value) return;
+
+  // Verifikasi role dari JWT Token (Hanya medic, head, atau admin yang boleh mengisi)
+  const token = localStorage.getItem("antrisehat-token");
+  const payload = parseJwt(token);
+  const currentRole = (payload?.role || "").toLowerCase();
+  if (!["medic", "head", "admin"].includes(currentRole)) {
+    queueStore.setNotice("Akses ditolak: Hanya pengguna dengan role Medic, Head, atau Admin yang berhak mengisi dan menyimpan kunjungan poli.");
+    return;
+  }
+
   const current = activePatient.value;
 
   // Build medication plan text
@@ -2580,6 +2605,35 @@ async function saveMedicalRecord() {
     } catch {
       // offline fallback
     }
+  }
+
+  // Catat riwayat pengisian kunjungan poli ke tabel audit_logs di database
+  try {
+    await api.recordVisitAuditLog({
+      visit_id: rxObject?.id || undefined,
+      appointment_id: current.id,
+      patient_id: current.id,
+      patient_name: current.name,
+      polyclinic: current.poli || queueStore.staffPoli,
+      doctor_name: doctorName.value,
+      diagnosis: queueStore.soap.diagnosis,
+      prescription_no: prescriptionNo,
+      vitals: {
+        bp_sys: Number(vitals.bp_sys) || 120,
+        bp_dia: Number(vitals.bp_dia) || 80,
+        temp: Number(vitals.temp) || 36.5,
+        hr: Number(vitals.hr) || 80,
+        spo2: Number(vitals.spo2) || 98,
+        weight: Number(vitals.weight) || 65,
+        height: Number(vitals.height) || 168,
+      },
+      subjective: subjectiveText.value || current.complaint || "Pemeriksaan rutin",
+      objective: objectiveText.value || "Pemeriksaan fisik umum dalam batas normal",
+      plan: queueStore.soap.plan || "Terapi simtomatik dan edukasi",
+      medication_plan: medPlanText,
+    });
+  } catch (err) {
+    console.error("Gagal mencatat audit log kunjungan:", err);
   }
 
   queueStore.selected = "";

@@ -35,8 +35,10 @@ func (h *VisitHandler) CreateVisit(c *gin.Context) {
 			createdBy = &uid
 		}
 	}
+	role := c.GetString("role")
+	ip := c.ClientIP()
 
-	res, err := h.visitService.CreateVisit(c.Request.Context(), &req, createdBy)
+	res, err := h.visitService.CreateVisit(c.Request.Context(), &req, createdBy, ip, role)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -44,6 +46,35 @@ func (h *VisitHandler) CreateVisit(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, response.OK(res))
 }
+
+// POST /api/v1/visits/audit-log - Pencatatan Audit Log saat Simpan & Tutup Kunjungan
+func (h *VisitHandler) LogVisitAudit(c *gin.Context) {
+	var req dto.LogVisitAuditRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("Invalid request body: "+err.Error(), err))
+		return
+	}
+
+	var userID *uuid.UUID
+	if userIDStr := c.GetString("user_id"); userIDStr != "" {
+		if uid, err := uuid.Parse(userIDStr); err == nil {
+			userID = &uid
+		}
+	}
+	role := c.GetString("role")
+	fullName := c.GetString("full_name")
+	ip := c.ClientIP()
+
+	if err := h.visitService.LogVisitAudit(c.Request.Context(), &req, userID, role, fullName, ip); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(gin.H{
+		"message": "Audit log kunjungan berhasil dicatat",
+	}))
+}
+
 
 // GET /api/v1/visits/:id - Detail Rekam Medis Kunjungan
 func (h *VisitHandler) GetVisitByID(c *gin.Context) {

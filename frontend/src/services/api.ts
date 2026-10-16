@@ -245,6 +245,33 @@ export const api = {
     }
   },
 
+  async recordVisitAuditLog(payload: {
+    visit_id?: string
+    appointment_id?: string
+    patient_id?: string
+    patient_name?: string
+    polyclinic?: string
+    doctor_name?: string
+    diagnosis?: string
+    prescription_no?: string
+    vitals?: Record<string, any>
+    subjective?: string
+    objective?: string
+    plan?: string
+    medication_plan?: string
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/visits/audit-log`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to record visit audit log:', err)
+      return null
+    }
+  },
+
   async searchICD10(query: string, limit = 20) {
     try {
       const res = await authFetch(`${BASE_URL}/icd10?q=${encodeURIComponent(query)}&limit=${limit}`)
