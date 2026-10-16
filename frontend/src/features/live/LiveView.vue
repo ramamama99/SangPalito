@@ -80,6 +80,30 @@
       </section>
     </div>
 
+    <!-- Broadcast / Transkripsi Teks Panggilan Antrean (Bahasa Indonesia) -->
+    <div
+      v-if="queueStore.lastCallAnnouncement"
+      class="mt-2.5 px-4 py-2 bg-gradient-to-r from-[#0f4d4a] via-[#115e59] to-[#0f4d4a] text-white rounded-xl flex items-center justify-between shadow-md border border-teal-500/30 shrink-0 text-xs sm:text-sm"
+    >
+      <div class="flex items-center gap-2.5 truncate">
+        <span class="flex h-2.5 w-2.5 relative shrink-0">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <Volume2 :size="16" class="text-amber-300 shrink-0 animate-pulse" />
+        <span class="uppercase font-bold text-teal-200 tracking-wider text-[11px] shrink-0">
+          Panggilan Terkini:
+        </span>
+        <strong class="font-bold text-white truncate">
+          {{ queueStore.lastCallAnnouncement.transcription }}
+          <span class="font-normal text-teal-100">({{ queueStore.lastCallAnnouncement.name }})</span>
+        </strong>
+      </div>
+      <span class="text-[11px] text-teal-200 shrink-0 font-medium hidden md:inline">
+        Audio Bahasa Indonesia
+      </span>
+    </div>
+
     <!-- FLOATING SEARCH BUTTON AT BOTTOM CENTER -->
     <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
       <!-- Search Trigger Button -->
@@ -168,7 +192,7 @@
 import { ref, computed, nextTick } from "vue";
 import {
   Stethoscope, Smile, Baby, HeartPulse,
-  Users, Search, X
+  Users, Search, X, Volume2
 } from "lucide-vue-next";
 import { useQueueStore } from "../../stores/queue";
 import { todayDate } from "../../constants/initialData";
@@ -242,12 +266,15 @@ const polyclinics = computed(() => {
       return matchDate && (matchPoli || matchPrefix);
     });
 
-    const currentPatient = poliPatients.find(
-      (p) => p.status === "Dipanggil" || p.status === "Sedang Dilayani",
-    ) || null;
+    const currentPatient =
+      [...poliPatients].reverse().find((p) => p.status === "Dipanggil") ||
+      poliPatients.find((p) => p.status === "Sedang Dilayani") ||
+      null;
 
     const nextPatients = poliPatients.filter(
-      (p) => p.status === "Hadir" || p.status === "Menunggu verifikasi" || p.status === "waiting",
+      (p) =>
+        p.id !== currentPatient?.id &&
+        (p.status === "Hadir" || p.status === "Menunggu verifikasi" || p.status === "waiting"),
     );
 
     return {

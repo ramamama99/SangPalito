@@ -205,15 +205,16 @@ const polyclinics = computed(() => {
     });
 
     const currentPatient =
-      poliPatients.find(
-        (p) => p.status === "Dipanggil" || p.status === "Sedang Dilayani",
-      ) || null;
+      [...poliPatients].reverse().find((p) => p.status === "Dipanggil") ||
+      poliPatients.find((p) => p.status === "Sedang Dilayani") ||
+      null;
 
     const nextPatients = poliPatients.filter(
       (p) =>
-        p.status === "Hadir" ||
-        p.status === "Menunggu verifikasi" ||
-        p.status === "waiting",
+        p.id !== currentPatient?.id &&
+        (p.status === "Hadir" ||
+          p.status === "Menunggu verifikasi" ||
+          p.status === "waiting"),
     );
 
     return {

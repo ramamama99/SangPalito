@@ -3,9 +3,6 @@
     <!-- Header Section -->
     <div class="panel-header-row">
       <div>
-        <div class="badge-role-tag admin-tag">
-          <Shield :size="14" /> AKSES ADMINISTRATOR
-        </div>
         <h3 class="panel-title">Manajemen Akun Pengguna & Staf</h3>
         <p class="panel-subtitle">
           Kelola hak akses login, data staf medis, petugas loket, kepala puskesmas, dan penempatan poli.

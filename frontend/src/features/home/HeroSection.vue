@@ -16,7 +16,7 @@
         <p>
           Daftar dari rumah, datang saat giliran Anda.
           <br class="desktop-break" />
-          Pelayanan puskesmas kini lebih mudah, cepat,
+          Pelayanan Kesehatan kini lebih mudah, cepat,
           <br class="desktop-break" />
           dan nyaman untuk semua.
         </p>

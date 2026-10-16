@@ -62,45 +62,6 @@
 
             <!-- 2. Kondisi Hasil Ekstraksi Sudah Didapat (Langkah Verifikasi & Konfirmasi Editable) -->
             <div v-else-if="parsedData" class="space-y-5">
-              <!-- Banner Sukses & Panduan Verifikasi -->
-              <div class="p-4 rounded-[14px] bg-[#eaf6f2] border border-[#c8e8df] flex items-start gap-3">
-                <div class="w-9 h-9 rounded-[10px] bg-[var(--deep)] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                  <CheckCircle2 class="w-5 h-5" />
-                </div>
-                <div class="space-y-0.5 flex-1">
-                  <h4 class="text-sm font-bold font-['Manrope'] text-[var(--deep)]">
-                    Data e-KTP Berhasil Ditangkap!
-                  </h4>
-                  <p class="text-xs text-[var(--deep)] leading-relaxed">
-                    Filter optimal: <strong>{{ winningMethodLabel || 'Otomatis' }}</strong> (Tingkat akurasi: {{ parsedData.confidence }}%).
-                    Seluruh kolom di bawah bersifat <strong>editable</strong>. Anda dapat mengedit dan memperbaiki data manual jika ada kesalahan baca OCR.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Thumbnail Tangkapan e-KTP Asli untuk Perbandingan -->
-              <div v-if="previewUrl" class="p-3 bg-[#f6f8f5] rounded-[14px] border border-[var(--line)] flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3 min-w-0">
-                  <img
-                    :src="previewUrl"
-                    alt="Pratinjau KTP"
-                    class="w-16 h-11 object-cover rounded-xl border border-[var(--line)] shadow-2xs shrink-0"
-                  />
-                  <div class="truncate">
-                    <span class="text-[11px] font-bold text-[var(--deep)] block truncate">Foto e-KTP yang Diproses</span>
-                    <span class="text-[11px] text-[var(--muted)] block truncate">Bandingkan data form dengan fisik kartu di foto</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  @click="resetScan"
-                  class="text-xs text-[var(--deep)] hover:text-[var(--teal)] font-bold px-3.5 py-1.5 rounded-full bg-white border border-[var(--line)] hover:bg-[#eaf6f2] transition shrink-0 flex items-center gap-1 cursor-pointer"
-                >
-                  <RotateCcw class="w-3.5 h-3.5" />
-                  <span>Foto Ulang</span>
-                </button>
-              </div>
-
               <!-- Formulir Verifikasi & Koreksi Data (Editable Form) -->
               <div class="bg-white rounded-[19px] border border-[var(--line)] shadow-xs p-4 sm:p-5 space-y-4">
                 <div class="flex items-center justify-between border-b border-[var(--line)] pb-3">
@@ -112,14 +73,6 @@
                   </div>
                   <span class="text-[11px] font-semibold text-[var(--muted)]">
                     Formulir Editable
-                  </span>
-                </div>
-
-                <!-- Petunjuk Filter Pembersihan Teks -->
-                <div class="text-[11px] text-[var(--deep)] bg-[#f6f8f5] rounded-[9px] p-2.5 border border-[var(--line)] flex items-center gap-2">
-                  <Info class="w-4 h-4 text-[var(--teal)] shrink-0" />
-                  <span>
-                    <strong>Filter aktif:</strong> Hanya huruf, angka, tanda titik (.), dan tanda garis miring (/) yang diizinkan masuk ke form.
                   </span>
                 </div>
 
@@ -440,8 +393,7 @@ import {
   Loader2,
   RotateCcw,
   Edit3,
-  MapPin,
-  Info
+  MapPin
 } from 'lucide-vue-next'
 import KtpCameraScanner from './KtpCameraScanner.vue'
 import { processMultiEnhancementOcr } from '@/utils/ocrService'

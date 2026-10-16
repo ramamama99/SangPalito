@@ -256,11 +256,14 @@
                     Verifikasi <ChevronRight :size="15" />
                   </button>
                   <button
-                    v-else-if="p.status === 'Hadir'"
+                    v-else-if="['Hadir', 'Dipanggil'].includes(p.status)"
                     class="text-button"
+                    :class="{ '!text-amber-700 !font-bold': p.status === 'Dipanggil' }"
                     @click="queueStore.call(p)"
+                    :title="p.status === 'Dipanggil' ? 'Panggil Ulang Pasien' : 'Panggil Pasien'"
                   >
-                    Panggil <Volume2 :size="16" />
+                    <span>{{ p.status === 'Dipanggil' ? 'Panggil Ulang' : 'Panggil' }}</span>
+                    <Volume2 :size="16" />
                   </button>
                   <button
                     v-else-if="p.status === 'Selesai' && (p.prescription || p.prescription_no)"
@@ -583,9 +586,6 @@
             <h3>Database Master Pasien</h3>
             <p class="muted text-xs">Kelola data pasien klinik, NIK terenkripsi, penjamin (BPJS/Umum), dan riwayat medis.</p>
           </div>
-          <button class="button primary small" @click="openAddPatientModal">
-            <Plus :size="16" /> Tambah Pasien Baru
-          </button>
         </div>
 
         <!-- Filter & Search Toolbar -->
@@ -618,7 +618,7 @@
                 <th>Kontak & Alamat</th>
                 <th>Penjamin</th>
                 <th>Alergi</th>
-                <th style="text-align: right;">Aksi</th>
+                <th style="text-align: center; width: 130px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -650,7 +650,7 @@
                   </span>
                   <span v-else class="text-slate-400 text-xs">—</span>
                 </td>
-                <td style="text-align: right;">
+                <td style="text-align: center;">
                   <div class="action-btn-group">
                     <button class="action-btn edit" @click="openEditPatientModal(p)" title="Edit Data Pasien">
                       <Edit2 :size="15" />
@@ -803,41 +803,51 @@
 
         <!-- Tabel Obat -->
         <div class="table-container">
-          <table class="data-table">
+          <table class="data-table meds-table">
             <thead>
               <tr>
-                <th style="width: 80px;">Kode</th>
-                <th>Nama Obat & Sediaan</th>
-                <th style="width: 130px;">Cara Pakai</th>
-                <th style="width: 160px; max-width: 180px;">Indikasi</th>
-                <th style="width: 170px;">Aturan & Waktu Pakai</th>
-                <th style="text-align: right; width: 90px;">Aksi</th>
+                <th class="col-med-code">Kode</th>
+                <th class="col-med-name">Nama Obat & Sediaan</th>
+                <th class="col-med-route">Cara Pakai</th>
+                <th class="col-med-indication">Indikasi</th>
+                <th class="col-med-instructions">Aturan & Waktu Pakai</th>
+                <th class="col-med-action">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="m in paginatedMedications" :key="m.id">
-                <td>
-                  <span class="font-mono font-bold text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">{{ m.code || 'MED' }}</span>
+                <td class="col-med-code">
+                  <span class="font-mono font-bold text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 whitespace-nowrap">{{ m.code || 'MED' }}</span>
                 </td>
-                <td>
-                  <strong class="block text-sm text-slate-800">{{ m.name }} {{ m.strength || '' }}</strong>
-                  <span class="text-xs text-slate-500">{{ m.generic_name || m.name }} · {{ m.dosage_form }}</span>
+                <td class="col-med-name">
+                  <strong class="med-name-title" :title="`${m.name} ${m.strength || ''}`">
+                    {{ m.name }} {{ m.strength || '' }}
+                  </strong>
+                  <span class="med-name-sub" :title="`${m.generic_name || m.name} · ${m.dosage_form}`">
+                    {{ m.generic_name || m.name }} · {{ m.dosage_form }}
+                  </span>
                 </td>
-                <td>
+                <td class="col-med-route">
                   <span class="route-badge" :data-route="m.route">
                     {{ formatRouteLabel(m.route) }}
                   </span>
                 </td>
-                <td style="width: 160px; max-width: 180px;">
-                  <span class="text-xs text-slate-700 font-medium line-clamp-2" :title="m.indication || 'Terapi umum'">{{ m.indication || "Terapi umum" }}</span>
+                <td class="col-med-indication">
+                  <span class="med-indication-text" :title="m.indication || 'Terapi umum'">
+                    {{ m.indication || "Terapi umum" }}
+                  </span>
                 </td>
-                <td>
-                  <div class="text-xs text-slate-600">
-                    <p class="font-semibold text-slate-700">{{ m.default_frequency || "3 x 1 sehari" }}</p>
-                    <p class="text-slate-500">{{ m.default_timing || "Sesudah makan" }}</p>
+                <td class="col-med-instructions">
+                  <div class="med-instructions-wrap">
+                    <p class="med-frequency-text" :title="m.default_frequency || '3 x 1 sehari'">
+                      {{ m.default_frequency || "3 x 1 sehari" }}
+                    </p>
+                    <p class="med-timing-text" :title="m.default_timing || 'Sesudah makan'">
+                      {{ m.default_timing || "Sesudah makan" }}
+                    </p>
                   </div>
                 </td>
-                <td style="text-align: right;">
+                <td class="col-med-action">
                   <div class="action-btn-group">
                     <button class="action-btn edit" @click="openEditMedModal(m)" title="Edit Obat">
                       <Edit2 :size="15" />
@@ -3089,7 +3099,7 @@ function goToMedicalRecord() {
 .action-btn-group {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -4050,5 +4060,140 @@ function goToMedicalRecord() {
 
 .arrival-time-cell small {
   font-size: 11px;
+}
+
+/* ── Database Obat Table Layout & Text Clamping ── */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.data-table.meds-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+.data-table.meds-table th,
+.data-table.meds-table td {
+  padding: 13px 14px;
+  vertical-align: middle;
+}
+
+.col-med-code {
+  width: 110px;
+  min-width: 95px;
+  white-space: nowrap;
+}
+
+.col-med-name {
+  min-width: 180px;
+  max-width: 270px;
+  white-space: normal !important;
+}
+
+.med-name-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.35;
+}
+
+.med-name-sub {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+.col-med-route {
+  width: 120px;
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+.col-med-indication {
+  min-width: 180px;
+  max-width: 260px;
+  white-space: normal !important;
+}
+
+.med-indication-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.col-med-instructions {
+  min-width: 170px;
+  max-width: 250px;
+  white-space: normal !important;
+}
+
+.med-instructions-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.med-frequency-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.med-timing-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.col-med-action {
+  width: 100px;
+  min-width: 90px;
+  text-align: center;
+  white-space: nowrap;
 }
 </style>

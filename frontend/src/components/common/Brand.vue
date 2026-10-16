@@ -1,7 +1,7 @@
 <template>
   <RouterLink to="/" class="brand" aria-label="AntriSehat beranda">
     <span class="brand-mark">
-      <Activity :size="27" :stroke-width="2.6" />
+      <img src="/favicon.svg" alt="AntriSehat Logo" class="brand-logo-img" />
     </span>
     <span>
       Antri<span class="teal">Sehat</span>
@@ -12,5 +12,4 @@
 
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { Activity } from "lucide-vue-next";
 </script>

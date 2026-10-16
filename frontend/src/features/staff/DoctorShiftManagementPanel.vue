@@ -8,28 +8,11 @@
           <div>
             <div style="display: flex; align-items: center; gap: 10px;">
               <h2 class="panel-main-title">Pengaturan Jadwal Shift & Akun Dokter</h2>
-              <span v-if="!canEdit" class="role-readonly-pill">
-                <Lock :size="12" /> Read-Only ({{ currentUser?.role || 'staf' }})
-              </span>
-              <span v-else class="role-admin-pill">
-                <ShieldCheck :size="12" /> Mode Editor ({{ currentUser?.role || 'admin' }})
-              </span>
             </div>
             <p class="panel-sub-title">
               Atur jadwal dinas dokter 7 hari (Senin s/d Minggu) dengan Drag & Drop, penukaran antar slot, serta manajemen akun dokter.
             </p>
           </div>
-        </div>
-      </div>
-
-      <!-- Read-Only Notice for Non-Admin & Non-Head -->
-      <div v-if="!canEdit" class="readonly-banner">
-        <Eye :size="18" class="text-amber-600 shrink-0" />
-        <div>
-          <strong>Mode Akses Hanya Lihat (Read-Only)</strong>
-          <p>
-            Anda masuk dengan role <strong>{{ currentUser?.role || 'staf' }}</strong>. Fitur Drag & Drop jadwal, penukaran shift, pengaturan cuti, dan penambahan/perubahan akun dokter hanya dapat dimodifikasi oleh <strong>Administrator</strong> dan <strong>Kepala Klinik / Puskesmas</strong>.
-          </p>
         </div>
       </div>
 
@@ -128,15 +111,6 @@
               class="pool-search-input"
             />
           </div>
-
-          <p v-if="canEdit" class="pool-hint">
-            <GripVertical :size="14" class="text-teal-700" />
-            <span>Tarik dokter di bawah ini ke slot hari & shift untuk <strong>plotting jadwal</strong>.</span>
-          </p>
-          <p v-else class="pool-hint readonly">
-            <Lock :size="14" />
-            <span>Mode Hanya Lihat: Penjadwalan terkunci.</span>
-          </p>
 
           <!-- Doctor Pool List -->
           <div class="doctor-pool-list">
@@ -239,40 +213,37 @@
                 </div>
 
                 <div class="assigned-card-footer">
-                  <span class="room-chip">{{ getAssignedDoctor(day.id, shift.id)?.room || 'Ruang 01' }}</span>
+                  <button
+                    v-if="canEdit"
+                    type="button"
+                    class="btn-edit-slot-quota"
+                    title="Ubah Kuota Pasien"
+                    @click.stop="openEditSlotModal(day.id, shift.id)"
+                  >
+                    <Settings :size="11" />
+                    <span>{{ getAssignedDoctor(day.id, shift.id)?.fixedQuota || shift.defaultQuota }} Kuota</span>
+                  </button>
+                  <span v-else class="quota-readonly-chip">
+                    {{ getAssignedDoctor(day.id, shift.id)?.fixedQuota || shift.defaultQuota }} Kuota
+                  </span>
 
-                  <div class="card-footer-btns">
-                    <button
-                      v-if="canEdit"
-                      type="button"
-                      class="btn-edit-slot-quota"
-                      title="Ubah Kuota / Ruangan"
-                      @click.stop="openEditSlotModal(day.id, shift.id)"
-                    >
-                      <Settings :size="11" /> {{ getAssignedDoctor(day.id, shift.id)?.fixedQuota || shift.defaultQuota }} Kuota
-                    </button>
-                    <span v-else class="quota-readonly-chip">
-                      {{ getAssignedDoctor(day.id, shift.id)?.fixedQuota || shift.defaultQuota }} Kuota
-                    </span>
-
-                    <!-- BUTTON HAPUS CARD DI SHIFT INI (HANYA LOGO SAMPAH) -->
-                    <button
-                      v-if="canEdit"
-                      type="button"
-                      class="btn-delete-card-slot"
-                      title="Hapus dokter dari jadwal shift ini"
-                      @click.stop="removeDoctorFromSlot(day.id, shift.id)"
-                    >
-                      <Trash2 :size="12" />
-                    </button>
-                  </div>
+                  <!-- BUTTON HAPUS CARD DI SHIFT INI (HANYA LOGO SAMPAH) -->
+                  <button
+                    v-if="canEdit"
+                    type="button"
+                    class="btn-delete-card-slot"
+                    title="Hapus dokter dari jadwal shift ini"
+                    @click.stop="removeDoctorFromSlot(day.id, shift.id)"
+                  >
+                    <Trash2 :size="12" />
+                  </button>
                 </div>
               </div>
 
               <!-- If Slot is Empty (Drop Target for Plotting) -->
               <div v-else class="empty-drop-placeholder">
                 <PlusCircle v-if="canEdit" :size="18" class="drop-icon" />
-                <span class="drop-text">{{ canEdit ? 'Tarik Dokter ke Sini untuk Plotting' : 'Kosong (Tidak Ada Dinas)' }}</span>
+                <span class="drop-text">{{ canEdit ? 'Tarik Dokter ke Sini' : 'Kosong' }}</span>
               </div>
             </div>
           </div>
@@ -553,15 +524,11 @@
       <div class="modal-card" style="max-width: 420px;">
         <div class="modal-header">
           <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">
-            Atur Kuota & Ruang Shift
+            Atur Kuota Pasien Shift
           </h3>
           <button type="button" class="btn-close" @click="showSlotEditModal = false"><X :size="18" /></button>
         </div>
         <div class="modal-body space-y-4">
-          <label class="form-field">
-            <span class="field-label">Nomor Ruangan Periksa</span>
-            <input type="text" v-model="editingSlotRoom" placeholder="Contoh: Ruang 01" />
-          </label>
           <label class="form-field">
             <span class="field-label">Kuota Maksimal Pasien</span>
             <input type="number" v-model.number="editingSlotQuota" min="1" max="100" />
@@ -597,9 +564,6 @@ import {
   UserX,
   Settings,
   MessageSquare,
-  Lock,
-  Eye,
-  ShieldCheck,
 } from "lucide-vue-next";
 import { api } from "../../services/api";
 import { useQueueStore } from "../../stores/queue";
@@ -1183,10 +1147,9 @@ function saveSlotConfig() {
   if (!canEdit.value) return;
   const key = getSlotKey(editingSlotDay.value, editingSlotShift.value);
   if (weeklyScheduleMatrix.value[key]) {
-    weeklyScheduleMatrix.value[key].room = editingSlotRoom.value;
     weeklyScheduleMatrix.value[key].fixedQuota = editingSlotQuota.value;
     saveWeeklyScheduleToLocal();
-    showToast("Pengaturan kuota dan ruangan berhasil disimpan.", "success");
+    showToast("Pengaturan kuota berhasil disimpan.", "success");
   }
   showSlotEditModal.value = false;
 }
@@ -1864,8 +1827,8 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 
 .roster-grid-header {
   display: grid;
-  grid-template-columns: 140px repeat(7, minmax(130px, 1fr));
-  gap: 8px;
+  grid-template-columns: 140px repeat(7, minmax(136px, 1fr));
+  gap: 10px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f1f5f9;
   text-align: center;
@@ -1886,7 +1849,7 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .day-name {
@@ -1904,15 +1867,15 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   font-weight: 700;
   background: #0f766e;
   color: white;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 10px;
 }
 
 /* Shift Grid Rows */
 .shift-grid-row {
   display: grid;
-  grid-template-columns: 140px repeat(7, minmax(130px, 1fr));
-  gap: 8px;
+  grid-template-columns: 140px repeat(7, minmax(136px, 1fr));
+  gap: 10px;
   margin-top: 10px;
 }
 
@@ -1920,11 +1883,12 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 12px 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .shift-name-tag {
@@ -1933,7 +1897,7 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2.5px 7px;
   border-radius: 6px;
   width: fit-content;
 }
@@ -1954,14 +1918,16 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 }
 
 .shift-hours {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #334155;
+  color: #1e293b;
+  letter-spacing: -0.01em;
 }
 
 .shift-quota-tag {
-  font-size: 10.5px;
+  font-size: 11px;
   color: #64748b;
+  font-weight: 500;
 }
 
 /* Day Shift Slot (Drop Target) */
@@ -1969,7 +1935,7 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   background: #fafaf9;
   border: 1.5px dashed #cbd5e1;
   border-radius: 12px;
-  min-height: 110px;
+  min-height: 112px;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -1998,10 +1964,9 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 }
 
 .day-shift-slot.is-assigned {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-style: solid;
-  padding: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 /* Assigned Doctor Card Inside Slot */
@@ -2010,11 +1975,13 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+  width: 100%;
   background: #ffffff;
-  border-radius: 8px;
-  padding: 5px;
+  border-radius: 12px;
+  padding: 10px 10px 8px;
   position: relative;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2025,8 +1992,8 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 .assigned-doctor-card.can-drag:hover {
   background: #f0fdfa;
   border-color: #0f766e;
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 12px -2px rgba(15, 118, 110, 0.2), 0 0 0 1.5px #0f766e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -3px rgba(15, 118, 110, 0.18), 0 0 0 1.5px #0f766e;
   z-index: 5;
 }
 
@@ -2039,17 +2006,17 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 .assigned-card-top {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 7px;
   position: relative;
 }
 
 .assigned-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   background: #0f766e;
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -2065,7 +2032,8 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 }
 
 .assigned-name {
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 700;
   color: #0f172a;
   line-height: 1.25;
   display: -webkit-box;
@@ -2075,11 +2043,12 @@ function showToast(msg: string, type: "success" | "error" = "success") {
 }
 
 .assigned-spec {
-  font-size: 10px;
+  font-size: 10.5px;
   color: #64748b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
 .btn-remove-slot {
@@ -2107,13 +2076,7 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   justify-content: space-between;
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px dashed #f1f5f9;
-  gap: 4px;
-}
-
-.card-footer-btns {
-  display: flex;
-  align-items: center;
+  border-top: 1px dashed #e2e8f0;
   gap: 4px;
 }
 
@@ -2121,13 +2084,13 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
@@ -2155,37 +2118,35 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   width: fit-content;
 }
 
-.room-chip {
-  font-size: 9.5px;
-  font-weight: 600;
-  background: #f1f5f9;
-  color: #475569;
-  padding: 2px 5px;
-  border-radius: 4px;
-}
-
 .quota-readonly-chip {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2.5px 6px;
+  border-radius: 6px;
 }
 
 .btn-edit-slot-quota {
-  background: none;
-  border: none;
-  font-size: 9.5px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  font-size: 10px;
   font-weight: 600;
   color: #0f766e;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 2.5px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .btn-edit-slot-quota:hover {
-  background: #f0fdfa;
+  background: #ccfbf1;
+  border-color: #99f6e4;
+  color: #115e59;
 }
 
 /* Empty Drop Placeholder */
@@ -2194,19 +2155,37 @@ function showToast(msg: string, type: "success" | "error" = "success") {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   height: 100%;
   color: #94a3b8;
   text-align: center;
+  padding: 6px 4px;
+  transition: color 0.15s ease;
+}
+
+.day-shift-slot:not(.readonly-slot):hover {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.day-shift-slot:not(.readonly-slot):hover .drop-icon {
+  color: #0f766e;
+  transform: scale(1.1);
+}
+
+.day-shift-slot:not(.readonly-slot):hover .drop-text {
+  color: #0f766e;
 }
 
 .drop-icon {
-  color: #cbd5e1;
+  color: #94a3b8;
+  transition: all 0.15s ease;
 }
 
 .drop-text {
-  font-size: 10.5px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 /* ============================================================ */

@@ -4,15 +4,6 @@
       <div class="section-label"><span /> ADA PERTANYAAN?</div>
       <h2>Kami siap membantu.</h2>
       <p>Hal yang perlu diketahui sebelum berkunjung.</p>
-      <a
-        class="contact-link"
-        href="https://wa.me/6281234567890"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Phone :size="17" /> Hubungi pusat bantuan
-        <ArrowUpRight :size="17" />
-      </a>
     </div>
     <div>
       <div v-for="(item, i) in faqItems" :key="item.question" class="faq-item">
@@ -28,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Phone, ArrowUpRight, ChevronDown } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
 import { faqItems } from "../../constants/faq";
 
 const activeFaq = ref<number | null>(0);

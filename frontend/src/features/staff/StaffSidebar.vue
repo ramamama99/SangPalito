@@ -8,7 +8,7 @@
     <div class="sidebar-header">
       <div v-if="!collapsed" class="sidebar-brand">
         <div class="brand-badge">
-          <Activity :size="18" class="text-[var(--deep)]" />
+          <img src="/favicon.svg" alt="AntriSehat Logo" class="brand-logo-img" />
         </div>
         <div class="brand-info">
           <span class="brand-title">AntriSehat</span>
@@ -129,7 +129,6 @@
       >
         <ClipboardList :size="19" class="nav-icon" />
         <span v-if="!collapsed" class="nav-text">Log Audit</span>
-        <span v-if="!collapsed" class="badge-counter badge-live">LIVE</span>
       </button>
 
       <button
@@ -158,12 +157,12 @@
       </RouterLink>
 
       <RouterLink
-        to="/qr-test"
+        to="/scan"
         class="nav-link"
-        :title="collapsed ? 'Simulator QR & Antrean' : undefined"
+        :title="collapsed ? 'Scan QR' : undefined"
       >
         <QrCode :size="19" class="nav-icon" />
-        <span v-if="!collapsed" class="nav-text">Simulator QR</span>
+        <span v-if="!collapsed" class="nav-text">Scan QR</span>
       </RouterLink>
     </nav>
 
@@ -205,7 +204,6 @@ import {
   Monitor,
   QrCode,
   LogOut,
-  Activity,
   CalendarClock,
   UserCog,
   ClipboardList,
@@ -398,12 +396,19 @@ const activePoliQueueCount = computed(() => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #eaf6f2;
+  background: #ffffff;
   border: 1px solid #c8e8df;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  padding: 4px;
+}
+
+.brand-badge .brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-info {

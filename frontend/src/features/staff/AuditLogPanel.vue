@@ -20,9 +20,6 @@
       <!-- Header Section -->
       <div class="panel-header-row">
         <div>
-          <div class="badge-role-tag audit-tag">
-            <ClipboardList :size="14" /> AUDIT TRAIL KEAMANAN & OPERASIONAL
-          </div>
           <h3 class="panel-title">Log Audit Aktivitas Realtime</h3>
           <p class="panel-subtitle">
             Pencatatan real-time seluruh riwayat masuk/keluar sistem dan penanganan pasien oleh dokter/petugas.
@@ -30,18 +27,16 @@
         </div>
 
         <div class="header-actions">
-          <div class="realtime-status-pill" :class="{ 'live': autoRefresh }">
+          <button
+            type="button"
+            class="button outline btn-sm realtime-toggle-btn"
+            :class="{ 'active': autoRefresh }"
+            :title="autoRefresh ? 'Sinkronisasi realtime aktif (klik untuk jeda)' : 'Sinkronisasi dijeda (klik untuk aktifkan)'"
+            @click="autoRefresh = !autoRefresh"
+          >
             <span class="live-dot"></span>
-            <span class="live-text">{{ autoRefresh ? 'REALTIME LIVE' : 'SYNC PAUSED' }}</span>
-            <button
-              type="button"
-              class="toggle-live-btn"
-              :title="autoRefresh ? 'Hentikan live poll' : 'Aktifkan live poll'"
-              @click="autoRefresh = !autoRefresh"
-            >
-              {{ autoRefresh ? 'Pause' : 'Play' }}
-            </button>
-          </div>
+            <span>REALTIME</span>
+          </button>
 
           <button type="button" class="button outline btn-sm" :disabled="loading" @click="fetchLogs">
             <RotateCw :size="15" :class="{ 'spin-anim': loading }" /> Refresh
@@ -336,7 +331,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   ShieldAlert,
-  ClipboardList,
   RotateCw,
   Search,
   Activity,
@@ -791,62 +785,73 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.realtime-status-pill {
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
+  gap: 7px;
+  border-radius: 50px;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.2s ease;
 }
 
-.realtime-status-pill.live {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #166534;
+.realtime-toggle-btn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #c9d8d4;
+}
+
+.realtime-toggle-btn.active {
+  background: #eaf6f2;
+  color: var(--deep, #195a5f);
+  border-color: #b8dfd6;
+  font-weight: 700;
+}
+
+.realtime-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+.realtime-toggle-btn.active:hover {
+  background: #dbeef7;
+  border-color: #99cec2;
+}
+
+.realtime-toggle-btn:not(.active):hover {
+  background: #f8fafc;
 }
 
 .live-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #94a3b8;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.realtime-status-pill.live .live-dot {
-  background: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
-  animation: pulse-live 1.5s infinite;
+.realtime-toggle-btn.active .live-dot {
+  background: #15736a;
+  box-shadow: 0 0 0 2px rgba(21, 115, 106, 0.2);
+  animation: pulse-live 1.6s infinite;
 }
 
 @keyframes pulse-live {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    box-shadow: 0 0 0 0 rgba(21, 115, 106, 0.6);
   }
   70% {
     transform: scale(1.1);
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 5px rgba(21, 115, 106, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 0 rgba(21, 115, 106, 0);
   }
-}
-
-.toggle-live-btn {
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
-  cursor: pointer;
-  color: #475569;
 }
 
 .audit-kpis {

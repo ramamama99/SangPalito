@@ -244,19 +244,6 @@
                 </div>
               </div>
 
-              <!-- Quick Demo Chips for Testing -->
-              <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                <span class="text-xs text-[var(--muted)]">Pilihan Cepat:</span>
-                <button
-                  v-for="chip in quickChips"
-                  :key="chip.code"
-                  type="button"
-                  class="text-[11px] font-mono px-3 py-1 rounded-full bg-[#f6f8f5] hover:bg-[#eaf6f2] text-[var(--deep)] transition-colors border border-[var(--line)]"
-                  @click="manualToken = chip.code"
-                >
-                  {{ chip.label }}
-                </button>
-              </div>
 
               <button
                 type="submit"
@@ -726,12 +713,6 @@ let html5QrCode: Html5Qrcode | null = null;
 
 // Manual Input State
 const manualToken = ref("");
-const quickChips = [
-  { label: "Ahmad Fauzi", code: "qr-ahmad-fauzi-004" },
-  { label: "Dewi Lestari", code: "qr-dewi-lestari-003" },
-  { label: "Budi Santoso", code: "qr-budi-santoso-002" },
-  { label: "Siti Aminah", code: "qr-siti-aminah-001" },
-];
 
 // Result & Audio Feedback State
 const verifyingToken = ref("");

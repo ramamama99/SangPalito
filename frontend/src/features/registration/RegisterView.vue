@@ -304,9 +304,7 @@
               <span v-if="regErrors.phone" class="field-error-text">
                 {{ regErrors.phone }}
               </span>
-              <small v-else>
-                Wajib diisi dengan benar. Tiket antrean dan pengingat panggilan akan dikirim ke nomor ini.
-              </small>
+            
             </label>
 
             <!-- 4.b Penjamin -->
@@ -360,23 +358,6 @@
                 {{ regErrors.insuranceName }}
               </span>
             </label>
-          </div>
-          <div>
-            <label class="captcha" :class="{ 'input-error': regErrors.human }">
-              <input type="checkbox" v-model="queueStore.human" @change="delete regErrors.human" />
-              <span>
-                Saya bukan robot <span class="req">*</span>
-                <small>Simulasi verifikasi keamanan prototype</small>
-              </span>
-              <ShieldCheck :size="30" />
-            </label>
-            <span v-if="regErrors.human" class="field-error-text">
-              {{ regErrors.human }}
-            </span>
-          </div>
-          <div class="info-note">
-            <ShieldCheck :size="17" /> Data pribadi Anda hanya digunakan untuk
-            pelayanan kesehatan.
           </div>
         </template>
 
@@ -973,11 +954,6 @@ function validateStep1(): boolean {
     }
   }
 
-  if (!queueStore.human) {
-    regErrors.value.human = "Harap centang verifikasi 'Saya bukan robot'";
-    valid = false;
-  }
-
   return valid;
 }
 
@@ -1100,20 +1076,21 @@ async function handleSubmit() {
 }
 .shift-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   margin-bottom: 18px;
 }
-@media (max-width: 820px) {
+@media (max-width: 860px) {
   .shift-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 .shift-card {
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 16px;
+  padding: 14px 12px;
   text-align: left;
   cursor: pointer;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -1121,6 +1098,7 @@ async function handleSubmit() {
   flex-direction: column;
   gap: 10px;
   position: relative;
+  min-width: 0;
 }
 .shift-card:hover:not(:disabled) {
   border-color: var(--teal);
@@ -1143,64 +1121,89 @@ async function handleSubmit() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  width: 100%;
 }
 .shift-name-tag {
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 11.5px;
+  font-weight: 700;
   color: var(--deep);
   background: #f0f4f2;
   padding: 3px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 .status-tag-avail {
   font-size: 11px;
   font-weight: 600;
   color: #2b7064;
   background: #eaf6f2;
-  padding: 2px 7px;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 .status-tag-full {
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 700;
   color: var(--coral);
   background: #fdf0ed;
-  padding: 2px 7px;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 .shift-time-main {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: #243e40;
+  white-space: nowrap;
 }
 .shift-time-main strong {
   font-weight: 750;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 .time-icon {
   color: var(--teal);
+  flex-shrink: 0;
 }
 .shift-doctor-line {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--muted);
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shift-doctor-line span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .shift-card-bottom {
-  margin-top: 2px;
+  margin-top: auto;
   padding-top: 8px;
   border-top: 1px dashed var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
 }
 .est-tag {
   font-size: 11.5px;
   color: var(--muted);
+  white-space: nowrap;
 }
 .est-tag strong {
   color: var(--deep);
@@ -1208,6 +1211,7 @@ async function handleSubmit() {
 }
 .check-icon {
   color: var(--teal);
+  flex-shrink: 0;
 }
 
 /* Appointment Summary Box */

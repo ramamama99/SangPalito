@@ -3,28 +3,16 @@
     <!-- Header Section -->
     <div class="panel-header-row">
       <div>
-        <div class="badge-role-tag head-tag">
-          <Award :size="14" /> DASHBOARD EKSEKUTIF KEPALA PUSKESMAS & MEDIS
-        </div>
         <h3 class="panel-title">Analitik Operasional & Kinerja Klinis</h3>
         <p class="panel-subtitle">
           Pemantauan volume pasien minggu ini, efisiensi dokter, dan tren diagnostik faskes.
         </p>
       </div>
-
-      <div class="header-actions">
-        <button type="button" class="button outline btn-sm" :disabled="loading" @click="fetchAllAnalytics">
-          <RotateCw :size="15" :class="{ 'spin-anim': loading }" /> Muat Data Terkini
-        </button>
-        <button type="button" class="button primary btn-sm" @click="exportReportSummary">
-          <Download :size="15" /> Cetak Laporan Mingguan
-        </button>
-      </div>
     </div>
 
     <!-- 1. Pasien Minggu Ini: Top KPI Cards -->
     <div class="stats-grid weekly-kpis">
-      <div class="stat-card featured-stat">
+      <div class="stat-card">
         <div class="kpi-icon-wrap bg-teal-subtle">
           <Users :size="24" class="text-teal" />
         </div>
@@ -382,10 +370,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import {
-  Award,
   Users,
-  RotateCw,
-  Download,
   TrendingUp,
   TrendingDown,
   Clock,
@@ -742,10 +727,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
-}
-
-.featured-stat {
-  border-left: 4px solid #0d9488;
 }
 
 .kpi-icon-wrap {

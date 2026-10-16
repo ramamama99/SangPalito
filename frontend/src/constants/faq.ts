@@ -17,6 +17,6 @@ export const faqItems = [
   {
     question: "Apakah pendaftaran ini berbayar?",
     answer:
-      "Pendaftaran antrean gratis. Biaya pelayanan mengikuti penjamin dan ketentuan puskesmas.",
+      "Pendaftaran antrean gratis. Biaya pelayanan mengikuti penjamin dan ketentuan Layanan Kesehatan.",
   },
 ];

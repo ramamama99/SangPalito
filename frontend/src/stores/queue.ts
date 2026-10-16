@@ -1,6 +1,16 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import type { Patient, RegistrationForm, SoapData } from "../types";
+
+export interface CallAnnouncement {
+  id: string;
+  number: string;
+  name: string;
+  poli: string;
+  transcription: string;
+  timestamp: number;
+}
+
 import {
   initialPatients,
   blankRegistrationForm,
@@ -25,14 +35,13 @@ export const useQueueStore = defineStore("queue", () => {
       const stored = localStorage.getItem("antrisehat-patients");
       if (stored) {
         const parsed = JSON.parse(stored);
-        const hasOtherPoli = parsed.some((p: Patient) => p.poli && p.poli !== "Poli Umum");
-        if (hasOtherPoli) {
-          return parsed.map((p: Patient) => {
-            if (p.id && p.id.startsWith("demo-")) {
-              return { ...p, date: todayDate };
-            }
-            return p;
-          });
+        if (Array.isArray(parsed)) {
+          // Bersihkan seluruh data pasien dummy (demo-*)
+          const filtered = parsed.filter(
+            (p: Patient) => p && p.id && !p.id.startsWith("demo-"),
+          );
+          localStorage.setItem("antrisehat-patients", JSON.stringify(filtered));
+          return filtered;
         }
       }
       return initialPatients;
@@ -43,7 +52,12 @@ export const useQueueStore = defineStore("queue", () => {
 
   function getStoredTicket(): string {
     try {
-      return localStorage.getItem("antrisehat-ticket") || "";
+      const t = localStorage.getItem("antrisehat-ticket") || "";
+      if (t && t.startsWith("demo-")) {
+        localStorage.removeItem("antrisehat-ticket");
+        return "";
+      }
+      return t;
     } catch {
       return "";
     }
@@ -56,9 +70,10 @@ export const useQueueStore = defineStore("queue", () => {
   const qr = ref<string>("");
   const notice = ref<string>("");
   let noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  const lastCallAnnouncement = ref<CallAnnouncement | null>(null);
 
   const role = ref<"loket" | "medis" | "database_pasien" | "database_obat" | "shift_dokter" | "user_management" | "audit_log" | "analytics">("loket");
-  const selected = ref<string>("demo-1");
+  const selected = ref<string>("");
   const verify = ref<Patient | null>(null);
   const search = ref<string>("");
   const staffPoli = ref<string>("Poli Umum");
@@ -143,6 +158,13 @@ export const useQueueStore = defineStore("queue", () => {
       }
       if (e.key === "antrisehat-ticket" && e.newValue) {
         ticket.value = e.newValue;
+      }
+      if (e.key === "antrisehat-last-call" && e.newValue) {
+        try {
+          lastCallAnnouncement.value = JSON.parse(e.newValue);
+        } catch {
+          // ignore parsing error
+        }
       }
     });
 
@@ -241,18 +263,77 @@ export const useQueueStore = defineStore("queue", () => {
     api.updateQueueStatus(id, backendStatus).catch(() => {});
   }
 
+  function isSamePoli(p1: Patient, p2: Patient): boolean {
+    if (p1.id === p2.id) return true;
+
+    // 1. Cek dari prefix kode antrean (misal A-001 vs A-002)
+    const prefix1 = p1.number ? p1.number.split("-")[0]?.trim().toUpperCase() : "";
+    const prefix2 = p2.number ? p2.number.split("-")[0]?.trim().toUpperCase() : "";
+    if (prefix1 && prefix2 && prefix1 === prefix2) {
+      return true;
+    }
+
+    // 2. Cek dari nama poliklinik
+    if (p1.poli && p2.poli) {
+      const s1 = p1.poli.toLowerCase().trim();
+      const s2 = p2.poli.toLowerCase().trim();
+      if (s1 === s2) return true;
+
+      const getPoliCat = (str: string): string => {
+        if (str.includes("umum")) return "umum";
+        if (str.includes("gigi")) return "gigi";
+        if (str.includes("kia") || str.includes("anak")) return "kia";
+        if (str.includes("lansia") || str.includes("geriatri")) return "lansia";
+        return str;
+      };
+
+      const c1 = getPoliCat(s1);
+      const c2 = getPoliCat(s2);
+      if (c1 && c2 && c1 === c2) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function call(p: Patient) {
-    patients.value = patients.value.map((item) =>
-      item.id === p.id
-        ? { ...item, status: "Dipanggil" }
-        : item.status === "Dipanggil"
-          ? { ...item, status: "Hadir" }
-          : item,
-    );
-    setNotice(`${p.number} dipanggil ke ${p.poli}`);
-    speakQueueCall(p.number, p.poli);
+    patients.value = patients.value.map((item) => {
+      // 1. Pasien yang baru saja ditekan tombol 'Panggil': status menjadi 'Dipanggil'
+      if (item.id === p.id) {
+        return { ...item, status: "Dipanggil" };
+      }
+      // 2. Hanya pasien sebelumnya DI POLI YANG SAMA yang status 'Dipanggil'-nya dikembalikan ke 'Hadir'
+      if (isSamePoli(item, p) && item.status === "Dipanggil") {
+        return { ...item, status: "Hadir" };
+      }
+      // 3. Pasien di POLI LAIN (misal Poli A saat Poli C dipanggil) TETAP DIPERTAHANKAN dan tidak terhapus!
+      return item;
+    });
+
+    const poliName = p.poli || "Poliklinik";
+    const transcription = `Nomor antrean ${p.number}, silakan menuju ${poliName}`;
+    setNotice(transcription);
+
+    const callPayload: CallAnnouncement = {
+      id: p.id,
+      number: p.number,
+      name: p.name,
+      poli: poliName,
+      transcription,
+      timestamp: Date.now(),
+    };
+    lastCallAnnouncement.value = callPayload;
+    try {
+      localStorage.setItem("antrisehat-last-call", JSON.stringify(callPayload));
+    } catch {
+      // ignore storage error
+    }
+
+    speakQueueCall(p.number, poliName);
     api.updateQueueStatus(p.id, "called").catch(() => {});
   }
+
 
   function updateForm<K extends keyof RegistrationForm>(
     key: K,
@@ -486,6 +567,8 @@ export const useQueueStore = defineStore("queue", () => {
     currentTicket,
     active,
     chosen,
+    lastCallAnnouncement,
+    isSamePoli,
     setNotice,
     clearNotice,
     changeStatus,
@@ -501,3 +584,4 @@ export const useQueueStore = defineStore("queue", () => {
     getPoliCode,
   };
 });
+

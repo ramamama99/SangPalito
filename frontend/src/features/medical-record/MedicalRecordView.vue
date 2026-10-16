@@ -263,8 +263,6 @@ const availablePolis = ["Semua Poli", "Poli Gigi", "Poli Umum"];
 const chosenPatient = computed(() => {
   return (
     queueStore.chosen ||
-    queueStore.patients.find((p) => p.name === "Budi Santoso") ||
-    queueStore.patients.find((p) => p.id === "demo-1") ||
     queueStore.patients[0] ||
     null
   );

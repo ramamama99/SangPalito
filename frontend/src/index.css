@@ -128,13 +128,20 @@ p {
   letter-spacing: -1.2px;
 }
 .brand-mark {
-  background: var(--deep);
-  color: #fff;
+  background: transparent;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.brand-mark .brand-logo-img,
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 .brand .teal {
   color: var(--teal);

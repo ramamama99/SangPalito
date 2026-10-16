@@ -102,9 +102,10 @@
   transition: all 0.3s ease;
 }
 
-.nav-wrap.is-capsule :deep(.brand-mark svg) {
-  width: 22px;
-  height: 22px;
+.nav-wrap.is-capsule :deep(.brand-mark svg),
+.nav-wrap.is-capsule :deep(.brand-mark img) {
+  width: 26px;
+  height: 26px;
 }
 
 .nav-wrap.is-capsule .nav {
