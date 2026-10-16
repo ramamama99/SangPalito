@@ -18,6 +18,9 @@ type User struct {
 	PolyclinicName   string
 	Role             string // "admin", "registrar", "medic", "head"
 	IsActive         bool
+	IsFirstLogin     bool
+	ResetToken       *string
+	ResetExpiresAt   *time.Time
 	LastLoginAt      *time.Time
 	RefreshTokenHash *string
 	CreatedAt        time.Time

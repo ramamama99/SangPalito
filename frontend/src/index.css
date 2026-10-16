@@ -883,6 +883,27 @@ label small {
 .error {
   color: #ca5b4c !important;
 }
+.req {
+  color: #dc2626 !important;
+  font-weight: 700;
+  margin-left: 2px;
+}
+input.input-error,
+select.input-error,
+textarea.input-error,
+.form-input.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+.field-error-text {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #dc2626 !important;
+  margin-top: 4px;
+  text-align: left;
+}
 .captcha {
   display: flex;
   flex-direction: row;

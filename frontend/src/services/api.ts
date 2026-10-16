@@ -464,6 +464,47 @@ export const api = {
     }
   },
 
+  async forgotPassword(email: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('ForgotPassword error:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async resetPasswordWithToken(token: string, newPassword: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, new_password: newPassword }),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('ResetPassword error:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async completeFirstLogin(data: { new_password: string; phone?: string; str_no?: string }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/auth/first-login`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('CompleteFirstLogin error:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
   async logout() {
     try {
       await fetch(`${BASE_URL}/auth/logout`, {
@@ -496,7 +537,7 @@ export const api = {
     return !!localStorage.getItem('antrisehat-token')
   },
 
-  // ── 6. Master Poliklinik ─────────────────────────────────
+  // ── 6. Master Poliklinik & Dokter ──────────────────────────
   async getPolyclinics() {
     try {
       const res = await authFetch(`${BASE_URL}/polyclinics`)
@@ -504,6 +545,91 @@ export const api = {
     } catch (err) {
       console.error('Failed to get polyclinics:', err)
       return { success: false, data: [] }
+    }
+  },
+
+  async getDoctors() {
+    try {
+      const res = await authFetch(`${BASE_URL}/doctors`)
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to get doctors:', err)
+      return { success: false, data: [] }
+    }
+  },
+
+  async createDoctor(data: {
+    full_name: string
+    email: string
+    phone: string
+    specialty?: string
+    str_no?: string
+    polyclinic_id?: string
+    password?: string
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/doctors`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to create doctor:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async updateDoctor(id: string, data: {
+    full_name: string
+    email?: string
+    phone?: string
+    specialty?: string
+    str_no?: string
+    polyclinic_id?: string
+    is_active: boolean
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/doctors/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to update doctor:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async deleteDoctor(id: string) {
+    try {
+      const res = await authFetch(`${BASE_URL}/doctors/${id}`, {
+        method: 'DELETE',
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to delete doctor:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
+    }
+  },
+
+  async assignShiftSchedule(data: {
+    polyclinic_id: string
+    doctor_id: string
+    day_of_week: number
+    shift_id: string
+    start_time?: string
+    end_time?: string
+    quota?: number
+  }) {
+    try {
+      const res = await authFetch(`${BASE_URL}/schedules/assign`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      return await res.json()
+    } catch (err) {
+      console.error('Failed to assign schedule:', err)
+      return { success: false, error: 'Koneksi ke backend gagal' }
     }
   },
 

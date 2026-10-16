@@ -13,6 +13,16 @@ export interface ShiftTimeConfig {
   effectivePatientMinutes: number; // 240 menit (4 jam)
 }
 
+export const DAYS_OF_WEEK = [
+  { id: 1, name: "Senin", short: "Sen" },
+  { id: 2, name: "Selasa", short: "Sel" },
+  { id: 3, name: "Rabu", short: "Rab" },
+  { id: 4, name: "Kamis", short: "Kam" },
+  { id: 5, name: "Jumat", short: "Jum" },
+  { id: 6, name: "Sabtu", short: "Sab" },
+  { id: 7, name: "Minggu", short: "Min" },
+];
+
 export const SHIFT_TIMES: Record<"pagi" | "siang" | "sore", ShiftTimeConfig> = {
   pagi: {
     id: "pagi",

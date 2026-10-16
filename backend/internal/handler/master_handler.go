@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"net/http"
@@ -170,3 +170,52 @@ func (h *MasterHandler) DeleteSchedule(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.OK("Jadwal berhasil dihapus"))
 }
+
+func (h *MasterHandler) UpdateDoctor(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.Error(apperror.BadRequest("ID dokter tidak valid", err))
+		return
+	}
+
+	var req dto.UpdateDoctorRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.BadRequest("Data tidak valid", err))
+		return
+	}
+
+	if err := h.service.UpdateDoctor(c.Request.Context(), id, req); err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK("Data dokter berhasil diperbarui"))
+}
+
+func (h *MasterHandler) DeleteDoctor(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.Error(apperror.BadRequest("ID dokter tidak valid", err))
+		return
+	}
+
+	if err := h.service.DeleteDoctor(c.Request.Context(), id); err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK("Dokter berhasil dihapus"))
+}
+
+func (h *MasterHandler) AssignShift(c *gin.Context) {
+	var req dto.SaveShiftAssignmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.BadRequest("Data shift tidak valid", err))
+		return
+	}
+
+	sch, err := h.service.AssignShift(c.Request.Context(), req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(sch))
+}

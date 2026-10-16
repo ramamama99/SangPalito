@@ -55,12 +55,12 @@ func Setup(
 	}()
 
 	// ── Services ─────────────────────────────────────────────
-	authService := service.NewAuthService(userRepo, auditLogRepo, jwtManager)
+	authService := service.NewAuthService(userRepo, doctorRepo, auditLogRepo, jwtManager)
 	patientService := service.NewPatientService(patientRepo, visitRepo, auditLogRepo, nikCrypto)
 	queueService := service.NewQueueService(queueRepo, auditLogRepo, hub, notifWorker)
 	publicService := service.NewPublicService(pool, patientRepo, appointmentRepo, queueRepo, scheduleRepo, polyclinicRepo, nikCrypto)
 	userService := service.NewUserService(userRepo)
-	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo)
+	masterService := service.NewMasterService(facilityRepo, polyclinicRepo, doctorRepo, scheduleRepo, userRepo)
 	apptService := service.NewAppointmentService(appointmentRepo, preRepo, polyclinicRepo, facilityRepo)
 	visitService := service.NewVisitService(visitRepo, icd10Repo, prescriptionRepo, auditLogRepo)
 	prescriptionService := service.NewPrescriptionService(prescriptionRepo, medicationRepo)
@@ -119,6 +119,8 @@ func Setup(
 	{
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/refresh", authHandler.Refresh)
+		auth.POST("/forgot-password", authHandler.ForgotPassword)
+		auth.POST("/reset-password", authHandler.ResetPassword)
 	}
 
 	public := api.Group("/public")
@@ -142,6 +144,7 @@ func Setup(
 	{
 		// Auth
 		authenticated.POST("/auth/logout", authHandler.Logout)
+		authenticated.POST("/auth/first-login", authHandler.CompleteFirstLogin)
 
 		// Master Data Management (Admin / Staff)
 		master := authenticated.Group("")
@@ -150,7 +153,10 @@ func Setup(
 			master.POST("/polyclinics", masterHandler.CreatePolyclinic)
 			master.PATCH("/polyclinics/:id", masterHandler.UpdatePolyclinic)
 			master.POST("/doctors", masterHandler.CreateDoctor)
+			master.PUT("/doctors/:id", masterHandler.UpdateDoctor)
+			master.DELETE("/doctors/:id", masterHandler.DeleteDoctor)
 			master.POST("/schedules", masterHandler.CreateSchedule)
+			master.POST("/schedules/assign", masterHandler.AssignShift)
 			master.DELETE("/schedules/:id", masterHandler.DeleteSchedule)
 		}
 

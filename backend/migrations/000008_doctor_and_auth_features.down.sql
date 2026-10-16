@@ -1,0 +1,10 @@
+-- Migration 000008 down
+ALTER TABLE doctors DROP COLUMN IF EXISTS polyclinic_id;
+ALTER TABLE doctors DROP COLUMN IF EXISTS phone;
+ALTER TABLE doctors DROP COLUMN IF EXISTS email;
+ALTER TABLE doctors DROP COLUMN IF EXISTS created_at;
+ALTER TABLE doctors DROP COLUMN IF EXISTS updated_at;
+
+ALTER TABLE users DROP COLUMN IF EXISTS is_first_login;
+ALTER TABLE users DROP COLUMN IF EXISTS reset_token;
+ALTER TABLE users DROP COLUMN IF EXISTS reset_expires_at;

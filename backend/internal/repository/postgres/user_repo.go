@@ -27,7 +27,9 @@ const userSelectQuery = `
 	SELECT u.id, u.facility_id, u.email, u.password_hash, u.full_name,
 	       COALESCE(r.name, 'registrar') AS role,
 	       u.is_active, u.last_login_at, u.refresh_token_hash, u.created_at, u.created_at AS updated_at,
-	       u.phone, u.polyclinic_id, COALESCE(p.name, '') AS polyclinic_name
+	       u.phone, u.polyclinic_id, COALESCE(p.name, '') AS polyclinic_name,
+	       COALESCE(u.is_first_login, false) AS is_first_login,
+	       u.reset_token, u.reset_expires_at
 	FROM users u
 	LEFT JOIN user_roles ur ON ur.user_id = u.id
 	LEFT JOIN roles r ON r.id = ur.role_id
@@ -43,6 +45,7 @@ func (r *userRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, er
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
 		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
+		&u.IsFirstLogin, &u.ResetToken, &u.ResetExpiresAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -62,6 +65,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string, facilityID uui
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
 		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
+		&u.IsFirstLogin, &u.ResetToken, &u.ResetExpiresAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -96,6 +100,7 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 			&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 			&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
 			&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
+			&u.IsFirstLogin, &u.ResetToken, &u.ResetExpiresAt,
 		); err != nil {
 			return nil, 0, fmt.Errorf("userRepo.FindByFacilityID scan: %w", err)
 		}
@@ -106,8 +111,8 @@ func (r *userRepo) FindByFacilityID(ctx context.Context, facilityID uuid.UUID, p
 
 // Create inserts a new user into the database.
 func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, phone, polyclinic_id, is_active, created_at)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	query := `INSERT INTO users (id, facility_id, email, password_hash, full_name, phone, polyclinic_id, is_active, is_first_login, created_at)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	now := time.Now()
 	user.ID = uuid.New()
@@ -116,7 +121,7 @@ func (r *userRepo) Create(ctx context.Context, user *entity.User) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.FacilityID, user.Email, user.PasswordHash, user.FullName,
-		user.Phone, user.PolyclinicID, user.IsActive, user.CreatedAt,
+		user.Phone, user.PolyclinicID, user.IsActive, user.IsFirstLogin, user.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("userRepo.Create: %w", err)
@@ -175,6 +180,7 @@ func (r *userRepo) FindByRefreshTokenHash(ctx context.Context, tokenHash string)
 		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
 		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
 		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
+		&u.IsFirstLogin, &u.ResetToken, &u.ResetExpiresAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -214,3 +220,54 @@ func (r *userRepo) UpdatePassword(ctx context.Context, userID uuid.UUID, passwor
 	}
 	return nil
 }
+
+// SetResetToken saves a password reset token and expiration for a user.
+func (r *userRepo) SetResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error {
+	query := `UPDATE users SET reset_token = $1, reset_expires_at = $2 WHERE id = $3`
+	_, err := r.pool.Exec(ctx, query, token, expiresAt, userID)
+	if err != nil {
+		return fmt.Errorf("userRepo.SetResetToken: %w", err)
+	}
+	return nil
+}
+
+// FindByResetToken finds a user by reset token where token is not expired.
+func (r *userRepo) FindByResetToken(ctx context.Context, token string) (*entity.User, error) {
+	query := userSelectQuery + ` WHERE u.reset_token = $1 AND u.reset_expires_at > $2 AND u.is_active = true`
+
+	u := &entity.User{}
+	err := r.pool.QueryRow(ctx, query, token, time.Now()).Scan(
+		&u.ID, &u.FacilityID, &u.Email, &u.PasswordHash, &u.FullName, &u.Role,
+		&u.IsActive, &u.LastLoginAt, &u.RefreshTokenHash, &u.CreatedAt, &u.UpdatedAt,
+		&u.Phone, &u.PolyclinicID, &u.PolyclinicName,
+		&u.IsFirstLogin, &u.ResetToken, &u.ResetExpiresAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apperror.NotFound("User with valid reset token", err)
+		}
+		return nil, fmt.Errorf("userRepo.FindByResetToken: %w", err)
+	}
+	return u, nil
+}
+
+// ClearResetToken clears reset_token and reset_expires_at.
+func (r *userRepo) ClearResetToken(ctx context.Context, userID uuid.UUID) error {
+	query := `UPDATE users SET reset_token = NULL, reset_expires_at = NULL WHERE id = $1`
+	_, err := r.pool.Exec(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("userRepo.ClearResetToken: %w", err)
+	}
+	return nil
+}
+
+// SetFirstLogin updates the is_first_login flag.
+func (r *userRepo) SetFirstLogin(ctx context.Context, userID uuid.UUID, isFirstLogin bool) error {
+	query := `UPDATE users SET is_first_login = $1 WHERE id = $2`
+	_, err := r.pool.Exec(ctx, query, isFirstLogin, userID)
+	if err != nil {
+		return fmt.Errorf("userRepo.SetFirstLogin: %w", err)
+	}
+	return nil
+}
+

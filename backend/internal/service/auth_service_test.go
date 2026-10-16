@@ -106,6 +106,41 @@ func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (m *mockUserRepo) SetResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error {
+	if u, ok := m.usersByID[userID]; ok {
+		u.ResetToken = &token
+		u.ResetExpiresAt = &expiresAt
+		return nil
+	}
+	return apperror.NotFound("User", nil)
+}
+
+func (m *mockUserRepo) FindByResetToken(ctx context.Context, token string) (*entity.User, error) {
+	for _, u := range m.usersByID {
+		if u.ResetToken != nil && *u.ResetToken == token {
+			return u, nil
+		}
+	}
+	return nil, apperror.NotFound("User", nil)
+}
+
+func (m *mockUserRepo) ClearResetToken(ctx context.Context, userID uuid.UUID) error {
+	if u, ok := m.usersByID[userID]; ok {
+		u.ResetToken = nil
+		u.ResetExpiresAt = nil
+		return nil
+	}
+	return apperror.NotFound("User", nil)
+}
+
+func (m *mockUserRepo) SetFirstLogin(ctx context.Context, userID uuid.UUID, isFirstLogin bool) error {
+	if u, ok := m.usersByID[userID]; ok {
+		u.IsFirstLogin = isFirstLogin
+		return nil
+	}
+	return apperror.NotFound("User", nil)
+}
+
 // mockAuditLogRepo is a mock implementation of AuditLogRepository for unit testing.
 type mockAuditLogRepo struct {
 	logs []*entity.AuditLog
@@ -155,7 +190,7 @@ func TestAuthService_Login(t *testing.T) {
 
 	auditRepo := &mockAuditLogRepo{}
 	jwtManager := jwt.NewManager("super-secret-key-32-chars-long!", 15*time.Minute, 7*24*time.Hour)
-	authSvc := NewAuthService(userRepo, auditRepo, jwtManager)
+	authSvc := NewAuthService(userRepo, nil, auditRepo, jwtManager)
 	ctx := context.Background()
 
 	t.Run("Success Login", func(t *testing.T) {
@@ -254,7 +289,7 @@ func TestAuthService_Refresh(t *testing.T) {
 
 	auditRepo := &mockAuditLogRepo{}
 	jwtManager := jwt.NewManager("super-secret-key-32-chars-long!", 15*time.Minute, 7*24*time.Hour)
-	authSvc := NewAuthService(userRepo, auditRepo, jwtManager)
+	authSvc := NewAuthService(userRepo, nil, auditRepo, jwtManager)
 	ctx := context.Background()
 
 	t.Run("Success Refresh", func(t *testing.T) {

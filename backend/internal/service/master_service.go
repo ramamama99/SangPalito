@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"sangpalito/backend/internal/domain/entity"
 	"sangpalito/backend/internal/domain/repository"
 	"sangpalito/backend/internal/dto"
+	"sangpalito/backend/pkg/hash"
 )
 
 type MasterService interface {
@@ -18,10 +19,13 @@ type MasterService interface {
 
 	GetDoctors(ctx context.Context, facilityID uuid.UUID) ([]entity.Doctor, error)
 	CreateDoctor(ctx context.Context, facilityID uuid.UUID, req dto.CreateDoctorRequest) (*entity.Doctor, error)
+	UpdateDoctor(ctx context.Context, id uuid.UUID, req dto.UpdateDoctorRequest) error
+	DeleteDoctor(ctx context.Context, id uuid.UUID) error
 
 	GetSchedules(ctx context.Context, polyclinicID uuid.UUID, dateStr string) ([]entity.Schedule, error)
 	CreateSchedule(ctx context.Context, req dto.CreateScheduleRequest) (*entity.Schedule, error)
 	DeleteSchedule(ctx context.Context, id uuid.UUID) error
+	AssignShift(ctx context.Context, req dto.SaveShiftAssignmentRequest) (*entity.Schedule, error)
 }
 
 type masterService struct {
@@ -29,6 +33,7 @@ type masterService struct {
 	polyclinicRepo repository.PolyclinicRepository
 	doctorRepo     repository.DoctorRepository
 	scheduleRepo   repository.ScheduleRepository
+	userRepo       repository.UserRepository
 }
 
 func NewMasterService(
@@ -36,12 +41,14 @@ func NewMasterService(
 	pRepo repository.PolyclinicRepository,
 	dRepo repository.DoctorRepository,
 	sRepo repository.ScheduleRepository,
+	uRepo repository.UserRepository,
 ) MasterService {
 	return &masterService{
 		facilityRepo:   fRepo,
 		polyclinicRepo: pRepo,
 		doctorRepo:     dRepo,
 		scheduleRepo:   sRepo,
+		userRepo:       uRepo,
 	}
 }
 
@@ -83,18 +90,98 @@ func (s *masterService) GetDoctors(ctx context.Context, facilityID uuid.UUID) ([
 }
 
 func (s *masterService) CreateDoctor(ctx context.Context, facilityID uuid.UUID, req dto.CreateDoctorRequest) (*entity.Doctor, error) {
+	var userID *uuid.UUID
+
+	// Check if user account already exists with this email
+	if s.userRepo != nil {
+		existingUser, err := s.userRepo.FindByEmail(ctx, req.Email, facilityID)
+		if err == nil && existingUser != nil {
+			userID = &existingUser.ID
+		} else {
+			// Auto create user account for doctor
+			rawPass := req.Password
+			if rawPass == "" {
+				rawPass = "Dokter123!"
+			}
+			passHash, err := hash.HashPassword(rawPass)
+			if err != nil {
+				return nil, err
+			}
+			newUser := &entity.User{
+				FacilityID:   facilityID,
+				Email:        req.Email,
+				PasswordHash: passHash,
+				FullName:     req.FullName,
+				Phone:        &req.Phone,
+				PolyclinicID: req.PolyclinicID,
+				Role:         "medic",
+				IsActive:     true,
+				IsFirstLogin: true,
+			}
+			if err := s.userRepo.Create(ctx, newUser); err != nil {
+				return nil, err
+			}
+			userID = &newUser.ID
+		}
+	}
+
 	doc := &entity.Doctor{
-		FacilityID: facilityID,
-		UserID:     req.UserID,
-		FullName:   req.FullName,
-		Specialty:  req.Specialty,
-		STRNo:      req.STRNo,
-		IsActive:   true,
+		FacilityID:   facilityID,
+		UserID:       userID,
+		FullName:     req.FullName,
+		Specialty:    req.Specialty,
+		STRNo:        req.STRNo,
+		PolyclinicID: req.PolyclinicID,
+		Phone:        req.Phone,
+		Email:        req.Email,
+		IsActive:     true,
 	}
 	if err := s.doctorRepo.Create(ctx, doc); err != nil {
 		return nil, err
 	}
 	return doc, nil
+}
+
+func (s *masterService) UpdateDoctor(ctx context.Context, id uuid.UUID, req dto.UpdateDoctorRequest) error {
+	doc, err := s.doctorRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	doc.FullName = req.FullName
+	doc.Specialty = req.Specialty
+	doc.STRNo = req.STRNo
+	doc.IsActive = req.IsActive
+	doc.PolyclinicID = req.PolyclinicID
+	doc.Phone = req.Phone
+	doc.Email = req.Email
+
+	if err := s.doctorRepo.Update(ctx, doc); err != nil {
+		return err
+	}
+
+	// Sync with linked user if present
+	if doc.UserID != nil && s.userRepo != nil {
+		u, err := s.userRepo.FindByID(ctx, *doc.UserID)
+		if err == nil && u != nil {
+			u.FullName = req.FullName
+			if req.Email != "" {
+				u.Email = req.Email
+			}
+			if req.Phone != "" {
+				u.Phone = &req.Phone
+			}
+			if req.PolyclinicID != nil {
+				u.PolyclinicID = req.PolyclinicID
+			}
+			u.IsActive = req.IsActive
+			_ = s.userRepo.Update(ctx, u)
+		}
+	}
+	return nil
+}
+
+func (s *masterService) DeleteDoctor(ctx context.Context, id uuid.UUID) error {
+	return s.doctorRepo.Delete(ctx, id)
 }
 
 func (s *masterService) GetSchedules(ctx context.Context, polyclinicID uuid.UUID, dateStr string) ([]entity.Schedule, error) {
@@ -133,3 +220,42 @@ func (s *masterService) CreateSchedule(ctx context.Context, req dto.CreateSchedu
 func (s *masterService) DeleteSchedule(ctx context.Context, id uuid.UUID) error {
 	return s.scheduleRepo.Delete(ctx, id)
 }
+
+func (s *masterService) AssignShift(ctx context.Context, req dto.SaveShiftAssignmentRequest) (*entity.Schedule, error) {
+	startTime := req.StartTime
+	endTime := req.EndTime
+	if startTime == "" || endTime == "" {
+		switch req.ShiftID {
+		case "pagi":
+			startTime = "08:00:00"
+			endTime = "12:00:00"
+		case "siang":
+			startTime = "12:00:00"
+			endTime = "15:00:00"
+		case "sore":
+			startTime = "15:00:00"
+			endTime = "18:00:00"
+		default:
+			startTime = "08:00:00"
+			endTime = "14:00:00"
+		}
+	}
+
+	quota := req.Quota
+	if quota <= 0 {
+		quota = 30
+	}
+
+	sch := &entity.Schedule{
+		PolyclinicID: req.PolyclinicID,
+		DoctorID:     req.DoctorID,
+		DayOfWeek:    req.DayOfWeek,
+		StartTime:    startTime,
+		EndTime:      endTime,
+		Quota:        quota,
+	}
+	if err := s.scheduleRepo.Create(ctx, sch); err != nil {
+		return nil, err
+	}
+	return sch, nil
+}

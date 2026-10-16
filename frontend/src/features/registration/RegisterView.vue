@@ -24,7 +24,7 @@
           <b>{{ s }}</b>
         </div>
       </div>
-      <form @submit.prevent="handleSubmit">
+      <form novalidate @submit.prevent="handleSubmit">
         <!-- Step 1: Identitas Diri -->
         <template v-if="queueStore.step === 1">
           <div class="form-title-wrap">
@@ -55,18 +55,21 @@
           <div class="fields">
             <!-- 3.a Nomor Induk Kependudukan (NIK) -->
             <label class="full">
-              Nomor Induk Kependudukan (NIK) *
+              <span>Nomor Induk Kependudukan (NIK) <span class="req">*</span></span>
               <input
-                required
                 inputmode="numeric"
                 pattern="[0-9]{16}"
                 maxlength="16"
+                :class="{ 'input-error': regErrors.nik }"
                 :value="queueStore.form.nik"
-                @input="handleNikInput"
+                @input="handleNikInput($event); delete regErrors.nik"
                 placeholder="Masukkan 16 digit NIK"
               />
+              <span v-if="regErrors.nik" class="field-error-text">
+                {{ regErrors.nik }}
+              </span>
               <small
-                v-if="queueStore.form.nik && queueStore.form.nik.length !== 16"
+                v-else-if="queueStore.form.nik && queueStore.form.nik.length !== 16"
                 class="error"
               >
                 NIK wajib tepat 16 digit angka (saat ini: {{ queueStore.form.nik.length }} digit).
@@ -75,70 +78,86 @@
 
             <!-- 3.b Nama Lengkap -->
             <label class="full">
-              Nama lengkap sesuai KTP *
+              <span>Nama lengkap sesuai KTP <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.name }"
                 :value="queueStore.form.name"
                 @input="
                   queueStore.updateForm(
                     'name',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.name;
                 "
                 placeholder="Nama lengkap Anda sesuai KTP"
               />
+              <span v-if="regErrors.name" class="field-error-text">
+                {{ regErrors.name }}
+              </span>
             </label>
 
             <!-- 3.c Tempat Lahir (Kota) -->
             <label>
-              Tempat lahir (Kota) *
+              <span>Tempat lahir (Kota) <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.birthPlace }"
                 :value="queueStore.form.birthPlace"
                 @input="
                   queueStore.updateForm(
                     'birthPlace',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.birthPlace;
                 "
                 placeholder="Contoh: Jakarta"
               />
+              <span v-if="regErrors.birthPlace" class="field-error-text">
+                {{ regErrors.birthPlace }}
+              </span>
             </label>
 
             <!-- 3.d Tanggal Lahir -->
             <label>
-              Tanggal lahir *
+              <span>Tanggal lahir <span class="req">*</span></span>
               <input
                 type="date"
-                required
                 :max="todayDate"
+                :class="{ 'input-error': regErrors.birth }"
                 :value="queueStore.form.birth"
                 @input="
                   queueStore.updateForm(
                     'birth',
                     ($event.target as HTMLInputElement).value,
-                  )
+                  );
+                  delete regErrors.birth;
                 "
               />
+              <span v-if="regErrors.birth" class="field-error-text">
+                {{ regErrors.birth }}
+              </span>
             </label>
 
             <!-- 3.e Jenis Kelamin -->
             <label>
-              Jenis kelamin *
+              <span>Jenis kelamin <span class="req">*</span></span>
               <select
-                required
+                :class="{ 'input-error': regErrors.gender }"
                 :value="queueStore.form.gender"
                 @change="
                   queueStore.updateForm(
                     'gender',
                     ($event.target as HTMLSelectElement).value,
-                  )
+                  );
+                  delete regErrors.gender;
                 "
               >
                 <option value="">Pilih jenis kelamin</option>
                 <option value="Laki-laki">Laki-laki</option>
                 <option value="Perempuan">Perempuan</option>
               </select>
+              <span v-if="regErrors.gender" class="field-error-text">
+                {{ regErrors.gender }}
+              </span>
             </label>
 
             <!-- 3.f Golongan Darah -->
@@ -164,112 +183,135 @@
 
             <!-- 3.g Alamat (Jalan / No. / Blok) -->
             <label class="full">
-              Alamat (Jalan / No. / Blok) *
+              <span>Alamat (Jalan / No. / Blok) <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.address }"
                 :value="queueStore.form.address"
                 @input="
                   queueStore.updateForm(
                     'address',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.address;
                 "
                 placeholder="Contoh: Jl. Pasirhejo IV No. 16"
               />
+              <span v-if="regErrors.address" class="field-error-text">
+                {{ regErrors.address }}
+              </span>
             </label>
 
             <!-- 3.h RT -->
             <label>
-              RT *
+              <span>RT <span class="req">*</span></span>
               <input
-                required
                 inputmode="numeric"
                 maxlength="3"
+                :class="{ 'input-error': regErrors.rt }"
                 :value="queueStore.form.rt"
                 @input="
                   queueStore.updateForm(
                     'rt',
                     cleanCharForDigit(($event.target as HTMLInputElement).value).replace(/\D/g, '').slice(0, 3),
-                  )
+                  );
+                  delete regErrors.rt;
                 "
                 placeholder="Contoh: 007"
               />
+              <span v-if="regErrors.rt" class="field-error-text">
+                {{ regErrors.rt }}
+              </span>
             </label>
 
             <!-- 3.i RW -->
             <label>
-              RW *
+              <span>RW <span class="req">*</span></span>
               <input
-                required
                 inputmode="numeric"
                 maxlength="3"
+                :class="{ 'input-error': regErrors.rw }"
                 :value="queueStore.form.rw"
                 @input="
                   queueStore.updateForm(
                     'rw',
                     cleanCharForDigit(($event.target as HTMLInputElement).value).replace(/\D/g, '').slice(0, 3),
-                  )
+                  );
+                  delete regErrors.rw;
                 "
                 placeholder="Contoh: 001"
               />
+              <span v-if="regErrors.rw" class="field-error-text">
+                {{ regErrors.rw }}
+              </span>
             </label>
 
             <!-- 3.j Kelurahan / Desa -->
             <label>
-              Kelurahan / Desa *
+              <span>Kelurahan / Desa <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.kelurahan }"
                 :value="queueStore.form.kelurahan"
                 @input="
                   queueStore.updateForm(
                     'kelurahan',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.kelurahan;
                 "
                 placeholder="Contoh: Pasirhejo"
               />
+              <span v-if="regErrors.kelurahan" class="field-error-text">
+                {{ regErrors.kelurahan }}
+              </span>
             </label>
 
             <!-- 3.k Kecamatan -->
             <label>
-              Kecamatan *
+              <span>Kecamatan <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.kecamatan }"
                 :value="queueStore.form.kecamatan"
                 @input="
                   queueStore.updateForm(
                     'kecamatan',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.kecamatan;
                 "
                 placeholder="Contoh: Cibeunying"
               />
+              <span v-if="regErrors.kecamatan" class="field-error-text">
+                {{ regErrors.kecamatan }}
+              </span>
             </label>
 
             <!-- 4.a Nomor WhatsApp aktif -->
             <label class="full">
-              Nomor WhatsApp aktif *
+              <span>Nomor WhatsApp aktif <span class="req">*</span></span>
               <input
                 type="tel"
-                required
-                pattern="(\+62|62|0)[0-9]{8,13}"
+                :class="{ 'input-error': regErrors.phone }"
                 :value="queueStore.form.phone"
                 @input="
                   queueStore.updateForm(
                     'phone',
                     ($event.target as HTMLInputElement).value,
-                  )
+                  );
+                  delete regErrors.phone;
                 "
                 placeholder="Contoh: 081234567890"
               />
-              <small>
+              <span v-if="regErrors.phone" class="field-error-text">
+                {{ regErrors.phone }}
+              </span>
+              <small v-else>
                 Wajib diisi dengan benar. Tiket antrean dan pengingat panggilan akan dikirim ke nomor ini.
               </small>
             </label>
 
             <!-- 4.b Penjamin -->
             <label class="full">
-              Penjamin *
+              <span>Penjamin <span class="req">*</span></span>
               <select
                 :value="queueStore.form.insurance"
                 @change="
@@ -286,41 +328,52 @@
             </label>
 
             <label v-if="queueStore.form.insurance === 'BPJS'" class="full">
-              Nomor BPJS *
+              <span>Nomor BPJS <span class="req">*</span></span>
               <input
-                required
-                pattern="[0-9]{13}"
                 inputmode="numeric"
                 maxlength="13"
+                :class="{ 'input-error': regErrors.bpjs }"
                 :value="queueStore.form.bpjs"
-                @input="handleBpjsInput"
+                @input="handleBpjsInput($event); delete regErrors.bpjs"
                 placeholder="13 digit nomor kartu BPJS"
               />
+              <span v-if="regErrors.bpjs" class="field-error-text">
+                {{ regErrors.bpjs }}
+              </span>
             </label>
 
             <label v-if="queueStore.form.insurance === 'Asuransi'" class="full">
-              Nama dan nomor kartu asuransi *
+              <span>Nama dan nomor kartu asuransi <span class="req">*</span></span>
               <input
-                required
+                :class="{ 'input-error': regErrors.insuranceName }"
                 :value="queueStore.form.insuranceName"
                 @input="
                   queueStore.updateForm(
                     'insuranceName',
                     sanitizeCleanText(($event.target as HTMLInputElement).value),
-                  )
+                  );
+                  delete regErrors.insuranceName;
                 "
                 placeholder="Penjamin dan nomor peserta asuransi"
               />
+              <span v-if="regErrors.insuranceName" class="field-error-text">
+                {{ regErrors.insuranceName }}
+              </span>
             </label>
           </div>
-          <label class="captcha">
-            <input type="checkbox" v-model="queueStore.human" required />
-            <span>
-              Saya bukan robot
-              <small>Simulasi verifikasi keamanan prototype</small>
+          <div>
+            <label class="captcha" :class="{ 'input-error': regErrors.human }">
+              <input type="checkbox" v-model="queueStore.human" @change="delete regErrors.human" />
+              <span>
+                Saya bukan robot <span class="req">*</span>
+                <small>Simulasi verifikasi keamanan prototype</small>
+              </span>
+              <ShieldCheck :size="30" />
+            </label>
+            <span v-if="regErrors.human" class="field-error-text">
+              {{ regErrors.human }}
             </span>
-            <ShieldCheck :size="30" />
-          </label>
+          </div>
           <div class="info-note">
             <ShieldCheck :size="17" /> Data pribadi Anda hanya digunakan untuk
             pelayanan kesehatan.
@@ -613,6 +666,7 @@ import {
 
 const router = useRouter();
 const queueStore = useQueueStore();
+const regErrors = ref<Record<string, string>>({});
 
 const dateToday = getRelativeDateStr(0);
 const dateTomorrow = getRelativeDateStr(1);
@@ -837,8 +891,105 @@ function handleKtpApplied(data: KtpData) {
   }, 7000);
 }
 
+function validateStep1(): boolean {
+  regErrors.value = {};
+  let valid = true;
+
+  if (!queueStore.form.nik || !queueStore.form.nik.trim()) {
+    regErrors.value.nik = "Nomor Induk Kependudukan (NIK) wajib diisi";
+    valid = false;
+  } else if (queueStore.form.nik.length !== 16) {
+    regErrors.value.nik = `NIK wajib tepat 16 digit angka (saat ini: ${queueStore.form.nik.length} digit)`;
+    valid = false;
+  }
+
+  if (!queueStore.form.name || !queueStore.form.name.trim()) {
+    regErrors.value.name = "Nama lengkap sesuai KTP wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.birthPlace || !queueStore.form.birthPlace.trim()) {
+    regErrors.value.birthPlace = "Tempat lahir wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.birth) {
+    regErrors.value.birth = "Tanggal lahir wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.gender) {
+    regErrors.value.gender = "Jenis kelamin wajib dipilih";
+    valid = false;
+  }
+
+  if (!queueStore.form.address || !queueStore.form.address.trim()) {
+    regErrors.value.address = "Alamat domisili wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.rt || !queueStore.form.rt.trim()) {
+    regErrors.value.rt = "RT wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.rw || !queueStore.form.rw.trim()) {
+    regErrors.value.rw = "RW wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.kelurahan || !queueStore.form.kelurahan.trim()) {
+    regErrors.value.kelurahan = "Kelurahan / Desa wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.kecamatan || !queueStore.form.kecamatan.trim()) {
+    regErrors.value.kecamatan = "Kecamatan wajib diisi";
+    valid = false;
+  }
+
+  if (!queueStore.form.phone || !queueStore.form.phone.trim()) {
+    regErrors.value.phone = "Nomor WhatsApp aktif wajib diisi";
+    valid = false;
+  } else if (queueStore.form.phone.trim().replace(/\D/g, "").length < 9) {
+    regErrors.value.phone = "Nomor WhatsApp minimal 9 digit angka";
+    valid = false;
+  }
+
+  if (queueStore.form.insurance === "BPJS") {
+    if (!queueStore.form.bpjs || !queueStore.form.bpjs.trim()) {
+      regErrors.value.bpjs = "Nomor kartu BPJS wajib diisi";
+      valid = false;
+    } else if (queueStore.form.bpjs.length !== 13) {
+      regErrors.value.bpjs = `Nomor kartu BPJS wajib 13 digit angka (saat ini: ${queueStore.form.bpjs.length} digit)`;
+      valid = false;
+    }
+  }
+
+  if (queueStore.form.insurance === "Asuransi") {
+    if (!queueStore.form.insuranceName || !queueStore.form.insuranceName.trim()) {
+      regErrors.value.insuranceName = "Nama dan nomor kartu asuransi wajib diisi";
+      valid = false;
+    }
+  }
+
+  if (!queueStore.human) {
+    regErrors.value.human = "Harap centang verifikasi 'Saya bukan robot'";
+    valid = false;
+  }
+
+  return valid;
+}
+
 async function handleSubmit() {
-  if (queueStore.step < 3) {
+  if (queueStore.step === 1) {
+    if (!validateStep1()) {
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+    queueStore.step++;
+    window.scrollTo({ top: 150, behavior: "smooth" });
+  } else if (queueStore.step === 2) {
     queueStore.step++;
     window.scrollTo({ top: 150, behavior: "smooth" });
   } else {

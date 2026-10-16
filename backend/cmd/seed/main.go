@@ -39,6 +39,7 @@ func main() {
 		"000003_seed_icd10_codes.up.sql",
 		"000004_seed_demo_data.up.sql",
 		"000005_add_blood_type_to_patients.up.sql",
+		"000008_doctor_and_auth_features.up.sql",
 	}
 
 	// Try relative path from cwd or binary location

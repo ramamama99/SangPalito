@@ -941,176 +941,8 @@
         </div>
       </section>
 
-      <!-- Role: Shift & Jadwal Dokter Panel -->
-      <section v-else-if="queueStore.role === 'shift_dokter'" class="dashboard-panel shift-management-panel">
-        <div class="panel-heading shift-panel-header">
-          <div>
-            <h3>Jadwal & Shift Dokter Poliklinik (3 Sesi Shift)</h3>
-          </div>
-          <div class="shift-action-btns">
-            <button
-              type="button"
-              class="button outline small"
-              @click="resetAllShiftsToDefault"
-              title="Kembalikan semua jadwal dokter ke pengaturan default sistem"
-            >
-              <RotateCcw :size="16" /> Reset Jadwal Default
-            </button>
-          </div>
-        </div>
-
-        <!-- Filter Poli Tabs Toolbar -->
-        <div class="shift-toolbar-wrap">
-          <div class="shift-filter-tabs">
-            <button
-              type="button"
-              class="tab-btn"
-              :class="{ active: selectedShiftPoli === 'all' }"
-              @click="selectedShiftPoli = 'all'"
-            >
-              Semua Poli
-            </button>
-            <button
-              type="button"
-              class="tab-btn"
-              :class="{ active: selectedShiftPoli === 'Poli Umum' }"
-              @click="selectedShiftPoli = 'Poli Umum'"
-            >
-              Poli Umum
-            </button>
-            <button
-              type="button"
-              class="tab-btn"
-              :class="{ active: selectedShiftPoli === 'Poli Gigi' }"
-              @click="selectedShiftPoli = 'Poli Gigi'"
-            >
-              Poli Gigi
-            </button>
-            <button
-              type="button"
-              class="tab-btn"
-              :class="{ active: selectedShiftPoli === 'Poli KIA' }"
-              @click="selectedShiftPoli = 'Poli KIA'"
-            >
-              Poli KIA / Anak
-            </button>
-            <button
-              type="button"
-              class="tab-btn"
-              :class="{ active: selectedShiftPoli === 'Poli Lansia' }"
-              @click="selectedShiftPoli = 'Poli Lansia'"
-            >
-              Poli Lansia
-            </button>
-          </div>
-
-          <div class="shift-stats-pill">
-            <span class="dot-indicator"></span>
-            <span>Menampilkan <strong>{{ filteredDoctorShifts.length }} Sesi Shift</strong></span>
-          </div>
-        </div>
-
-        <!-- Grid of Shift Cards -->
-        <div class="admin-shifts-grid">
-          <div
-            v-for="shift in filteredDoctorShifts"
-            :key="shift.id"
-            class="admin-shift-card"
-            :class="[shift.shiftId, { inactive: !shift.isActive }]"
-          >
-            <!-- Card Header: Shift pill + Status dot -->
-            <div class="card-top-bar">
-              <div class="shift-title-block">
-                <span class="shift-type-pill" :class="shift.shiftId">
-                  <span class="shift-dot"></span>
-                  {{ shift.shiftId === 'pagi' ? 'Shift Pagi' : shift.shiftId === 'siang' ? 'Shift Siang' : 'Shift Sore' }}
-                </span>
-              </div>
-              <div class="status-badge-switch">
-                <span v-if="shift.isActive" class="badge-active-dot">
-                  <span class="status-indicator active"></span> Aktif Bertugas
-                </span>
-                <span v-else class="badge-inactive-dot">
-                  <span class="status-indicator inactive"></span> Cuti / Off
-                </span>
-              </div>
-            </div>
-
-            <!-- Poli & Room -->
-            <div class="card-poli-heading">
-              <h4 class="poli-title-text">{{ shift.poliName }}</h4>
-              <span class="room-pill">{{ shift.room }}</span>
-            </div>
-
-            <!-- Doctor Profile Box -->
-            <div class="doctor-profile-box">
-              <div class="doctor-avatar-box">
-                <Stethoscope :size="20" class="text-teal-700" />
-              </div>
-              <div class="doctor-name-info">
-                <strong class="doctor-main-name">{{ shift.doctorName }}</strong>
-                <span class="doctor-spec-text">{{ shift.doctorSpecialty }}</span>
-              </div>
-            </div>
-
-            <!-- Operating Hours Details -->
-            <div class="time-specs-box">
-              <div class="time-spec-row">
-                <span class="label">Jam Siaga Dokter</span>
-                <strong class="val doctor-val">
-                  {{ shift.shiftId === 'pagi' ? '07.00 – 12.00' : shift.shiftId === 'siang' ? '12.00 – 17.00' : '17.00 – 22.00' }} WIB
-                </strong>
-              </div>
-              <div class="time-spec-row">
-                <span class="label">Layanan Pasien</span>
-                <strong class="val patient-val">
-                  {{ shift.shiftId === 'pagi' ? '07.00 – 11.00' : shift.shiftId === 'siang' ? '12.00 – 16.00' : '17.00 – 21.00' }} WIB
-                </strong>
-              </div>
-              <div class="time-spec-row">
-                <span class="label">Buffer Tindakan</span>
-                <span class="val buffer-val">60 Menit (1 Jam Akhir)</span>
-              </div>
-            </div>
-
-            <!-- Live Booking Counter Today -->
-            <div class="shift-live-status">
-              <div class="live-progress-info">
-                <span>Kuota Pasien:</span>
-                <strong>
-                  {{ getShiftBookedCount(shift.poliName, shift.shiftId) }} / {{ shift.fixedQuota }} Pasien
-                </strong>
-              </div>
-              <div class="progress-bar-wrap">
-                <div
-                  class="progress-bar-fill"
-                  :style="{
-                    width: `${Math.min(100, (getShiftBookedCount(shift.poliName, shift.shiftId) / shift.fixedQuota) * 100)}%`
-                  }"
-                  :class="{ full: getShiftBookedCount(shift.poliName, shift.shiftId) >= shift.fixedQuota }"
-                />
-              </div>
-            </div>
-
-            <!-- Notes as Clinical Focus Callout -->
-            <div v-if="shift.notes" class="shift-note-bubble">
-              <span class="note-tag">Fokus:</span>
-              <span class="note-text">{{ shift.notes }}</span>
-            </div>
-
-            <!-- Card Actions -->
-            <div class="card-actions">
-              <button
-                type="button"
-                class="btn-edit-shift"
-                @click="openEditShiftModal(shift)"
-              >
-                <Edit3 :size="14" /> Atur Dokter & Shift
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- Role: Shift & Jadwal Dokter (Drag & Drop Mingguan + CRUD Dokter) -->
+      <DoctorShiftManagementPanel v-else-if="queueStore.role === 'shift_dokter'" />
 
       <!-- Role: Manajemen Pengguna / Staf (Admin) -->
       <UserManagementPanel v-else-if="queueStore.role === 'user_management'" />
@@ -1124,6 +956,7 @@
 
     <!-- Modals -->
     <VerifyModal />
+    <FirstLoginModal />
 
     <!-- MODAL PENEBUSAN RESEP OBAT DI LOKET FARMASI -->
     <div v-if="isDispenseModalOpen && dispenseModalPatient" class="modal-backdrop" @click.self="closeDispenseModal">
@@ -1214,29 +1047,53 @@
           <button type="button" class="btn-close" @click="closePatientModal"><X :size="18" /></button>
         </div>
 
-        <form @submit.prevent="savePatientSubmit" class="modal-body space-y-3">
+        <form novalidate @submit.prevent="savePatientSubmit" class="modal-body space-y-3">
           <div class="crud-form-grid-2">
             <label>
-              Nomor Induk Kependudukan (NIK) *
-              <input required v-model="patientForm.nik" maxlength="16" placeholder="16 digit NIK" />
+              <span>Nomor Induk Kependudukan (NIK) <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': patientErrors.nik }"
+                v-model="patientForm.nik"
+                @input="delete patientErrors.nik"
+                maxlength="16"
+                placeholder="16 digit NIK"
+              />
+              <span v-if="patientErrors.nik" class="field-error-text">{{ patientErrors.nik }}</span>
             </label>
             <label>
-              Nama Lengkap Pasien *
-              <input required v-model="patientForm.name" placeholder="Nama lengkap sesuai KTP" />
+              <span>Nama Lengkap Pasien <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': patientErrors.name }"
+                v-model="patientForm.name"
+                @input="delete patientErrors.name"
+                placeholder="Nama lengkap sesuai KTP"
+              />
+              <span v-if="patientErrors.name" class="field-error-text">{{ patientErrors.name }}</span>
             </label>
           </div>
 
           <div class="crud-form-grid-2">
             <label>
-              Tanggal Lahir *
-              <input required type="date" v-model="patientForm.birth" />
+              <span>Tanggal Lahir <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': patientErrors.birth }"
+                type="date"
+                v-model="patientForm.birth"
+                @input="delete patientErrors.birth"
+              />
+              <span v-if="patientErrors.birth" class="field-error-text">{{ patientErrors.birth }}</span>
             </label>
             <label>
-              Jenis Kelamin *
-              <select required v-model="patientForm.gender">
+              <span>Jenis Kelamin <span class="req">*</span></span>
+              <select
+                :class="{ 'input-error': patientErrors.gender }"
+                v-model="patientForm.gender"
+                @change="delete patientErrors.gender"
+              >
                 <option value="Laki-laki">Laki-laki</option>
                 <option value="Perempuan">Perempuan</option>
               </select>
+              <span v-if="patientErrors.gender" class="field-error-text">{{ patientErrors.gender }}</span>
             </label>
           </div>
 
@@ -1246,8 +1103,8 @@
               <input v-model="patientForm.phone" placeholder="08xxxxxxxxxx" />
             </label>
             <label>
-              Penjamin / Asuransi *
-              <select required v-model="patientForm.insurance">
+              <span>Penjamin / Asuransi <span class="req">*</span></span>
+              <select v-model="patientForm.insurance">
                 <option value="Umum">Pasien Umum</option>
                 <option value="BPJS">BPJS Kesehatan</option>
               </select>
@@ -1256,8 +1113,14 @@
 
           <div v-if="patientForm.insurance === 'BPJS'" class="crud-form-group">
             <label>
-              Nomor Kartu BPJS *
-              <input required v-model="patientForm.bpjs" placeholder="13 digit Nomor Kartu BPJS" />
+              <span>Nomor Kartu BPJS <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': patientErrors.bpjs }"
+                v-model="patientForm.bpjs"
+                @input="delete patientErrors.bpjs"
+                placeholder="13 digit Nomor Kartu BPJS"
+              />
+              <span v-if="patientErrors.bpjs" class="field-error-text">{{ patientErrors.bpjs }}</span>
             </label>
           </div>
 
@@ -1296,7 +1159,7 @@
           <button type="button" class="btn-close" @click="closeMedModal"><X :size="18" /></button>
         </div>
 
-        <form @submit.prevent="saveMedicationSubmit" class="modal-body space-y-3">
+        <form novalidate @submit.prevent="saveMedicationSubmit" class="modal-body space-y-3">
           <div class="crud-form-grid-2">
             <label>
               <span class="flex items-center justify-between">
@@ -1313,15 +1176,27 @@
               <input v-model="medForm.code" placeholder="Contoh: FORNAS-PCT-500" />
             </label>
             <label>
-              Nama Obat (Generik Resmi) *
-              <input required v-model="medForm.name" placeholder="Contoh: Parasetamol" />
+              <span>Nama Obat (Generik Resmi) <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': medErrors.name }"
+                v-model="medForm.name"
+                @input="delete medErrors.name"
+                placeholder="Contoh: Parasetamol"
+              />
+              <span v-if="medErrors.name" class="field-error-text">{{ medErrors.name }}</span>
             </label>
           </div>
 
           <div class="crud-form-grid-2">
             <label>
-              Ukuran / Kekuatan Sediaan *
-              <input required v-model="medForm.strength" placeholder="Contoh: 500 mg, 120 mg/5 ml, 1%" />
+              <span>Ukuran / Kekuatan Sediaan <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': medErrors.strength }"
+                v-model="medForm.strength"
+                @input="delete medErrors.strength"
+                placeholder="Contoh: 500 mg, 120 mg/5 ml, 1%"
+              />
+              <span v-if="medErrors.strength" class="field-error-text">{{ medErrors.strength }}</span>
             </label>
             <label>
               Bentuk Sediaan *
@@ -1421,7 +1296,7 @@
           <button type="button" class="btn-close" @click="closeEditShiftModal"><X :size="18" /></button>
         </div>
 
-        <form @submit.prevent="saveShiftSubmit" class="modal-body space-y-4">
+        <form novalidate @submit.prevent="saveShiftSubmit" class="modal-body space-y-4">
           <!-- Shift Overview Header -->
           <div class="modal-shift-info-bar">
             <div>
@@ -1438,19 +1313,37 @@
 
           <div class="crud-form-group">
             <label>
-              Nama Dokter Bertugas *
-              <input required v-model="editingShiftForm.doctorName" placeholder="Contoh: dr. Rama Palito" />
+              <span>Nama Dokter Bertugas <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': shiftErrors.doctorName }"
+                v-model="editingShiftForm.doctorName"
+                @input="delete shiftErrors.doctorName"
+                placeholder="Contoh: dr. Rama Palito"
+              />
+              <span v-if="shiftErrors.doctorName" class="field-error-text">{{ shiftErrors.doctorName }}</span>
             </label>
           </div>
 
           <div class="crud-form-grid-2">
             <label>
-              Gelar / Spesialisasi Dokter *
-              <input required v-model="editingShiftForm.doctorSpecialty" placeholder="Contoh: Dokter Umum / Spesialis Anak" />
+              <span>Gelar / Spesialisasi Dokter <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': shiftErrors.doctorSpecialty }"
+                v-model="editingShiftForm.doctorSpecialty"
+                @input="delete shiftErrors.doctorSpecialty"
+                placeholder="Contoh: Dokter Umum / Spesialis Anak"
+              />
+              <span v-if="shiftErrors.doctorSpecialty" class="field-error-text">{{ shiftErrors.doctorSpecialty }}</span>
             </label>
             <label>
-              Ruang Praktik / Poliklinik *
-              <input required v-model="editingShiftForm.room" placeholder="Contoh: Ruang 01 / Poli Umum Lt. 1" />
+              <span>Ruang Praktik / Poliklinik <span class="req">*</span></span>
+              <input
+                :class="{ 'input-error': shiftErrors.room }"
+                v-model="editingShiftForm.room"
+                @input="delete shiftErrors.room"
+                placeholder="Contoh: Ruang 01 / Poli Umum Lt. 1"
+              />
+              <span v-if="shiftErrors.room" class="field-error-text">{{ shiftErrors.room }}</span>
             </label>
           </div>
 
@@ -1552,6 +1445,8 @@ import StaffSidebar from "./StaffSidebar.vue";
 import UserManagementPanel from "./UserManagementPanel.vue";
 import AuditLogPanel from "./AuditLogPanel.vue";
 import AnalyticsDashboardPanel from "./AnalyticsDashboardPanel.vue";
+import DoctorShiftManagementPanel from "./DoctorShiftManagementPanel.vue";
+import FirstLoginModal from "./FirstLoginModal.vue";
 import { api } from "../../services/api";
 
 const router = useRouter();
@@ -1638,7 +1533,34 @@ const editingShiftForm = ref<DoctorShift>({
   notes: "",
 });
 
+const patientErrors = ref<Record<string, string>>({});
+const medErrors = ref<Record<string, string>>({});
+const shiftErrors = ref<Record<string, string>>({});
+
+function validateShiftForm(): boolean {
+  shiftErrors.value = {};
+  let valid = true;
+
+  if (!editingShiftForm.value.doctorName || !editingShiftForm.value.doctorName.trim()) {
+    shiftErrors.value.doctorName = "Nama dokter bertugas wajib diisi";
+    valid = false;
+  }
+
+  if (!editingShiftForm.value.doctorSpecialty || !editingShiftForm.value.doctorSpecialty.trim()) {
+    shiftErrors.value.doctorSpecialty = "Spesialisasi dokter wajib diisi";
+    valid = false;
+  }
+
+  if (!editingShiftForm.value.room || !editingShiftForm.value.room.trim()) {
+    shiftErrors.value.room = "Ruang praktik wajib diisi";
+    valid = false;
+  }
+
+  return valid;
+}
+
 function openEditShiftModal(shift: DoctorShift) {
+  shiftErrors.value = {};
   editingShift.value = shift;
   editingShiftForm.value = { ...shift };
   isShiftModalOpen.value = true;
@@ -1651,6 +1573,7 @@ function closeEditShiftModal() {
 
 function saveShiftSubmit() {
   if (!editingShiftForm.value.id) return;
+  if (!validateShiftForm()) return;
   // Recalculate fixedQuota strictly from 240 / smartAvgServiceMin
   const avg = editingShiftForm.value.smartAvgServiceMin || 10;
   editingShiftForm.value.fixedQuota = Math.floor(240 / avg);
@@ -2179,7 +2102,48 @@ async function confirmDispensePrescription() {
   closeDispenseModal();
 }
 
+function validatePatientForm(): boolean {
+  patientErrors.value = {};
+  let valid = true;
+
+  if (!patientForm.nik || !patientForm.nik.trim()) {
+    patientErrors.value.nik = "Nomor Induk Kependudukan (NIK) wajib diisi";
+    valid = false;
+  } else if (patientForm.nik.trim().length !== 16) {
+    patientErrors.value.nik = "NIK wajib tepat 16 digit angka";
+    valid = false;
+  }
+
+  if (!patientForm.name || !patientForm.name.trim()) {
+    patientErrors.value.name = "Nama lengkap pasien wajib diisi";
+    valid = false;
+  }
+
+  if (!patientForm.birth) {
+    patientErrors.value.birth = "Tanggal lahir wajib diisi";
+    valid = false;
+  }
+
+  if (!patientForm.gender) {
+    patientErrors.value.gender = "Jenis kelamin wajib dipilih";
+    valid = false;
+  }
+
+  if (patientForm.insurance === "BPJS") {
+    if (!patientForm.bpjs || !patientForm.bpjs.trim()) {
+      patientErrors.value.bpjs = "Nomor kartu BPJS wajib diisi";
+      valid = false;
+    } else if (patientForm.bpjs.trim().length !== 13) {
+      patientErrors.value.bpjs = "Nomor BPJS harus 13 digit angka";
+      valid = false;
+    }
+  }
+
+  return valid;
+}
+
 function openAddPatientModal() {
+  patientErrors.value = {};
   patientModalMode.value = "add";
   patientForm.id = "p-" + Date.now();
   patientForm.nik = "";
@@ -2195,6 +2159,7 @@ function openAddPatientModal() {
 }
 
 function openEditPatientModal(p: Patient) {
+  patientErrors.value = {};
   patientModalMode.value = "edit";
   patientForm.id = p.id;
   patientForm.nik = p.nik || "";
@@ -2214,6 +2179,7 @@ function closePatientModal() {
 }
 
 async function savePatientSubmit() {
+  if (!validatePatientForm()) return;
   if (patientModalMode.value === "add") {
     const newPatient: Patient = {
       id: patientForm.id || "p-" + Date.now(),
@@ -2272,7 +2238,25 @@ function viewPatientRecord(p: Patient) {
   router.push("/medical-record");
 }
 
+function validateMedForm(): boolean {
+  medErrors.value = {};
+  let valid = true;
+
+  if (!medForm.name || !medForm.name.trim()) {
+    medErrors.value.name = "Nama obat generik resmi wajib diisi";
+    valid = false;
+  }
+
+  if (!medForm.strength || !medForm.strength.trim()) {
+    medErrors.value.strength = "Kekuatan sediaan wajib diisi";
+    valid = false;
+  }
+
+  return valid;
+}
+
 function openAddMedModal() {
+  medErrors.value = {};
   medModalMode.value = "add";
   const nextNum = medications.value.length + 1;
   medForm.id = "fornas-" + Date.now();
@@ -2293,6 +2277,7 @@ function openAddMedModal() {
 }
 
 function openEditMedModal(m: Medication) {
+  medErrors.value = {};
   medModalMode.value = "edit";
   medForm.id = m.id;
   medForm.code = m.code;
@@ -2316,6 +2301,7 @@ function closeMedModal() {
 }
 
 async function saveMedicationSubmit() {
+  if (!validateMedForm()) return;
   if (medModalMode.value === "add") {
     const newMed: Medication = {
       id: medForm.id || "fornas-" + Date.now(),

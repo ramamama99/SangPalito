@@ -5,6 +5,7 @@ import TicketView from "../features/ticket/TicketView.vue";
 import LiveView from "../features/live/LiveView.vue";
 import TvView from "../features/tv/TvView.vue";
 import LoginView from "../features/auth/LoginView.vue";
+import ResetPasswordView from "../features/auth/ResetPasswordView.vue";
 import StaffView from "../features/staff/StaffView.vue";
 import MedicalRecordView from "../features/medical-record/MedicalRecordView.vue";
 import PatientScanner from "../features/scanner/PatientScanner.vue";
@@ -41,6 +42,11 @@ const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: ResetPasswordView,
     },
     {
       path: "/staff",

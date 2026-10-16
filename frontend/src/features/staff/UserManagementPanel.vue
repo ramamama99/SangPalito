@@ -236,17 +236,20 @@
           <button type="button" class="modal-close-btn" @click="showCreateModal = false">×</button>
         </div>
 
-        <form @submit.prevent="submitCreateUser" class="modal-form">
+        <form novalidate @submit.prevent="submitCreateUser" class="modal-form">
           <div class="form-grid">
             <div class="form-group full-width">
               <label>Nama Lengkap Staf <span class="req">*</span></label>
               <input
                 v-model="createForm.full_name"
                 type="text"
-                required
+                :class="['form-input', { 'input-error': createErrors.full_name }]"
+                @input="delete createErrors.full_name"
                 placeholder="Contoh: dr. Rama Palito, Sp.PD / Siti Rahmawati, A.Md"
-                class="form-input"
               />
+              <span v-if="createErrors.full_name" class="field-error-text">
+                {{ createErrors.full_name }}
+              </span>
             </div>
 
             <div class="form-group">
@@ -254,10 +257,13 @@
               <input
                 v-model="createForm.email"
                 type="email"
-                required
+                :class="['form-input', { 'input-error': createErrors.email }]"
+                @input="delete createErrors.email"
                 placeholder="staf@antrisehat.id"
-                class="form-input"
               />
+              <span v-if="createErrors.email" class="field-error-text">
+                {{ createErrors.email }}
+              </span>
             </div>
 
             <div class="form-group">
@@ -265,10 +271,13 @@
               <input
                 v-model="createForm.phone"
                 type="tel"
-                required
+                :class="['form-input', { 'input-error': createErrors.phone }]"
+                @input="delete createErrors.phone"
                 placeholder="081234567890"
-                class="form-input"
               />
+              <span v-if="createErrors.phone" class="field-error-text">
+                {{ createErrors.phone }}
+              </span>
             </div>
 
             <div class="form-group">
@@ -277,10 +286,9 @@
                 <input
                   v-model="createForm.password"
                   :type="showCreatePassword ? 'text' : 'password'"
-                  required
-                  minlength="6"
+                  :class="['form-input', { 'input-error': createErrors.password }]"
+                  @input="delete createErrors.password"
                   placeholder="Minimal 6 karakter"
-                  class="form-input"
                 />
                 <button
                   type="button"
@@ -291,17 +299,27 @@
                   <EyeOff v-else :size="16" />
                 </button>
               </div>
-              <span class="input-hint">Password akan di-hash dan di-salt secara otomatis dengan bcrypt di backend.</span>
+              <span v-if="createErrors.password" class="field-error-text">
+                {{ createErrors.password }}
+              </span>
+              <span v-else class="input-hint">Password akan di-hash dan di-salt secara otomatis dengan bcrypt di backend.</span>
             </div>
 
             <div class="form-group">
               <label>Peran / Role Pengguna <span class="req">*</span></label>
-              <select v-model="createForm.role" required class="form-input">
+              <select
+                v-model="createForm.role"
+                :class="['form-input', { 'input-error': createErrors.role }]"
+                @change="delete createErrors.role"
+              >
                 <option value="registrar">Petugas Loket / Pendaftaran (registrar)</option>
                 <option value="medic">Tenaga Medis / Dokter (medic)</option>
                 <option value="head">Kepala Puskesmas / Faskes (head)</option>
                 <option value="admin">Administrator Sistem (admin)</option>
               </select>
+              <span v-if="createErrors.role" class="field-error-text">
+                {{ createErrors.role }}
+              </span>
             </div>
 
             <div class="form-group full-width">
@@ -343,16 +361,19 @@
           <button type="button" class="modal-close-btn" @click="showEditModal = false">×</button>
         </div>
 
-        <form @submit.prevent="submitUpdateUser" class="modal-form">
+        <form novalidate @submit.prevent="submitUpdateUser" class="modal-form">
           <div class="form-grid">
             <div class="form-group full-width">
               <label>Nama Lengkap Staf <span class="req">*</span></label>
               <input
                 v-model="editForm.full_name"
                 type="text"
-                required
-                class="form-input"
+                :class="['form-input', { 'input-error': editErrors.full_name }]"
+                @input="delete editErrors.full_name"
               />
+              <span v-if="editErrors.full_name" class="field-error-text">
+                {{ editErrors.full_name }}
+              </span>
             </div>
 
             <div class="form-group">
@@ -360,19 +381,30 @@
               <input
                 v-model="editForm.phone"
                 type="tel"
+                :class="['form-input', { 'input-error': editErrors.phone }]"
+                @input="delete editErrors.phone"
                 placeholder="081234567890"
-                class="form-input"
               />
+              <span v-if="editErrors.phone" class="field-error-text">
+                {{ editErrors.phone }}
+              </span>
             </div>
 
             <div class="form-group">
-              <label>Peran / Role</label>
-              <select v-model="editForm.role" required class="form-input">
+              <label>Peran / Role <span class="req">*</span></label>
+              <select
+                v-model="editForm.role"
+                :class="['form-input', { 'input-error': editErrors.role }]"
+                @change="delete editErrors.role"
+              >
                 <option value="registrar">Petugas Loket (registrar)</option>
                 <option value="medic">Tenaga Medis / Dokter (medic)</option>
                 <option value="head">Kepala Puskesmas (head)</option>
                 <option value="admin">Administrator Sistem (admin)</option>
               </select>
+              <span v-if="editErrors.role" class="field-error-text">
+                {{ editErrors.role }}
+              </span>
             </div>
 
             <div class="form-group full-width">
@@ -420,17 +452,16 @@
           <button type="button" class="modal-close-btn" @click="showResetModal = false">×</button>
         </div>
 
-        <form @submit.prevent="submitResetPassword" class="modal-form">
+        <form novalidate @submit.prevent="submitResetPassword" class="modal-form">
           <div class="form-group full-width">
             <label>Kata Sandi Baru <span class="req">*</span></label>
             <div class="password-input-wrap">
               <input
                 v-model="newPassword"
                 :type="showResetPw ? 'text' : 'password'"
-                required
-                minlength="6"
+                :class="['form-input', { 'input-error': resetPwError }]"
+                @input="resetPwError = ''"
                 placeholder="Masukkan kata sandi baru (min 6 karakter)"
-                class="form-input"
               />
               <button
                 type="button"
@@ -441,12 +472,15 @@
                 <EyeOff v-else :size="16" />
               </button>
             </div>
-            <span class="input-hint">Kata sandi akan di-hash ulang dengan salt baru sebelum disimpan ke database.</span>
+            <span v-if="resetPwError" class="field-error-text">
+              {{ resetPwError }}
+            </span>
+            <span v-else class="input-hint">Kata sandi akan di-hash ulang dengan salt baru sebelum disimpan ke database.</span>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="button outline" @click="showResetModal = false">Batal</button>
-            <button type="submit" class="button primary" :disabled="formSubmitting || !newPassword">
+            <button type="submit" class="button primary" :disabled="formSubmitting">
               <span v-if="formSubmitting">Menyimpan...</span>
               <span v-else>Update Kata Sandi</span>
             </button>
@@ -549,6 +583,10 @@ const showResetPw = ref(false);
 const editingUser = ref<UserItem | null>(null);
 const targetUser = ref<UserItem | null>(null);
 const newPassword = ref('');
+
+const createErrors = ref<Record<string, string>>({});
+const editErrors = ref<Record<string, string>>({});
+const resetPwError = ref('');
 
 const createForm = ref({
   full_name: '',
@@ -670,6 +708,82 @@ const filteredUsers = computed(() => {
   });
 });
 
+function validateCreateUser(): boolean {
+  createErrors.value = {};
+  let valid = true;
+
+  if (!createForm.value.full_name || !createForm.value.full_name.trim()) {
+    createErrors.value.full_name = 'Nama lengkap staf wajib diisi';
+    valid = false;
+  }
+
+  if (!createForm.value.email || !createForm.value.email.trim()) {
+    createErrors.value.email = 'Alamat email wajib diisi';
+    valid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createForm.value.email.trim())) {
+    createErrors.value.email = 'Format email tidak valid (contoh: staf@antrisehat.id)';
+    valid = false;
+  }
+
+  if (!createForm.value.phone || !createForm.value.phone.trim()) {
+    createErrors.value.phone = 'Nomor telepon / WhatsApp wajib diisi';
+    valid = false;
+  } else if (createForm.value.phone.trim().replace(/\D/g, '').length < 9) {
+    createErrors.value.phone = 'Nomor telepon minimal 9 digit angka';
+    valid = false;
+  }
+
+  if (!createForm.value.password) {
+    createErrors.value.password = 'Kata sandi wajib diisi';
+    valid = false;
+  } else if (createForm.value.password.length < 6) {
+    createErrors.value.password = 'Kata sandi minimal 6 karakter';
+    valid = false;
+  }
+
+  if (!createForm.value.role) {
+    createErrors.value.role = 'Peran pengguna wajib dipilih';
+    valid = false;
+  }
+
+  return valid;
+}
+
+function validateEditUser(): boolean {
+  editErrors.value = {};
+  let valid = true;
+
+  if (!editForm.value.full_name || !editForm.value.full_name.trim()) {
+    editErrors.value.full_name = 'Nama lengkap staf wajib diisi';
+    valid = false;
+  }
+
+  if (editForm.value.phone && editForm.value.phone.trim().replace(/\D/g, '').length < 9) {
+    editErrors.value.phone = 'Nomor telepon minimal 9 digit angka';
+    valid = false;
+  }
+
+  if (!editForm.value.role) {
+    editErrors.value.role = 'Peran pengguna wajib dipilih';
+    valid = false;
+  }
+
+  return valid;
+}
+
+function validateResetPassword(): boolean {
+  resetPwError.value = '';
+  if (!newPassword.value || !newPassword.value.trim()) {
+    resetPwError.value = 'Kata sandi baru wajib diisi';
+    return false;
+  }
+  if (newPassword.value.length < 6) {
+    resetPwError.value = 'Kata sandi baru minimal 6 karakter';
+    return false;
+  }
+  return true;
+}
+
 function openCreateModal() {
   createForm.value = {
     full_name: '',
@@ -679,18 +793,23 @@ function openCreateModal() {
     role: 'medic',
     polyclinic_id: '',
   };
+  createErrors.value = {};
   showCreatePassword.value = false;
   showCreateModal.value = true;
 }
 
 async function submitCreateUser() {
+  if (!validateCreateUser()) {
+    return;
+  }
+
   formSubmitting.value = true;
   errorMessage.value = '';
   try {
     const payload: any = {
-      full_name: createForm.value.full_name,
-      email: createForm.value.email,
-      phone: createForm.value.phone || undefined,
+      full_name: createForm.value.full_name.trim(),
+      email: createForm.value.email.trim(),
+      phone: createForm.value.phone.trim() || undefined,
       password: createForm.value.password,
       role: createForm.value.role,
       polyclinic_id: createForm.value.polyclinic_id || undefined,
@@ -719,17 +838,22 @@ function openEditModal(u: UserItem) {
     polyclinic_id: u.polyclinic_id || '',
     is_active: u.is_active,
   };
+  editErrors.value = {};
   showEditModal.value = true;
 }
 
 async function submitUpdateUser() {
   if (!editingUser.value) return;
+  if (!validateEditUser()) {
+    return;
+  }
+
   formSubmitting.value = true;
   errorMessage.value = '';
   try {
     const payload: any = {
-      full_name: editForm.value.full_name,
-      phone: editForm.value.phone || undefined,
+      full_name: editForm.value.full_name.trim(),
+      phone: editForm.value.phone.trim() || undefined,
       role: editForm.value.role,
       polyclinic_id: editForm.value.polyclinic_id || undefined,
       is_active: editForm.value.is_active,
@@ -752,12 +876,17 @@ async function submitUpdateUser() {
 function openResetPasswordModal(u: UserItem) {
   targetUser.value = u;
   newPassword.value = '';
+  resetPwError.value = '';
   showResetPw.value = false;
   showResetModal.value = true;
 }
 
 async function submitResetPassword() {
-  if (!targetUser.value || !newPassword.value) return;
+  if (!targetUser.value) return;
+  if (!validateResetPassword()) {
+    return;
+  }
+
   formSubmitting.value = true;
   errorMessage.value = '';
   try {
@@ -1397,11 +1526,26 @@ onMounted(() => {
   background: #fff;
   color: #0f172a;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .form-input:focus {
   border-color: #0d9488;
+}
+
+.form-input.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+.field-error-text {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #dc2626;
+  margin-top: 4px;
+  text-align: left;
 }
 
 .password-input-wrap {

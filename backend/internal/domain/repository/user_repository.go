@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -20,4 +21,8 @@ type UserRepository interface {
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	SetResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error
+	FindByResetToken(ctx context.Context, token string) (*entity.User, error)
+	ClearResetToken(ctx context.Context, userID uuid.UUID) error
+	SetFirstLogin(ctx context.Context, userID uuid.UUID, isFirstLogin bool) error
 }

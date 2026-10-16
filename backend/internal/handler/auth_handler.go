@@ -91,3 +91,89 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.OK(map[string]string{"message": "Berhasil logout"}))
 }
+
+// ForgotPassword handles POST /api/v1/auth/forgot-password.
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("Email tidak valid", err))
+		return
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		_ = c.Error(apperror.ValidationError(err.Error()))
+		return
+	}
+
+	origin := c.Request.Header.Get("Origin")
+	if origin == "" {
+		origin = "http://" + c.Request.Host
+	}
+
+	res, err := h.authService.ForgotPassword(c.Request.Context(), req, h.defaultFacilityID, origin)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(res))
+}
+
+// ResetPassword handles POST /api/v1/auth/reset-password.
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("Format data tidak valid", err))
+		return
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		_ = c.Error(apperror.ValidationError(err.Error()))
+		return
+	}
+
+	if err := h.authService.ResetPassword(c.Request.Context(), req); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(map[string]string{
+		"message": "Kata sandi berhasil diperbarui. Silakan login kembali dengan kata sandi baru.",
+	}))
+}
+
+// CompleteFirstLogin handles POST /api/v1/auth/first-login.
+func (h *AuthHandler) CompleteFirstLogin(c *gin.Context) {
+	userIDStr, exists := c.Get(middleware.CtxUserID)
+	if !exists {
+		_ = c.Error(apperror.Unauthorized(nil))
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		_ = c.Error(apperror.BadRequest("Invalid user ID", err))
+		return
+	}
+
+	var req dto.CompleteFirstLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(apperror.BadRequest("Data tidak valid", err))
+		return
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		_ = c.Error(apperror.ValidationError(err.Error()))
+		return
+	}
+
+	if err := h.authService.CompleteFirstLogin(c.Request.Context(), userID, req); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.OK(map[string]string{
+		"message": "Pengaturan akun pertama kali berhasil diselesaikan.",
+	}))
+}
+

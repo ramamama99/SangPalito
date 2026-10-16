@@ -164,11 +164,23 @@ func seedDefaultFacility(ctx context.Context, repo domainRepo.FacilityRepository
 }
 
 func seedTestingData(ctx context.Context, pool *pgxpool.Pool, facID uuid.UUID) {
-	// Auto-ensure user columns exist
+	// Auto-ensure user and doctor columns exist
 	_, _ = pool.Exec(ctx, `
 		ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30);
 		ALTER TABLE users ADD COLUMN IF NOT EXISTS polyclinic_id UUID REFERENCES polyclinics(id) ON DELETE SET NULL;
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS is_first_login BOOLEAN NOT NULL DEFAULT false;
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(120);
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires_at TIMESTAMPTZ;
 		CREATE INDEX IF NOT EXISTS idx_users_polyclinic ON users (polyclinic_id);
+		CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users (reset_token);
+
+		ALTER TABLE doctors ADD COLUMN IF NOT EXISTS polyclinic_id UUID REFERENCES polyclinics(id) ON DELETE SET NULL;
+		ALTER TABLE doctors ADD COLUMN IF NOT EXISTS phone VARCHAR(30);
+		ALTER TABLE doctors ADD COLUMN IF NOT EXISTS email VARCHAR(150);
+		ALTER TABLE doctors ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+		ALTER TABLE doctors ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+		CREATE INDEX IF NOT EXISTS idx_doctors_user_id ON doctors (user_id);
+		CREATE INDEX IF NOT EXISTS idx_doctors_polyclinic ON doctors (polyclinic_id);
 	`)
 
 	var polyID, docID, patientID uuid.UUID
