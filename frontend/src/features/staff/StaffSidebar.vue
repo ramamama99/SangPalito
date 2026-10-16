@@ -8,7 +8,7 @@
     <div class="sidebar-header">
       <div v-if="!collapsed" class="sidebar-brand">
         <div class="brand-badge">
-          <Activity :size="18" class="text-teal-700" />
+          <Activity :size="18" class="text-[var(--deep)]" />
         </div>
         <div class="brand-info">
           <span class="brand-title">AntriSehat</span>
@@ -388,11 +388,11 @@ const activePoliQueueCount = computed(() => {
 }
 
 .brand-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: #f0fdfa;
-  border: 1px solid #ccfbf1;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -405,26 +405,27 @@ const activePoliQueueCount = computed(() => {
 }
 
 .brand-title {
-  font-size: 15px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--deep, #0f4c47);
+  color: var(--deep);
   letter-spacing: -0.2px;
   line-height: 1.1;
 }
 
 .brand-sub {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 11px;
+  color: var(--muted);
   font-weight: 500;
 }
 
 .toggle-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 50px;
   padding: 8px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -432,8 +433,8 @@ const activePoliQueueCount = computed(() => {
 }
 
 .toggle-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #f6f8f5;
+  color: var(--deep);
 }
 
 /* Navigation Menu */
@@ -446,7 +447,7 @@ const activePoliQueueCount = computed(() => {
   flex-direction: column;
   gap: 4px;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--line) transparent;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -456,14 +457,14 @@ const activePoliQueueCount = computed(() => {
   background: transparent;
 }
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--line);
   border-radius: 4px;
 }
 
 .nav-group-title {
   font-size: 10px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--muted);
   letter-spacing: 0.8px;
   padding: 12px 10px 6px;
   text-transform: uppercase;
@@ -473,11 +474,11 @@ const activePoliQueueCount = computed(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
+  padding: 10px 14px;
   border-radius: 10px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #334155;
+  color: #243e40;
   background: transparent;
   border: none;
   width: 100%;
@@ -494,22 +495,22 @@ const activePoliQueueCount = computed(() => {
 }
 
 .nav-link:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f6f8f5;
+  color: var(--deep);
 }
 
 .nav-link.active {
-  background: #e6f6f4;
-  color: var(--deep, #0f4c47);
-  font-weight: 600;
+  background: #eaf6f2;
+  color: var(--deep);
+  font-weight: 700;
 }
 
 .nav-link.active .nav-icon {
-  color: var(--teal, #0d9488);
+  color: var(--teal);
 }
 
 .nav-icon {
-  color: #64748b;
+  color: var(--muted);
   flex-shrink: 0;
   transition: color 0.18s ease;
 }
@@ -526,13 +527,15 @@ const activePoliQueueCount = computed(() => {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
-  background: #e2e8f0;
-  color: #475569;
+  background: #f6f8f5;
+  color: var(--deep);
+  border: 1px solid var(--line);
 }
 
 .badge-counter.active-poli {
-  background: #fef08a;
-  color: #854d0e;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
 /* Pinned Bottom Footer */
@@ -540,8 +543,8 @@ const activePoliQueueCount = computed(() => {
   flex-shrink: 0;
   margin-top: auto;
   padding: 14px 12px;
-  background: #fbfdfc;
-  border-top: 1px solid var(--line, #f1f5f9);
+  background: #ffffff;
+  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -552,16 +555,16 @@ const activePoliQueueCount = computed(() => {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
 }
 
 .avatar-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--deep, #0f4c47);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--deep);
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -569,6 +572,7 @@ const activePoliQueueCount = computed(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-family: 'Manrope', sans-serif;
 }
 
 .profile-meta {
@@ -578,8 +582,10 @@ const activePoliQueueCount = computed(() => {
 }
 
 .doctor-title {
+  font-family: 'Manrope', sans-serif;
   font-size: 12.5px;
-  color: #1e293b;
+  font-weight: 700;
+  color: var(--deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -588,24 +594,24 @@ const activePoliQueueCount = computed(() => {
 
 .role-badge-label {
   font-size: 10.5px;
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Logout Button (Pinned, visually prominent, never scrolled out) */
+/* Logout Button (Pinned, visually prominent, pill shape) */
 .logout-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #fff1f2;
-  color: #e11d48;
-  border: 1px solid #ffe4e6;
+  padding: 9px 16px;
+  border-radius: 50px;
+  background: #fdf3f0;
+  color: var(--coral);
+  border: 1px solid #f7d6cf;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -615,13 +621,14 @@ const activePoliQueueCount = computed(() => {
 
 .staff-sidebar.is-collapsed .logout-action-btn {
   padding: 10px 0;
+  border-radius: 12px;
   justify-content: center;
 }
 
 .logout-action-btn:hover {
-  background: #ffe4e6;
-  color: #be123c;
-  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.12);
+  background: #fbeae5;
+  color: #c96855;
+  box-shadow: 0 2px 8px rgba(217, 127, 108, 0.15);
   transform: translateY(-1px);
 }
 
@@ -632,12 +639,12 @@ const activePoliQueueCount = computed(() => {
     left: 0;
     bottom: 0;
     z-index: 50;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 4px 0 24px rgba(25, 90, 95, 0.12);
   }
   .staff-sidebar.is-collapsed {
     position: sticky;
     width: 60px;
-    box-shadow: 1px 0 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 1px 0 6px rgba(25, 90, 95, 0.04);
   }
 }
 </style>

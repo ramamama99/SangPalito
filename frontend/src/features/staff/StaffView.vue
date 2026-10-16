@@ -138,9 +138,6 @@
             >
               + Pasien Walk-in
             </RouterLink>
-            <RouterLink to="/scan" class="button primary small">
-              <QrCode :size="17" /> Scan QR Pasien
-            </RouterLink>
           </div>
         </div>
 
@@ -2648,9 +2645,10 @@ function goToMedicalRecord() {
 .record-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  background-color: #1e464c;
-  color: #ffffff;
+  border-radius: 12px;
+  background-color: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
   font-weight: 700;
   font-size: 14px;
   display: flex;
@@ -2658,20 +2656,22 @@ function goToMedicalRecord() {
   justify-content: center;
   flex-shrink: 0;
   letter-spacing: 0.5px;
+  font-family: 'Manrope', sans-serif;
 }
 
 .record-patient-details h3 {
   margin: 0 0 4px 0;
+  font-family: 'Manrope', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--deep);
   line-height: 1.25;
 }
 
 .record-patient-details p {
   margin: 2px 0 0 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   line-height: 1.4;
 }
 
@@ -2681,30 +2681,30 @@ function goToMedicalRecord() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 18px;
-  border-radius: 9999px;
+  padding: 8px 20px;
+  border-radius: 50px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  background-color: #1e464c;
+  letter-spacing: 0.3px;
+  background-color: var(--deep);
   color: #ffffff;
   border: none;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(30, 70, 76, 0.2);
+  box-shadow: 0 2px 8px rgba(25, 90, 95, 0.2);
 }
 
 .record-trigger:hover {
-  background-color: #13353a;
+  background-color: #237079;
   transform: translateY(-1px);
 }
 
 .record-alert {
-  background-color: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #b91c1c;
-  border-radius: 8px;
+  background-color: #fdf3f0;
+  border: 1px solid #f7d6cf;
+  color: var(--coral);
+  border-radius: 10px;
   padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
@@ -2729,8 +2729,8 @@ function goToMedicalRecord() {
 .med-prescription-section {
   margin: 18px 0;
   padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
   border-radius: 14px;
 }
 
@@ -2755,12 +2755,12 @@ function goToMedicalRecord() {
   gap: 8px;
   font-size: 13px;
   font-weight: 700;
-  color: #195a5f;
+  color: var(--deep);
   cursor: pointer;
-  background: #e6fffa;
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid #b2f5ea;
+  background: #eaf6f2;
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid #c8e8df;
 }
 
 .med-builder-box {
@@ -2769,9 +2769,9 @@ function goToMedicalRecord() {
   gap: 12px;
   padding: 16px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(25, 90, 95, 0.03);
 }
 
 .med-field-group label,
@@ -2781,7 +2781,7 @@ function goToMedicalRecord() {
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
-  color: #334155;
+  color: var(--deep);
 }
 
 .med-field-group select,
@@ -2790,11 +2790,11 @@ function goToMedicalRecord() {
 .med-grid-2 select,
 .med-grid-2 input {
   padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
   font-size: 13px;
-  color: #0f172a;
-  background: #f8fafc;
+  color: #243e40;
+  background: #ffffff;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -2804,8 +2804,8 @@ function goToMedicalRecord() {
 .med-field-group textarea:focus,
 .med-grid-2 select:focus,
 .med-grid-2 input:focus {
-  border-color: #195a5f;
-  background: #ffffff;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 .med-grid-2 {
@@ -2839,40 +2839,40 @@ function goToMedicalRecord() {
 
 .route-badge[data-route="oral_minum"],
 .route-badge[data-route="sirup_minum"] {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
 }
 
 .route-badge[data-route="oral_kunyah"] {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fcd34d;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
 .route-badge[data-route="topikal_oles"] {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+  background: #eaf3f6;
+  color: var(--deep);
+  border: 1px solid #c5dbe3;
 }
 
 .route-badge[data-route="tetes_mata"],
 .route-badge[data-route="tetes_telinga"] {
-  background: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
+  background: #f4ecf8;
+  color: #5a3e75;
+  border: 1px solid #dfcce6;
 }
 
 .route-badge[data-route="kumur"] {
-  background: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
+  background: #fdf3f0;
+  color: var(--coral);
+  border: 1px solid #f7d6cf;
 }
 
 .route-badge[data-route="inhalasi"] {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background: #eaf6f2;
+  color: var(--teal);
+  border: 1px solid #c8e8df;
 }
 
 /* ── Rx Items Summary ── */
@@ -2886,14 +2886,14 @@ function goToMedicalRecord() {
 .rx-summary-title {
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--deep);
 }
 
 .rx-item-card {
   padding: 10px 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 9px;
   font-size: 12px;
 }
 
@@ -2919,29 +2919,30 @@ function goToMedicalRecord() {
 .rx-item-qty {
   font-weight: 700;
   font-family: monospace;
-  color: #0f172a;
+  color: var(--deep);
 }
 
 .btn-remove-med {
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--coral);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 50px;
+  transition: all 0.15s ease;
 }
 
 .btn-remove-med:hover {
-  background: #fee2e2;
+  background: #fdf3f0;
 }
 
 .rx-item-body {
-  color: #475569;
-  line-height: 1.4;
+  color: #243e40;
+  line-height: 1.5;
 }
 
 .rx-instruction-text {
-  color: #0f766e;
+  color: var(--teal);
   margin-top: 2px;
 }
 
@@ -2950,9 +2951,10 @@ function goToMedicalRecord() {
   max-width: 580px;
   width: 90%;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 19px;
+  border: 1px solid var(--line);
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(25, 90, 95, 0.1);
 }
 
 .patient-rx-meta {
@@ -2960,8 +2962,9 @@ function goToMedicalRecord() {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   padding: 12px;
-  background: #f1f5f9;
-  border-radius: 10px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 9px;
 }
 
 .rx-items-list-box {
@@ -2983,9 +2986,9 @@ function goToMedicalRecord() {
   gap: 12px;
   flex-wrap: wrap;
   padding: 12px 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 14px;
 }
 
 .search-input-box {
@@ -2995,13 +2998,19 @@ function goToMedicalRecord() {
   flex: 1;
   min-width: 260px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
   padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.search-input-box:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 .search-input-box .search-icon {
-  color: #64748b;
+  color: var(--muted);
   flex-shrink: 0;
 }
 
@@ -3011,7 +3020,7 @@ function goToMedicalRecord() {
   background: transparent;
   width: 100%;
   font-size: 13px;
-  color: #0f172a;
+  color: #243e40;
 }
 
 .toolbar-filter-group {
@@ -3022,14 +3031,19 @@ function goToMedicalRecord() {
 
 .toolbar-select {
   padding: 8px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
   background: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: #243e40;
   outline: none;
   cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.toolbar-select:focus {
+  border-color: var(--teal);
 }
 
 .action-btn-group {
@@ -3045,35 +3059,35 @@ function goToMedicalRecord() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  border: 1px solid var(--line);
   background: #ffffff;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .action-btn.edit {
-  color: #0f766e;
+  color: var(--teal);
 }
 .action-btn.edit:hover {
-  background: #e6fffa;
-  border-color: #99f6e4;
+  background: #eaf6f2;
+  border-color: #c8e8df;
 }
 
 .action-btn.view {
-  color: #2563eb;
+  color: var(--deep);
 }
 .action-btn.view:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #f6f8f5;
+  border-color: var(--line);
 }
 
 .action-btn.delete {
-  color: #ef4444;
+  color: var(--coral);
 }
 .action-btn.delete:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: #fdf3f0;
+  border-color: #f7d6cf;
 }
 
 /* ── Modal CRUD Styles ── */
@@ -3081,9 +3095,10 @@ function goToMedicalRecord() {
   max-width: 650px;
   width: 90%;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 19px;
+  border: 1px solid var(--line);
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(25, 90, 95, 0.1);
 }
 
 .modal-header {
@@ -3091,14 +3106,15 @@ function goToMedicalRecord() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 22px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--line);
   background: #ffffff;
 }
 
 .modal-header h3 {
+  font-family: 'Manrope', sans-serif;
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--deep);
   margin: 0;
 }
 
@@ -3108,18 +3124,18 @@ function goToMedicalRecord() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #64748b;
+  border-radius: 50px;
+  border: 1px solid var(--line);
+  background: #f6f8f5;
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-close:hover {
-  background: #fee2e2;
-  color: #ef4444;
-  border-color: #fca5a5;
+  background: #fdf3f0;
+  color: var(--coral);
+  border-color: #f7d6cf;
 }
 
 .modal-body {
@@ -3128,8 +3144,8 @@ function goToMedicalRecord() {
 
 .modal-footer {
   padding: 14px 22px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  background: #f6f8f5;
+  border-top: 1px solid var(--line);
 }
 
 .crud-form-grid-2 {
@@ -3145,7 +3161,7 @@ function goToMedicalRecord() {
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
-  color: #334155;
+  color: var(--deep);
 }
 
 .crud-form-grid-2 input,
@@ -3154,11 +3170,11 @@ function goToMedicalRecord() {
 .crud-form-group select,
 .crud-form-group textarea {
   padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
   font-size: 13px;
-  color: #0f172a;
-  background: #f8fafc;
+  color: #243e40;
+  background: #ffffff;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -3168,8 +3184,8 @@ function goToMedicalRecord() {
 .crud-form-group input:focus,
 .crud-form-group select:focus,
 .crud-form-group textarea:focus {
-  border-color: #195a5f;
-  background: #ffffff;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 @media (max-width: 640px) {
@@ -3187,8 +3203,8 @@ function goToMedicalRecord() {
   flex-wrap: wrap;
   padding: 14px 18px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
   margin-top: 12px;
 }
 
@@ -3197,7 +3213,7 @@ function goToMedicalRecord() {
   align-items: center;
   gap: 16px;
   font-size: 13px;
-  color: #475569;
+  color: var(--muted);
   flex-wrap: wrap;
 }
 
@@ -3206,17 +3222,17 @@ function goToMedicalRecord() {
   align-items: center;
   gap: 8px;
   font-size: 12.5px;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .per-page-select {
   padding: 4px 8px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #dce5df;
   border-radius: 6px;
-  background: #f8fafc;
+  background: #f6f8f5;
   font-size: 12.5px;
   font-weight: 600;
-  color: #0f172a;
+  color: #243e40;
   outline: none;
   cursor: pointer;
 }
@@ -3240,10 +3256,10 @@ function goToMedicalRecord() {
   min-width: 34px;
   height: 34px;
   padding: 0 8px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  border: 1px solid var(--line);
   background: #ffffff;
-  color: #334155;
+  color: #243e40;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -3252,20 +3268,20 @@ function goToMedicalRecord() {
 }
 
 .page-btn:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0f172a;
+  background: #f6f8f5;
+  border-color: #c8e8df;
+  color: var(--deep);
 }
 
 .page-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  background: #f8fafc;
+  background: #f6f8f5;
 }
 
 .page-number-btn.active {
-  background: #195a5f;
-  border-color: #195a5f;
+  background: var(--deep);
+  border-color: var(--deep);
   color: #ffffff;
   box-shadow: 0 2px 4px rgba(25, 90, 95, 0.25);
 }
@@ -3276,7 +3292,7 @@ function goToMedicalRecord() {
   justify-content: center;
   width: 28px;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--muted);
   user-select: none;
 }
 
@@ -3289,7 +3305,7 @@ function goToMedicalRecord() {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(25, 90, 95, 0.4);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 35;
@@ -3327,7 +3343,7 @@ function goToMedicalRecord() {
 
 .panel-sub {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   margin: 3px 0 0 0;
 }
 
@@ -3344,22 +3360,22 @@ function goToMedicalRecord() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #f1f5f9;
+  background: #f6f8f5;
   padding: 5px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  border-radius: 50px;
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(25, 90, 95, 0.02);
   flex-wrap: wrap;
 }
 
 .tab-btn {
-  padding: 9px 20px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: 50px;
   font-size: 13.5px;
   font-weight: 600;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
@@ -3368,25 +3384,25 @@ function goToMedicalRecord() {
 }
 
 .tab-btn:hover {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.7);
+  color: var(--deep);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .tab-btn.active {
   background: #ffffff;
-  color: #0f766e;
+  color: var(--deep);
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(25, 90, 95, 0.08);
 }
 
 .shift-stats-pill {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  color: var(--deep);
+  background: #ffffff;
+  border: 1px solid var(--line);
   padding: 6px 14px;
-  border-radius: 9999px;
+  border-radius: 50px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3396,11 +3412,11 @@ function goToMedicalRecord() {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #0d9488;
+  background: var(--teal);
 }
 
 .shift-stats-pill strong {
-  color: #0f172a;
+  color: var(--deep);
 }
 
 .admin-shifts-grid {
@@ -3411,26 +3427,26 @@ function goToMedicalRecord() {
 
 .admin-shift-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 13px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 1px 3px rgba(25, 90, 95, 0.03);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
 .admin-shift-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.07);
-  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px -4px rgba(25, 90, 95, 0.07);
+  border-color: #c8e8df;
 }
 
 .admin-shift-card.inactive {
   opacity: 0.65;
-  background: #f8fafc;
+  background: #f6f8f5;
 }
 
 .card-top-bar {
@@ -3449,10 +3465,10 @@ function goToMedicalRecord() {
   font-size: 11.5px;
   font-weight: 650;
   padding: 3px 10px;
-  border-radius: 9999px;
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  background: #f6f8f5;
+  color: #243e40;
+  border: 1px solid var(--line);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3462,15 +3478,15 @@ function goToMedicalRecord() {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #0d9488;
+  background: var(--teal);
 }
 
 .shift-type-pill.siang .shift-dot {
-  background: #0284c7;
+  background: var(--deep);
 }
 
 .shift-type-pill.sore .shift-dot {
-  background: #64748b;
+  background: var(--muted);
 }
 
 .status-indicator {
@@ -3481,12 +3497,12 @@ function goToMedicalRecord() {
 }
 
 .status-indicator.active {
-  background: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  background: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 .status-indicator.inactive {
-  background: #94a3b8;
+  background: var(--muted);
 }
 
 .badge-active-dot {
@@ -3495,11 +3511,11 @@ function goToMedicalRecord() {
   gap: 6px;
   font-size: 11.5px;
   font-weight: 600;
-  color: #059669;
-  background: #ecfdf5;
-  border: 1px solid #d1fae5;
+  color: var(--deep);
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 50px;
 }
 
 .badge-inactive-dot {
@@ -3508,11 +3524,11 @@ function goToMedicalRecord() {
   gap: 6px;
   font-size: 11.5px;
   font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  color: var(--muted);
+  background: #f6f8f5;
+  border: 1px solid var(--line);
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 50px;
 }
 
 .card-poli-heading {
@@ -3522,9 +3538,10 @@ function goToMedicalRecord() {
 }
 
 .poli-title-text {
-  font-size: 15.5px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
   font-weight: 750;
-  color: #0f172a;
+  color: var(--deep);
   letter-spacing: -0.2px;
   margin: 0;
 }
@@ -3532,9 +3549,9 @@ function goToMedicalRecord() {
 .room-pill {
   font-size: 11.5px;
   font-weight: 600;
-  color: #0f766e;
-  background: #f0fdfa;
-  border: 1px solid #ccfbf1;
+  color: var(--deep);
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
   padding: 2px 8px;
   border-radius: 6px;
 }
@@ -3543,23 +3560,24 @@ function goToMedicalRecord() {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f8fafc;
+  background: #f6f8f5;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--line);
 }
 
 .doctor-avatar-box {
   width: 38px;
   height: 38px;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  color: var(--deep);
+  box-shadow: 0 1px 2px rgba(25, 90, 95, 0.02);
 }
 
 .doctor-name-info {
@@ -3569,9 +3587,10 @@ function goToMedicalRecord() {
 }
 
 .doctor-main-name {
+  font-family: 'Manrope', sans-serif;
   font-size: 13.5px;
   font-weight: 750;
-  color: #0f172a;
+  color: var(--deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3579,7 +3598,7 @@ function goToMedicalRecord() {
 
 .doctor-spec-text {
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -3588,10 +3607,10 @@ function goToMedicalRecord() {
   flex-direction: column;
   gap: 7px;
   font-size: 12px;
-  background: #f8fafc;
+  background: #f6f8f5;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 
 .time-spec-row {
@@ -3601,23 +3620,23 @@ function goToMedicalRecord() {
 }
 
 .time-spec-row .label {
-  color: #64748b;
+  color: var(--muted);
   font-size: 11.5px;
   font-weight: 500;
 }
 
 .time-spec-row .doctor-val {
-  color: #0f172a;
+  color: var(--deep);
   font-weight: 600;
 }
 
 .time-spec-row .patient-val {
-  color: #0f766e;
+  color: var(--teal);
   font-weight: 750;
 }
 
 .time-spec-row .buffer-val {
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
   font-size: 11px;
 }
@@ -3634,60 +3653,61 @@ function goToMedicalRecord() {
   justify-content: space-between;
   align-items: center;
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
 }
 
 .live-progress-info strong {
-  color: #0f766e;
+  color: var(--teal);
   font-weight: 750;
 }
 
 .progress-bar-wrap {
   height: 6px;
-  background: #f1f5f9;
-  border-radius: 9999px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 50px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: #0d9488;
-  border-radius: 9999px;
+  background: var(--teal);
+  border-radius: 50px;
   transition: width 0.3s ease;
 }
 
 .progress-bar-fill.full {
-  background: #e11d48;
+  background: var(--coral);
 }
 
 .shift-note-bubble {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 11.5px;
   line-height: 1.4;
-  color: #475569;
+  color: #243e40;
   display: flex;
   gap: 5px;
 }
 
 .note-tag {
   font-weight: 700;
-  color: #334155;
+  color: var(--deep);
   flex-shrink: 0;
 }
 
 .btn-edit-shift {
   width: 100%;
   height: 38px;
-  border-radius: 9px;
+  border-radius: 50px;
   font-weight: 600;
   font-size: 12.5px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  border: 1px solid var(--line);
+  color: var(--deep);
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
@@ -3697,33 +3717,36 @@ function goToMedicalRecord() {
 }
 
 .btn-edit-shift:hover {
-  background: #f0fdfa;
-  color: #0f766e;
-  border-color: #0d9488;
-  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.12);
+  background: #eaf6f2;
+  color: var(--deep);
+  border-color: #c8e8df;
+  box-shadow: 0 1px 3px rgba(25, 90, 95, 0.08);
 }
 
 .edit-shift-modal {
   max-width: 540px;
+  border-radius: 19px;
+  border: 1px solid var(--line);
 }
 
 .modal-shift-info-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8fafc;
+  background: #f6f8f5;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 
 .shift-modal-notice {
   display: flex;
   gap: 10px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--warm);
+  border: 1px solid #e7ded4;
   border-radius: 10px;
   padding: 10px 12px;
+  color: var(--deep);
 }
 
 /* Loket Unified Search & Filter Toolbar */
@@ -3736,11 +3759,11 @@ function goToMedicalRecord() {
 .loket-count-badge {
   font-size: 12px;
   font-weight: 700;
-  color: #0f766e;
-  background: #f0fdfa;
-  border: 1px solid #ccfbf1;
-  padding: 3px 10px;
-  border-radius: 9999px;
+  color: var(--deep);
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
+  padding: 3px 12px;
+  border-radius: 50px;
 }
 
 .loket-quick-actions {
@@ -3772,9 +3795,9 @@ function goToMedicalRecord() {
   align-items: center;
   gap: 8px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 0 12px;
+  border: 1px solid #dce5df;
+  border-radius: 50px;
+  padding: 0 14px;
   height: 38px;
   width: 320px;
   max-width: 100%;
@@ -3783,13 +3806,13 @@ function goToMedicalRecord() {
 }
 
 .loket-search-container:focus-within {
-  border-color: #0f766e;
+  border-color: var(--teal);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 .loket-search-icon {
-  color: #64748b;
+  color: var(--muted);
   flex-shrink: 0;
 }
 
@@ -3799,18 +3822,18 @@ function goToMedicalRecord() {
   background: transparent;
   width: 100%;
   font-size: 13px;
-  color: #1e293b;
+  color: #243e40;
   padding: 0;
 }
 
 .loket-search-input::placeholder {
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .loket-clear-search {
   border: none;
-  background: #e2e8f0;
-  color: #64748b;
+  background: #f6f8f5;
+  color: var(--muted);
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -3824,8 +3847,8 @@ function goToMedicalRecord() {
 }
 
 .loket-clear-search:hover {
-  background: #cbd5e1;
-  color: #0f172a;
+  background: #eaf6f2;
+  color: var(--deep);
 }
 
 .loket-filter-actions {
@@ -3838,23 +3861,23 @@ function goToMedicalRecord() {
 .filter-pill-toggle {
   display: flex;
   align-items: center;
-  background: #f1f5f9;
+  background: #f6f8f5;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 50px;
   gap: 2px;
   height: 38px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 
 .pill-btn {
   height: 30px;
-  padding: 0 12px;
+  padding: 0 14px;
   font-size: 12px;
   font-weight: 600;
   border: none;
   background: transparent;
-  color: #64748b;
-  border-radius: 6px;
+  color: var(--muted);
+  border-radius: 50px;
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -3863,50 +3886,50 @@ function goToMedicalRecord() {
 }
 
 .pill-btn:hover {
-  color: #0f172a;
+  color: var(--deep);
 }
 
 .pill-btn.active {
   background: #ffffff;
-  color: #0f766e;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  color: var(--deep);
+  box-shadow: 0 1px 3px rgba(25, 90, 95, 0.08);
   font-weight: 700;
 }
 
 .loket-select-filter {
   height: 38px;
   padding: 0 32px 0 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  border: 1px solid #dce5df;
   background: #ffffff;
   font-size: 12.5px;
   font-weight: 600;
-  color: #334155;
+  color: #243e40;
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23788586' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 13px 13px;
 }
 
 .loket-select-filter:focus {
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
   outline: none;
 }
 
 .btn-reset-filter {
   height: 38px;
-  padding: 0 12px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #ffffff;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  background: #fdf3f0;
+  color: var(--coral);
+  border: 1px solid #f7d6cf;
+  border-radius: 50px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -3914,8 +3937,8 @@ function goToMedicalRecord() {
 }
 
 .btn-reset-filter:hover {
-  background: #fef2f2;
-  border-color: #f87171;
+  background: #fbeae5;
+  color: #c96855;
 }
 
 .loket-empty-row {
@@ -3931,13 +3954,14 @@ function goToMedicalRecord() {
 }
 
 .loket-empty-content strong {
+  font-family: 'Manrope', sans-serif;
   font-size: 14px;
-  color: #334155;
+  color: var(--deep);
 }
 
 .loket-empty-content p {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--muted);
   margin: 0;
 }
 
@@ -3950,25 +3974,28 @@ function goToMedicalRecord() {
 .shift-mini-badge {
   font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 50px;
   display: inline-block;
   width: fit-content;
 }
 
 .shift-mini-badge.pagi {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
 .shift-mini-badge.siang {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
 }
 
 .shift-mini-badge.sore {
-  background: #ede9fe;
-  color: #6b21a8;
+  background: #f6f8f5;
+  color: var(--muted);
+  border: 1px solid var(--line);
 }
 
 .arrival-time-cell {

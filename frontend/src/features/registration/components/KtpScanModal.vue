@@ -10,12 +10,12 @@
           class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] my-auto transition-all"
         >
           <!-- Header Modal -->
-          <div class="px-5 sm:px-7 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between bg-gradient-to-r from-slate-50 to-white">
+          <div class="px-5 sm:px-7 pt-5 pb-4 border-b border-[var(--line)] flex items-start justify-between bg-[#f6f8f5]">
             <div class="space-y-1">
-              <h2 class="text-xl sm:text-2xl font-bold text-[#195a5f] tracking-tight">
+              <h2 class="text-xl sm:text-2xl font-bold font-['Manrope'] text-[var(--deep)] tracking-tight">
                 {{ parsedData ? 'Verifikasi Data Hasil Scan e-KTP' : 'Scan Kartu e-KTP Otomatis' }}
               </h2>
-              <p class="text-xs sm:text-sm text-slate-500 max-w-md">
+              <p class="text-xs sm:text-sm text-[var(--muted)] max-w-md">
                 {{ parsedData
                   ? 'Periksa dan ubah data hasil pembacaan OCR di bawah ini secara manual bila diperlukan.'
                   : 'Arahkan kartu ke kamera atau unggah berkas foto untuk pengisian formulir instan.' }}
@@ -26,7 +26,7 @@
             <button
               type="button"
               @click="closeModal"
-              class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer shrink-0 -mr-1 -mt-1"
+              class="w-9 h-9 rounded-full bg-white hover:bg-[#f6f8f5] text-[var(--muted)] hover:text-[var(--deep)] border border-[var(--line)] flex items-center justify-center transition cursor-pointer shrink-0 -mr-1 -mt-1"
               title="Tutup Modal"
             >
               <X class="w-5 h-5" />
@@ -38,40 +38,40 @@
             <!-- 1. Kondisi Sedang Memproses Ekstraksi OCR -->
             <div v-if="isScanning" class="py-10 flex flex-col items-center justify-center text-center space-y-4">
               <div class="relative w-16 h-16 flex items-center justify-center">
-                <Loader2 class="w-16 h-16 text-[var(--teal,#12b8b0)] animate-spin" />
-                <Sparkles class="w-6 h-6 text-[var(--deep,#195a5f)] absolute" />
+                <Loader2 class="w-16 h-16 text-[var(--teal)] animate-spin" />
+                <Sparkles class="w-6 h-6 text-[var(--deep)] absolute" />
               </div>
               <div class="space-y-1 max-w-sm">
-                <h3 class="text-base font-bold text-slate-800">
+                <h3 class="text-base font-bold font-['Manrope'] text-[var(--deep)]">
                   Menganalisis Teks e-KTP...
                 </h3>
-                <p class="text-xs text-slate-500 leading-relaxed">
+                <p class="text-xs text-[var(--muted)] leading-relaxed">
                   {{ statusText || 'Mengevaluasi 4 metode citra (Optimal, Otsu, Kontras, Asli) untuk akurasi terbaik...' }}
                 </p>
               </div>
 
               <!-- Progress Bar -->
-              <div class="w-full max-w-xs bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+              <div class="w-full max-w-xs bg-[#f6f8f5] rounded-full h-2 overflow-hidden border border-[var(--line)]">
                 <div
-                  class="bg-gradient-to-r from-[var(--teal,#12b8b0)] to-[var(--deep,#195a5f)] h-2 transition-all duration-300"
+                  class="bg-[var(--teal)] h-2 transition-all duration-300"
                   :style="{ width: `${progress}%` }"
                 ></div>
               </div>
-              <span class="text-xs font-semibold text-slate-400">{{ progress }}%</span>
+              <span class="text-xs font-semibold text-[var(--muted)]">{{ progress }}%</span>
             </div>
 
             <!-- 2. Kondisi Hasil Ekstraksi Sudah Didapat (Langkah Verifikasi & Konfirmasi Editable) -->
             <div v-else-if="parsedData" class="space-y-5">
               <!-- Banner Sukses & Panduan Verifikasi -->
-              <div class="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex items-start gap-3">
-                <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <div class="p-4 rounded-[14px] bg-[#eaf6f2] border border-[#c8e8df] flex items-start gap-3">
+                <div class="w-9 h-9 rounded-[10px] bg-[var(--deep)] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                   <CheckCircle2 class="w-5 h-5" />
                 </div>
                 <div class="space-y-0.5 flex-1">
-                  <h4 class="text-sm font-bold text-emerald-950">
+                  <h4 class="text-sm font-bold font-['Manrope'] text-[var(--deep)]">
                     Data e-KTP Berhasil Ditangkap!
                   </h4>
-                  <p class="text-xs text-emerald-800 leading-relaxed">
+                  <p class="text-xs text-[var(--deep)] leading-relaxed">
                     Filter optimal: <strong>{{ winningMethodLabel || 'Otomatis' }}</strong> (Tingkat akurasi: {{ parsedData.confidence }}%).
                     Seluruh kolom di bawah bersifat <strong>editable</strong>. Anda dapat mengedit dan memperbaiki data manual jika ada kesalahan baca OCR.
                   </p>
@@ -79,22 +79,22 @@
               </div>
 
               <!-- Thumbnail Tangkapan e-KTP Asli untuk Perbandingan -->
-              <div v-if="previewUrl" class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3">
+              <div v-if="previewUrl" class="p-3 bg-[#f6f8f5] rounded-[14px] border border-[var(--line)] flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                   <img
                     :src="previewUrl"
                     alt="Pratinjau KTP"
-                    class="w-16 h-11 object-cover rounded-xl border border-slate-300 shadow-2xs shrink-0"
+                    class="w-16 h-11 object-cover rounded-xl border border-[var(--line)] shadow-2xs shrink-0"
                   />
                   <div class="truncate">
-                    <span class="text-[11px] font-bold text-slate-700 block truncate">Foto e-KTP yang Diproses</span>
-                    <span class="text-[11px] text-slate-500 block truncate">Bandingkan data form dengan fisik kartu di foto</span>
+                    <span class="text-[11px] font-bold text-[var(--deep)] block truncate">Foto e-KTP yang Diproses</span>
+                    <span class="text-[11px] text-[var(--muted)] block truncate">Bandingkan data form dengan fisik kartu di foto</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   @click="resetScan"
-                  class="text-xs text-[var(--deep,#195a5f)] hover:text-teal-700 font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 transition shrink-0 flex items-center gap-1 cursor-pointer"
+                  class="text-xs text-[var(--deep)] hover:text-[var(--teal)] font-bold px-3.5 py-1.5 rounded-full bg-white border border-[var(--line)] hover:bg-[#eaf6f2] transition shrink-0 flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw class="w-3.5 h-3.5" />
                   <span>Foto Ulang</span>
@@ -102,22 +102,22 @@
               </div>
 
               <!-- Formulir Verifikasi & Koreksi Data (Editable Form) -->
-              <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="bg-white rounded-[19px] border border-[var(--line)] shadow-xs p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-[var(--line)] pb-3">
                   <div class="flex items-center gap-2">
-                    <Edit3 class="w-4 h-4 text-[var(--teal,#12b8b0)]" />
-                    <h3 class="text-sm font-bold text-slate-800">
+                    <Edit3 class="w-4 h-4 text-[var(--teal)]" />
+                    <h3 class="text-sm font-bold font-['Manrope'] text-[var(--deep)]">
                       Pengecekan & Koreksi Data e-KTP
                     </h3>
                   </div>
-                  <span class="text-[11px] font-semibold text-slate-400">
+                  <span class="text-[11px] font-semibold text-[var(--muted)]">
                     Formulir Editable
                   </span>
                 </div>
 
                 <!-- Petunjuk Filter Pembersihan Teks -->
-                <div class="text-[11px] text-slate-600 bg-slate-50 rounded-xl p-2.5 border border-slate-200/70 flex items-center gap-2">
-                  <Info class="w-4 h-4 text-slate-400 shrink-0" />
+                <div class="text-[11px] text-[var(--deep)] bg-[#f6f8f5] rounded-[9px] p-2.5 border border-[var(--line)] flex items-center gap-2">
+                  <Info class="w-4 h-4 text-[var(--teal)] shrink-0" />
                   <span>
                     <strong>Filter aktif:</strong> Hanya huruf, angka, tanda titik (.), dan tanda garis miring (/) yang diizinkan masuk ke form.
                   </span>
@@ -128,19 +128,19 @@
                   <!-- 1. NIK (16 Digit) -->
                   <div class="sm:col-span-2 space-y-1">
                     <div class="flex items-center justify-between">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         Nomor Induk Kependudukan (NIK) *
                       </label>
                       <span
                         v-if="editableForm.nik.length === 16"
-                        class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1"
+                        class="text-[11px] font-bold text-[var(--deep)] bg-[#eaf6f2] px-2.5 py-0.5 rounded-full border border-[#c8e8df] flex items-center gap-1"
                       >
-                        <CheckCircle2 class="w-3 h-3 text-emerald-600" />
+                        <CheckCircle2 class="w-3 h-3 text-[var(--teal)]" />
                         16 Digit Valid
                       </span>
                       <span
                         v-else
-                        class="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200"
+                        class="text-[11px] font-bold text-[var(--deep)] bg-[var(--warm)] px-2.5 py-0.5 rounded-full border border-[#e7ded4]"
                       >
                         {{ editableForm.nik.length }}/16 Digit (Wajib 16 Digit)
                       </span>
@@ -151,65 +151,65 @@
                       maxlength="16"
                       :value="editableForm.nik"
                       @input="handleNikInput"
-                      class="w-full px-3.5 py-2.5 text-sm font-mono font-bold bg-slate-50/70 border rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
-                      :class="editableForm.nik.length === 16 ? 'border-slate-300 text-slate-900' : 'border-amber-300 text-amber-900 bg-amber-50/30'"
+                      class="w-full px-3.5 py-2.5 text-sm font-mono font-bold bg-white border rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
+                      :class="editableForm.nik.length === 16 ? 'border-[#dce5df] text-[#243e40]' : 'border-[#e7ded4] text-[var(--deep)] bg-[var(--warm)]/30'"
                       placeholder="Masukkan 16 digit angka NIK"
                     />
-                    <small class="text-[11px] text-slate-400 block">
+                    <small class="text-[11px] text-[var(--muted)] block">
                       Karakter huruf dan simbol otomatis dikoreksi menjadi digit angka.
                     </small>
                   </div>
 
                   <!-- 2. Nama Lengkap Sesuai KTP -->
                   <div class="sm:col-span-2 space-y-1">
-                    <label class="text-xs font-bold text-slate-700">
+                    <label class="text-xs font-bold text-[var(--deep)]">
                       Nama Lengkap Sesuai KTP *
                     </label>
                     <input
                       type="text"
                       :value="editableForm.nama"
                       @input="handleTextInput('nama', ($event.target as HTMLInputElement).value)"
-                      class="w-full px-3.5 py-2.5 text-sm font-semibold text-slate-900 bg-slate-50/70 border border-slate-300 rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                      class="w-full px-3.5 py-2.5 text-sm font-semibold text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                       placeholder="Nama lengkap sesuai KTP"
                     />
                   </div>
 
                   <!-- 3. Tempat Lahir (Kota) -->
                   <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-700">
+                    <label class="text-xs font-bold text-[var(--deep)]">
                       Tempat Lahir (Kota) *
                     </label>
                     <input
                       type="text"
                       :value="editableForm.tempatLahir"
                       @input="handleTextInput('tempatLahir', ($event.target as HTMLInputElement).value)"
-                      class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50/70 border border-slate-300 rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                      class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                       placeholder="Contoh: Jakarta"
                     />
                   </div>
 
                   <!-- 4. Tanggal Lahir (Format: DD/MM/YYYY) -->
                   <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-700">
+                    <label class="text-xs font-bold text-[var(--deep)]">
                       Tanggal Lahir (DD/MM/YYYY) *
                     </label>
                     <input
                       type="text"
                       :value="editableForm.tglLahir"
                       @input="handleTextInput('tglLahir', ($event.target as HTMLInputElement).value)"
-                      class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50/70 border border-slate-300 rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                      class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                       placeholder="Contoh: 19/05/2006"
                     />
                   </div>
 
                   <!-- 5. Jenis Kelamin -->
                   <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-700">
+                    <label class="text-xs font-bold text-[var(--deep)]">
                       Jenis Kelamin *
                     </label>
                     <select
                       v-model="editableForm.jenisKelamin"
-                      class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50/70 border border-slate-300 rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)] cursor-pointer"
+                      class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none cursor-pointer"
                     >
                       <option value="LAKI-LAKI">LAKI-LAKI</option>
                       <option value="PEREMPUAN">PEREMPUAN</option>
@@ -218,12 +218,12 @@
 
                   <!-- 6. Golongan Darah -->
                   <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-700">
+                    <label class="text-xs font-bold text-[var(--deep)]">
                       Golongan Darah
                     </label>
                     <select
                       v-model="editableForm.golDarah"
-                      class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50/70 border border-slate-300 rounded-xl transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)] cursor-pointer"
+                      class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none cursor-pointer"
                     >
                       <option value="-">- (Tidak Tahu)</option>
                       <option value="A">A</option>
@@ -234,38 +234,38 @@
                   </div>
                 </div>
 
-                <!-- BAGIAN PENGECEKAN ALAMAT SESUAI KTP (TERPISAH SESUAI SYARAT 1.c) -->
-                <div class="pt-3 border-t border-slate-200/80 space-y-3">
+                <!-- BAGIAN PENGECEKAN ALAMAT SESUAI KTP -->
+                <div class="pt-3 border-t border-[var(--line)] space-y-3">
                   <div class="flex items-center gap-2">
-                    <MapPin class="w-4 h-4 text-[var(--teal,#12b8b0)]" />
+                    <MapPin class="w-4 h-4 text-[var(--teal)]" />
                     <div>
-                      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--deep)]">
                         Pengecekan Alamat Sesuai KTP (Kolom Terpisah)
                       </h4>
-                      <p class="text-[11px] text-slate-500">
+                      <p class="text-[11px] text-[var(--muted)]">
                         Data alamat dipecah ke kolom Jalan, RT, RW, Kelurahan/Desa, dan Kecamatan.
                       </p>
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#f6f8f5] p-3.5 rounded-[14px] border border-[var(--line)]">
                     <!-- 1. Jalan / No. / Blok (Full width) -->
                     <div class="sm:col-span-2 space-y-1">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         Jalan / No. / Blok *
                       </label>
                       <input
                         type="text"
                         :value="editableForm.alamatJalan"
                         @input="handleTextInput('alamatJalan', ($event.target as HTMLInputElement).value)"
-                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                        class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                         placeholder="Contoh: Jl. Pasirhejo IV No. 16"
                       />
                     </div>
 
                     <!-- 2. RT (Kolom Terpisah) -->
                     <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         RT *
                       </label>
                       <input
@@ -274,14 +274,14 @@
                         maxlength="3"
                         :value="editableForm.rt"
                         @input="handleDigitInput('rt', ($event.target as HTMLInputElement).value, 3)"
-                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                        class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                         placeholder="007"
                       />
                     </div>
 
                     <!-- 3. RW (Kolom Terpisah) -->
                     <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         RW *
                       </label>
                       <input
@@ -290,35 +290,35 @@
                         maxlength="3"
                         :value="editableForm.rw"
                         @input="handleDigitInput('rw', ($event.target as HTMLInputElement).value, 3)"
-                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                        class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                         placeholder="001"
                       />
                     </div>
 
                     <!-- 4. Kelurahan atau Desa (Kolom Terpisah) -->
                     <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         Kelurahan / Desa *
                       </label>
                       <input
                         type="text"
                         :value="editableForm.kelDesa"
                         @input="handleTextInput('kelDesa', ($event.target as HTMLInputElement).value)"
-                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                        class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                         placeholder="Contoh: Pasirhejo"
                       />
                     </div>
 
                     <!-- 5. Kecamatan (Kolom Terpisah) -->
                     <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-700">
+                      <label class="text-xs font-bold text-[var(--deep)]">
                         Kecamatan *
                       </label>
                       <input
                         type="text"
                         :value="editableForm.kecamatan"
                         @input="handleTextInput('kecamatan', ($event.target as HTMLInputElement).value)"
-                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[var(--teal,#12b8b0)]"
+                        class="w-full px-3.5 py-2.5 text-sm text-[#243e40] bg-white border border-[#dce5df] rounded-[9px] transition focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none"
                         placeholder="Contoh: Cibeunying"
                       />
                     </div>
@@ -331,7 +331,7 @@
                 <button
                   type="button"
                   @click="applyDataToForm"
-                  class="flex-1 py-3 px-5 bg-[var(--teal,#12b8b0)] hover:brightness-105 active:scale-[0.99] text-white font-bold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                  class="flex-1 py-3 px-6 bg-[var(--teal)] hover:bg-[#0ea59e] active:scale-[0.99] text-white font-bold text-sm rounded-full shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Check class="w-4 h-4" />
                   <span>Gunakan Data KTP Ini</span>
@@ -339,7 +339,7 @@
                 <button
                   type="button"
                   @click="resetScan"
-                  class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                  class="py-3 px-5 bg-white hover:bg-[#f6f8f5] text-[var(--deep)] font-semibold text-sm rounded-full border border-[var(--line)] transition cursor-pointer flex items-center gap-1.5"
                 >
                   <RotateCcw class="w-4 h-4" />
                   <span>Scan Ulang</span>
@@ -352,23 +352,23 @@
               <!-- Tab Navigasi & Tombol Contoh KTP -->
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <!-- Tab Selector -->
-                <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold text-slate-600">
+                <div class="inline-flex p-1 bg-[#f6f8f5] rounded-full text-xs font-bold text-[var(--muted)] border border-[var(--line)]">
                   <button
                     type="button"
                     @click="activeTab = 'camera'"
-                    class="flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg transition cursor-pointer"
-                    :class="activeTab === 'camera' ? 'bg-white text-[var(--deep,#195a5f)] shadow-xs' : 'hover:text-slate-900'"
+                    class="flex items-center gap-1.5 py-2 px-4 rounded-full transition cursor-pointer"
+                    :class="activeTab === 'camera' ? 'bg-white text-[var(--deep)] shadow-xs' : 'hover:text-[var(--deep)]'"
                   >
-                    <Camera class="w-4 h-4 text-[var(--teal,#12b8b0)]" />
+                    <Camera class="w-4 h-4 text-[var(--teal)]" />
                     <span>Scan Kamera</span>
                   </button>
                   <button
                     type="button"
                     @click="activeTab = 'upload'"
-                    class="flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-lg transition cursor-pointer"
-                    :class="activeTab === 'upload' ? 'bg-white text-[var(--deep,#195a5f)] shadow-xs' : 'hover:text-slate-900'"
+                    class="flex items-center gap-1.5 py-2 px-4 rounded-full transition cursor-pointer"
+                    :class="activeTab === 'upload' ? 'bg-white text-[var(--deep)] shadow-xs' : 'hover:text-[var(--deep)]'"
                   >
-                    <UploadCloud class="w-4 h-4 text-[var(--teal,#12b8b0)]" />
+                    <UploadCloud class="w-4 h-4 text-[var(--teal)]" />
                     <span>Upload Foto</span>
                   </button>
                 </div>
@@ -377,10 +377,10 @@
                 <button
                   type="button"
                   @click="generateSampleKtp"
-                  class="text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  class="text-xs font-semibold bg-[#eaf6f2] hover:bg-[#d8efe7] text-[var(--deep)] border border-[#c8e8df] px-4 py-2 rounded-full transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
                   title="Simulasikan kartu e-KTP untuk pengujian otomatis langsung"
                 >
-                  <Sparkles class="w-3.5 h-3.5 text-emerald-600" />
+                  <Sparkles class="w-3.5 h-3.5 text-[var(--teal)]" />
                   <span>Uji Contoh KTP</span>
                 </button>
               </div>
@@ -396,19 +396,19 @@
               <!-- Pilihan B: Upload Berkas Foto KTP -->
               <div v-else-if="activeTab === 'upload'">
                 <label
-                  class="flex flex-col items-center justify-center w-full min-h-[300px] sm:min-h-[340px] border-2 border-dashed rounded-2xl cursor-pointer transition p-6 text-center"
-                  :class="isScanning ? 'border-slate-300 bg-slate-50 cursor-not-allowed' : 'border-teal-300 bg-teal-50/20 hover:bg-teal-50/40'"
+                  class="flex flex-col items-center justify-center w-full min-h-[300px] sm:min-h-[340px] border-2 border-dashed rounded-[19px] cursor-pointer transition p-6 text-center"
+                  :class="isScanning ? 'border-[var(--line)] bg-[#f6f8f5] cursor-not-allowed' : 'border-[#c8e8df] bg-[#eaf6f2]/30 hover:bg-[#eaf6f2]/60'"
                 >
-                  <div class="w-16 h-16 rounded-2xl bg-teal-100 text-[var(--deep,#195a5f)] flex items-center justify-center mb-4 shadow-xs">
-                    <UploadCloud class="w-8 h-8 text-[var(--teal,#12b8b0)]" />
+                  <div class="w-16 h-16 rounded-[14px] bg-[#eaf6f2] text-[var(--deep)] border border-[#c8e8df] flex items-center justify-center mb-4 shadow-xs">
+                    <UploadCloud class="w-8 h-8 text-[var(--teal)]" />
                   </div>
-                  <h4 class="text-sm font-bold text-slate-800 mb-1">
+                  <h4 class="text-sm font-bold font-['Manrope'] text-[var(--deep)] mb-1">
                     Pilih atau Tarik Berkas Foto e-KTP ke Sini
                   </h4>
-                  <p class="text-xs text-slate-500 max-w-sm mb-4 leading-relaxed">
+                  <p class="text-xs text-[var(--muted)] max-w-sm mb-4 leading-relaxed">
                     Mendukung semua format gambar standar (JPG, JPEG, PNG, WEBP). Pastikan foto e-KTP tegak, pencahayaan merata, dan nomor NIK terbaca jelas.
                   </p>
-                  <span class="text-xs font-semibold px-4 py-2 bg-[var(--teal,#12b8b0)] text-white rounded-xl shadow-xs hover:brightness-105 transition">
+                  <span class="text-xs font-semibold px-5 py-2.5 bg-[var(--teal)] hover:bg-[#0ea59e] text-white rounded-full shadow-xs transition">
                     Jelajahi Berkas Foto
                   </span>
                   <input

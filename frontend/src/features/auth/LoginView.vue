@@ -9,7 +9,7 @@
       <form @submit.prevent="handleLogin">
         <div
           v-if="errorMessage"
-          style="margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; background-color: #fef2f2; border: 1px solid #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 500; text-align: left;"
+          class="login-error-alert"
         >
           {{ errorMessage }}
         </div>
@@ -23,7 +23,7 @@
         </label>
         <button class="button primary full-width" type="submit" :disabled="loading">
           <span v-if="loading">Memverifikasi...</span>
-          <span v-else style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+          <span v-else class="login-btn-content">
             Masuk ke Dashboard <ArrowRight :size="18" />
           </span>
         </button>
@@ -32,6 +32,41 @@
     </div>
   </main>
 </template>
+
+<style scoped>
+.login-error-alert {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background-color: #fdf3f0;
+  border: 1px solid #f7d6cf;
+  color: var(--coral);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.login-btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin: 22px auto 0;
+  font-size: 14px;
+  color: var(--muted);
+  transition: color 0.15s ease;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--deep);
+}
+</style>
 
 <script setup lang="ts">
 import { ref } from "vue";

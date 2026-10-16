@@ -40,29 +40,29 @@
           <!-- QR Validity Badge: QR is strictly active on visit date only -->
           <div
             v-if="isTodayTicket"
-            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center gap-1.5"
+            class="ticket-validity-badge today"
           >
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="live-dot"></span>
             QR Aktif Hari Ini · Siap Scan di Lokasi
           </div>
           <div
             v-else-if="isFutureTicket"
-            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center gap-1.5"
+            class="ticket-validity-badge future"
           >
-            <Clock :size="13" class="text-amber-600" />
+            <Clock :size="13" />
             QR Hanya Aktif pada Hari Kunjungan ({{ formatDate(queueStore.currentTicket.date) }})
           </div>
           <div
             v-else-if="isPastTicket"
-            class="my-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 flex items-center justify-center gap-1.5"
+            class="ticket-validity-badge past"
           >
-            <AlertCircle :size="13" class="text-rose-600" />
+            <AlertCircle :size="13" />
             QR Kedaluwarsa (Jadwal: {{ formatDate(queueStore.currentTicket.date) }})
           </div>
 
-          <div v-if="queueStore.currentTicket.qr_token" class="text-center my-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-            <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Token Check-In</span>
-            <code class="text-emerald-700 font-mono font-bold text-[11px] break-all select-all">{{ queueStore.currentTicket.qr_token }}</code>
+          <div v-if="queueStore.currentTicket.qr_token" class="ticket-token-box">
+            <span class="ticket-token-label">Token Check-In</span>
+            <code class="ticket-token-code">{{ queueStore.currentTicket.qr_token }}</code>
           </div>
           <h3>{{ queueStore.currentTicket.name }}</h3>
           <p>{{ queueStore.currentTicket.poli }} · Klinik Buah Batu</p>
@@ -102,21 +102,21 @@
           <!-- E-RESEP PASIEN DIGITAL -->
           <div v-if="ticketPrescription || queueStore.currentTicket.medication_plan || queueStore.currentTicket.prescription_no" class="patient-rx-card">
             <div class="rx-card-top">
-              <div class="flex items-center gap-2">
-                <Pill :size="20" class="text-teal-700" />
-                <h3 class="font-bold text-sm text-slate-800">e-Resep Dokter Anda</h3>
+              <div class="rx-card-title-wrap">
+                <Pill :size="18" class="rx-card-icon" />
+                <h3 class="rx-card-title">e-Resep Dokter Anda</h3>
               </div>
               <span
                 class="rx-status-pill"
-                :class="(ticketPrescription?.status === 'dispensed' || queueStore.currentTicket.prescription?.status === 'dispensed') ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'"
+                :class="(ticketPrescription?.status === 'dispensed' || queueStore.currentTicket.prescription?.status === 'dispensed') ? 'dispensed' : 'pending'"
               >
                 {{ (ticketPrescription?.status === 'dispensed' || queueStore.currentTicket.prescription?.status === 'dispensed') ? '✓ Obat Sudah Ditebus' : '⏳ Menunggu di Farmasi' }}
               </span>
             </div>
 
             <div class="rx-card-meta">
-              <span class="text-xs text-slate-500 font-medium">Nomor e-Resep:</span>
-              <strong class="font-mono text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+              <span class="rx-meta-label">Nomor e-Resep:</span>
+              <strong class="rx-meta-no">
                 {{ ticketPrescription?.prescription_no || queueStore.currentTicket.prescription_no || queueStore.currentTicket.prescription?.prescription_no || 'RX-TERTULIS' }}
               </strong>
             </div>
@@ -128,28 +128,28 @@
                 :key="itIdx"
                 class="rx-card-item"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 flex-wrap">
+                <div class="rx-item-header">
+                  <div class="rx-item-med">
                     <span class="route-badge" :data-route="item.route">
                       {{ formatRouteLabel(item.route) }}
                     </span>
-                    <strong class="text-xs text-slate-900">{{ item.medication_name }}</strong>
+                    <strong class="rx-item-name">{{ item.medication_name }}</strong>
                   </div>
-                  <span class="text-xs font-mono font-bold text-teal-900">{{ item.quantity }} {{ item.unit }}</span>
+                  <span class="rx-item-qty">{{ item.quantity }} {{ item.unit }}</span>
                 </div>
-                <div class="text-xs text-slate-600 mt-1 space-y-0.5">
+                <div class="rx-item-details">
                   <p><strong>Aturan:</strong> {{ item.frequency }} · {{ item.timing }}</p>
-                  <p v-if="item.instruction" class="text-teal-800 font-medium">
+                  <p v-if="item.instruction" class="rx-item-instruction">
                     <strong>Petunjuk:</strong> {{ item.instruction }}
                   </p>
                 </div>
               </div>
             </div>
-            <div v-else-if="queueStore.currentTicket.medication_plan" class="text-xs text-slate-700 whitespace-pre-line p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <div v-else-if="queueStore.currentTicket.medication_plan" class="rx-card-plan">
               {{ queueStore.currentTicket.medication_plan }}
             </div>
 
-            <p class="text-[11px] text-slate-500 mt-2">
+            <p class="rx-card-footer">
               Tunjukkan nomor e-resep ini ke loket Farmasi / Pengambilan Obat klinik.
             </p>
           </div>
@@ -420,101 +420,216 @@ function handleNewRegistration() {
 </script>
 
 <style scoped>
-.patient-rx-card {
-  margin-bottom: 24px;
-  padding: 18px;
-  background: #f0fdf4;
-  border: 1.5px solid #86efac;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+/* Validity Badge (Soft Design System) */
+.ticket-validity-badge {
+  margin: 8px 0;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.ticket-validity-badge.today {
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
+}
+.ticket-validity-badge.future {
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
+}
+.ticket-validity-badge.past {
+  background: #fdf0ed;
+  color: var(--coral);
+  border: 1px solid #f7d6cf;
 }
 
+/* Check-In Token */
+.ticket-token-box {
+  text-align: center;
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ticket-token-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+.ticket-token-code {
+  color: var(--deep);
+  font-family: monospace;
+  font-weight: 750;
+  font-size: 12px;
+  word-break: break-all;
+  user-select: all;
+}
+
+/* e-Resep Pasien Card */
+.patient-rx-card {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  box-shadow: 0 4px 15px rgba(25, 90, 95, 0.04);
+}
 .rx-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   gap: 8px;
 }
-
+.rx-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rx-card-icon {
+  color: var(--teal);
+}
+.rx-card-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--deep);
+  margin: 0;
+}
 .rx-status-pill {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 3px 10px;
-  border-radius: 9999px;
-  border-width: 1px;
+  border-radius: 50px;
 }
-
+.rx-status-pill.dispensed {
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
+}
+.rx-status-pill.pending {
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
+}
 .rx-card-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-
+.rx-meta-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.rx-meta-no {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--deep);
+  background: #f0f4f2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
 .rx-card-items {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
 .rx-card-item {
-  padding: 10px 14px;
-  background: #ffffff;
-  border: 1px solid #d1fae5;
-  border-radius: 10px;
+  padding: 12px 14px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.rx-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rx-item-med {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rx-item-name {
+  font-size: 13px;
+  color: #243e40;
+  font-weight: 700;
+}
+.rx-item-qty {
+  font-size: 12px;
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--deep);
+}
+.rx-item-details {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.rx-item-details p {
+  margin: 0;
+  color: var(--muted);
+}
+.rx-item-instruction {
+  color: var(--deep);
+  font-weight: 550;
+  margin-top: 2px !important;
+}
+.rx-card-plan {
+  font-size: 12px;
+  color: #243e40;
+  white-space: pre-line;
+  padding: 12px 14px;
+  background: #f6f8f5;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+}
+.rx-card-footer {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 10px;
 }
 
+/* Route Badges (Soft Palette) */
 .route-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
 }
-
-.route-badge[data-route="oral_minum"],
+.route-badge[data-route="oral_kunyah"],
 .route-badge[data-route="sirup_minum"] {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
-.route-badge[data-route="oral_kunyah"] {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fcd34d;
-}
-
-.route-badge[data-route="topikal_oles"] {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-
-.route-badge[data-route="tetes_mata"],
-.route-badge[data-route="tetes_telinga"] {
-  background: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
-}
-
-.route-badge[data-route="kumur"] {
-  background: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
-}
-
-.route-badge[data-route="inhalasi"] {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-
+/* Success Banner Popup */
 .success-popup {
   position: fixed;
   top: 100px;
@@ -523,7 +638,6 @@ function handleNewRegistration() {
   z-index: 1000;
   width: min(92vw, 520px);
 }
-
 .popup-enter-active,
 .popup-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -536,54 +650,48 @@ function handleNewRegistration() {
 
 .full-detail-span {
   grid-column: 1 / -1;
-  background: #f0fdf4;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
+  background: #f6f8f5;
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .highlight-time {
   font-size: 16px !important;
-  color: #047857 !important;
-  font-weight: 800 !important;
+  color: var(--deep) !important;
+  font-weight: 750 !important;
 }
 
 .ticket-warning-box {
-  margin-top: 14px;
-  background: #fffbeb;
-  border: 1.5px solid #fde68a;
-  border-radius: 12px;
-  padding: 12px 14px;
+  margin-top: 16px;
+  background: var(--warm);
+  border: 1px solid #e7ded4;
+  border-radius: 14px;
+  padding: 14px 16px;
   text-align: left;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
 }
-
 .warning-title {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  font-weight: 750;
-  color: #92400e;
+  font-weight: 650;
+  color: var(--deep);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   margin-bottom: 5px;
 }
-
 .warning-text {
-  font-size: 12px !important;
-  color: #78350f !important;
-  line-height: 1.45 !important;
+  font-size: 12.5px !important;
+  color: var(--deep) !important;
+  line-height: 1.5 !important;
   margin: 0 !important;
 }
-
 .time-highlight {
-  color: #b45309;
-  font-weight: 800;
-  text-decoration: underline;
+  color: var(--coral);
+  font-weight: 750;
 }
 
 /* Header Tiket Modern & Rapi */
@@ -594,49 +702,45 @@ function handleNewRegistration() {
   gap: 12px;
   padding-bottom: 16px;
   margin-bottom: 20px;
-  border-bottom: 1.5px dashed #cbd5e1;
+  border-bottom: 1px dashed var(--line);
 }
-
 .ticket-type-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #f0fdfa;
-  color: #0f766e;
-  border: 1px solid #ccfbf1;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
   padding: 4px 12px;
-  border-radius: 9999px;
+  border-radius: 50px;
   font-size: 11.5px;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
-
 .ticket-queue-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 14px;
 }
-
 .ticket-queue-label {
-  font-size: 11.5px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: #64748b;
+  letter-spacing: 1.5px;
+  color: var(--muted);
   margin-bottom: 4px;
 }
-
 .ticket-queue-number {
+  font-family: "Manrope", sans-serif !important;
   font-size: 84px !important;
   letter-spacing: -3px !important;
   margin: 0 0 8px 0 !important;
-  color: #0f766e !important;
+  color: var(--deep) !important;
   font-weight: 800 !important;
   line-height: 1 !important;
 }
-
 @media (max-width: 400px) {
   .ticket-header-bar {
     flex-direction: column;

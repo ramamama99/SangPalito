@@ -693,23 +693,23 @@ function goToStaff() {
 .medical-record-page {
   min-height: 100vh;
   width: 100%;
-  background-color: #f8fafc;
+  background-color: #f6f8f5;
   padding: clamp(14px, 2.5vw, 36px);
   display: flex;
   justify-content: center;
   box-sizing: border-box;
   font-family: inherit;
-  color: #1e293b;
+  color: #243e40;
 }
 
 .medical-record-wrapper {
   width: 100%;
   max-width: 100%;
   background-color: #ffffff;
-  border: 1px solid #eef2f6;
-  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
   padding: clamp(16px, 2.5vw, 36px);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px -2px rgba(25, 90, 95, 0.04);
   box-sizing: border-box;
 }
 
@@ -722,21 +722,22 @@ function goToStaff() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 16px;
-  border-radius: 9999px;
-  border: 1px solid #d1d5db;
+  padding: 8px 18px;
+  border-radius: 50px;
+  border: 1px solid var(--line);
   background-color: #ffffff;
-  color: #374151;
+  color: var(--deep);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   line-height: 1;
 }
 
 .back-button:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: #f6f8f5;
+  border-color: #c8e8df;
+  color: var(--deep);
 }
 
 /* Patient Header */
@@ -748,18 +749,20 @@ function goToStaff() {
 }
 
 .patient-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #1e464c;
-  color: #ffffff;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   letter-spacing: 0.5px;
+  font-family: 'Manrope', sans-serif;
 }
 
 .patient-details {
@@ -768,9 +771,10 @@ function goToStaff() {
 }
 
 .patient-name {
-  font-size: 18px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--deep);
   margin: 0 0 4px 0;
   line-height: 1.25;
 }
@@ -780,18 +784,18 @@ function goToStaff() {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   margin-bottom: 3px;
 }
 
 .meta-dot {
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .gender-badge {
-  background-color: #ecfdf5;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
+  background-color: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
   font-size: 11px;
   font-weight: 600;
   padding: 1px 8px;
@@ -801,43 +805,44 @@ function goToStaff() {
 
 .patient-meta-sub {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   line-height: 1.4;
 }
 
 /* Allergy Alert */
 .allergy-alert {
-  background-color: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #b91c1c;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-size: 12px;
+  background-color: #fdf3f0;
+  border: 1px solid #f7d6cf;
+  color: var(--coral);
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 13px;
   margin-bottom: 20px;
 }
 
 /* History Card */
 .history-card {
   background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
   padding: 24px 28px 32px;
   box-sizing: border-box;
 }
 
 .history-title {
+  font-family: 'Manrope', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--deep);
   margin: 0 0 20px 0;
 }
 
 /* Filter Box */
 .filter-box {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
   padding: 18px 20px;
-  background-color: #ffffff;
+  background-color: #f6f8f5;
   margin-bottom: 24px;
 }
 
@@ -856,17 +861,17 @@ function goToStaff() {
 .filter-field label {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--deep);
   margin-bottom: 6px;
 }
 
 .filter-field input[type="date"] {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 7px 12px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
+  padding: 8px 12px;
   font-size: 13px;
-  color: #1f2937;
+  color: #243e40;
   height: 38px;
   outline: none;
   background-color: #ffffff;
@@ -876,8 +881,8 @@ function goToStaff() {
 }
 
 .filter-field input[type="date"]:focus {
-  border-color: #0f766e;
-  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 
 .filter-actions {
@@ -890,21 +895,21 @@ function goToStaff() {
   justify-content: center;
   height: 38px;
   padding: 0 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
+  border: 1px solid var(--line);
+  border-radius: 50px;
   background-color: #ffffff;
-  color: #374151;
+  color: var(--deep);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   font-family: inherit;
 }
 
 .reset-filter-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: #eaf6f2;
+  border-color: #c8e8df;
 }
 
 /* Poli Radios */
@@ -912,7 +917,7 @@ function goToStaff() {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   margin-top: 16px;
 }
 
@@ -922,12 +927,12 @@ function goToStaff() {
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: #243e40;
   cursor: pointer;
 }
 
 .poli-radio-label input[type="radio"] {
-  accent-color: #0f766e;
+  accent-color: var(--teal);
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -941,7 +946,7 @@ function goToStaff() {
 /* Empty filter notice */
 .filter-empty-notice {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   padding: 16px 0;
   text-align: center;
   margin: 0;
@@ -956,32 +961,34 @@ function goToStaff() {
 
 .visit-card {
   background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-left: 4px solid #0f766e;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--teal);
+  border-radius: 14px;
   padding: 22px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px -2px rgba(25, 90, 95, 0.04);
   box-sizing: border-box;
 }
 
 /* Visit Header */
 .visit-title {
-  font-size: 15px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
   font-weight: 700;
-  color: #111827;
-  margin: 0 0 3px 0;
+  color: var(--deep);
+  margin: 0 0 4px 0;
 }
 
 .visit-doctor {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   margin: 0 0 8px 0;
 }
 
 .visit-diagnosis {
+  font-family: 'Manrope', sans-serif;
   font-size: 15px;
   font-weight: 700;
-  color: #0f766e;
+  color: var(--teal);
   margin: 0 0 18px 0;
 }
 
@@ -994,10 +1001,10 @@ function goToStaff() {
 }
 
 .vital-box {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
   padding: 10px 12px;
-  background-color: #ffffff;
+  background-color: #f6f8f5;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1007,15 +1014,16 @@ function goToStaff() {
 
 .vital-label {
   font-size: 11px;
-  color: #64748b;
+  color: var(--muted);
   margin-bottom: 3px;
   display: block;
 }
 
 .vital-value {
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: var(--deep);
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -1023,25 +1031,25 @@ function goToStaff() {
 }
 
 .vital-abnormal {
-  color: #dc2626 !important;
+  color: var(--coral) !important;
 }
 
 .vitals-footnote {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--muted);
   margin: 8px 0 16px 0;
 }
 
 /* Dividers */
 .section-divider {
   border: 0;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--line);
   margin: 16px 0;
 }
 
 .soap-divider {
   border: 0;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--line);
   margin: 12px 0;
 }
 
@@ -1056,17 +1064,18 @@ function goToStaff() {
 }
 
 .soap-label {
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #0f766e;
+  color: var(--deep);
   display: block;
   margin-bottom: 4px;
 }
 
 .soap-text {
   font-size: 13px;
-  color: #374151;
-  line-height: 1.5;
+  color: #243e40;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -1074,25 +1083,26 @@ function goToStaff() {
 .empty-state-card {
   text-align: center;
   padding: 60px 20px;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .empty-icon {
   margin: 0 auto 16px auto;
-  color: #0f766e;
-  opacity: 0.7;
+  color: var(--teal);
+  opacity: 0.8;
 }
 
 .empty-state-card h3 {
+  font-family: 'Manrope', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--deep);
   margin: 0 0 8px 0;
 }
 
 .empty-state-card p {
   font-size: 14px;
-  color: #64748b;
+  color: var(--muted);
   margin: 0 0 20px 0;
 }
 
@@ -1100,19 +1110,20 @@ function goToStaff() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 20px;
-  background-color: #0f766e;
+  padding: 10px 24px;
+  background-color: var(--teal);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 50px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(18, 184, 176, 0.25);
 }
 
 .button-primary:hover {
-  background-color: #115e59;
+  background-color: #0ea59e;
 }
 
 /* Responsive adjustments */
@@ -1143,10 +1154,10 @@ function goToStaff() {
 /* ── Prescription & Medication History Styles ── */
 .rx-history-card {
   margin-top: 16px;
-  padding: 14px 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  padding: 16px 18px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 14px;
 }
 
 .rx-history-header {
@@ -1162,12 +1173,14 @@ function goToStaff() {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
-  color: #1e293b;
+  font-weight: 700;
+  color: var(--deep);
 }
 
 .rx-pill-icon {
-  color: #0f766e;
+  color: var(--teal);
 }
 
 .rx-status-meta {
@@ -1181,27 +1194,29 @@ function goToStaff() {
   font-weight: 700;
   font-size: 11px;
   padding: 2px 8px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
   border-radius: 6px;
-  color: #0f766e;
+  color: var(--deep);
 }
 
 .rx-status-badge {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 9999px;
+  padding: 2px 10px;
+  border-radius: 50px;
 }
 
 .rx-status-badge.dispensed {
-  background: #d1fae5;
-  color: #065f46;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
 }
 
 .rx-status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
 .rx-meds-list {
@@ -1211,10 +1226,10 @@ function goToStaff() {
 }
 
 .rx-med-item {
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
   font-size: 12px;
 }
 
@@ -1232,34 +1247,36 @@ function goToStaff() {
 }
 
 .rx-med-name {
-  color: #0f172a;
+  color: var(--deep);
   font-size: 13px;
+  font-weight: 700;
 }
 
 .rx-med-qty {
   font-weight: 700;
   font-family: monospace;
-  color: #1e464c;
+  color: var(--deep);
 }
 
 .rx-med-details {
-  color: #475569;
-  line-height: 1.4;
+  color: #243e40;
+  line-height: 1.5;
 }
 
 .rx-med-instruction {
-  color: #0f766e;
+  color: var(--teal);
   margin-top: 2px;
+  font-weight: 500;
 }
 
 .rx-plain-plan {
   font-size: 12px;
-  color: #334155;
+  color: #243e40;
   white-space: pre-line;
   background: #ffffff;
   padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  border: 1px solid var(--line);
 }
 
 /* Route Badges */
@@ -1276,39 +1293,39 @@ function goToStaff() {
 
 .route-badge[data-route="oral_minum"],
 .route-badge[data-route="sirup_minum"] {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: #eaf6f2;
+  color: var(--deep);
+  border: 1px solid #c8e8df;
 }
 
 .route-badge[data-route="oral_kunyah"] {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fcd34d;
+  background: var(--warm);
+  color: var(--deep);
+  border: 1px solid #e7ded4;
 }
 
 .route-badge[data-route="topikal_oles"] {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+  background: #eaf3f6;
+  color: var(--deep);
+  border: 1px solid #c5dbe3;
 }
 
 .route-badge[data-route="tetes_mata"],
 .route-badge[data-route="tetes_telinga"] {
-  background: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
+  background: #f4ecf8;
+  color: #5a3e75;
+  border: 1px solid #dfcce6;
 }
 
 .route-badge[data-route="kumur"] {
-  background: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
+  background: #fdf3f0;
+  color: var(--coral);
+  border: 1px solid #f7d6cf;
 }
 
 .route-badge[data-route="inhalasi"] {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background: #eaf6f2;
+  color: var(--teal);
+  border: 1px solid #c8e8df;
 }
 </style>

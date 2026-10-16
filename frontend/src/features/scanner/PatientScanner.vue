@@ -5,183 +5,104 @@
     :class="{ 'p-4 sm:p-6 lg:p-8': !isFullscreen, 'p-6 sm:p-10': isFullscreen }"
   >
     <!-- TOP KIOSK HEADER -->
-    <header class="w-full max-w-6xl mx-auto mb-6 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <header class="w-full max-w-6xl mx-auto mb-6 bg-white rounded-[19px] border border-[var(--line)] p-4 sm:p-5 lg:px-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <!-- Hospital Branding -->
-      <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 shadow-xs">
-          <Activity :size="26" class="text-emerald-600" />
+      <div class="flex items-center gap-3.5 min-w-0">
+        <div class="w-12 h-12 rounded-[14px] bg-[#eaf6f2] text-[var(--deep)] border border-[#c8e8df] flex items-center justify-center shrink-0">
+          <Activity :size="24" class="text-[var(--deep)]" />
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-              Anjungan Check-In Mandiri
-            </span>
-            <span class="text-xs text-slate-400 font-mono">SangPalito</span>
-          </div>
-          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold font-['Manrope'] text-[var(--deep)] tracking-tight">
             Klinik Buah Batu
           </h1>
-          <p class="text-xs text-slate-500 hidden sm:block">
-            Pindai tiket antrean pasien menggunakan mesin scanner barcode fisik atau kamera kios.
-          </p>
         </div>
       </div>
 
       <!-- Real-time Digital Clock -->
-      <div class="flex items-center justify-between md:justify-center px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+      <div class="flex items-center justify-center px-5 py-2.5 rounded-2xl bg-[#f6f8f5] border border-[var(--line)] text-center shrink-0 min-w-[210px]">
         <div>
-          <div class="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-emerald-700">
+          <div class="text-xl sm:text-2xl font-mono font-bold tracking-wider text-[var(--deep)] whitespace-nowrap">
             {{ currentTimeString || '00:00:00 WIB' }}
           </div>
-          <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+          <div class="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider whitespace-nowrap mt-0.5">
             {{ currentDateString || 'Memuat Waktu...' }}
           </div>
         </div>
       </div>
 
       <!-- Controls & Navigation -->
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div class="flex items-center gap-2 shrink-0 flex-nowrap">
         <!-- Audio Toggle Button -->
         <button
           type="button"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-xs flex items-center gap-1.5"
+          class="h-9 px-3.5 rounded-full text-xs font-semibold border border-[var(--line)] bg-white hover:bg-[#f6f8f5] text-[var(--deep)] transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
           @click="soundEnabled = !soundEnabled"
           :title="soundEnabled ? 'Matikan Suara Konfirmasi' : 'Aktifkan Suara Konfirmasi'"
         >
-          <Volume2 v-if="soundEnabled" :size="16" class="text-emerald-600" />
-          <VolumeX v-else :size="16" class="text-slate-400" />
+          <Volume2 v-if="soundEnabled" :size="15" class="text-[var(--teal)] shrink-0" />
+          <VolumeX v-else :size="15" class="text-[var(--muted)] shrink-0" />
           <span class="hidden sm:inline">{{ soundEnabled ? 'Audio Aktif' : 'Mute' }}</span>
         </button>
 
         <!-- Fullscreen Kiosk Mode Toggle -->
         <button
           type="button"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-xs"
+          class="h-9 px-3.5 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap"
           :class="isFullscreen
-            ? 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-600/20'
-            : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+            ? 'bg-[var(--deep)] border-[var(--deep)] text-white shadow-xs'
+            : 'bg-white border-[var(--line)] hover:bg-[#f6f8f5] text-[var(--deep)]'"
           @click="toggleFullscreen"
           title="Mode Layar Penuh"
         >
-          <Minimize v-if="isFullscreen" :size="16" />
-          <Maximize v-else :size="16" />
+          <Minimize v-if="isFullscreen" :size="15" class="shrink-0" />
+          <Maximize v-else :size="15" class="shrink-0" />
           <span class="hidden sm:inline">{{ isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh' }}</span>
         </button>
 
         <!-- Back to Staff Dashboard -->
         <RouterLink
           to="/staff"
-          class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 transition-colors flex items-center gap-1 shadow-xs"
+          class="h-9 px-3.5 rounded-full text-xs font-semibold bg-white hover:bg-[#f6f8f5] border border-[var(--line)] text-[var(--deep)] transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap"
         >
-          <ChevronLeft :size="15" />
+          <ChevronLeft :size="15" class="shrink-0" />
           <span class="hidden sm:inline">Staf</span>
         </RouterLink>
       </div>
     </header>
 
-    <!-- COOLDOWN & SENSOR ACTIVE STATUS BANNER -->
-    <section class="w-full max-w-6xl mx-auto mb-6">
-      <div
-        class="relative overflow-hidden rounded-2xl border transition-all duration-300 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-        :class="isCooldown
-          ? 'bg-amber-50 border-amber-300 text-amber-950'
-          : 'bg-emerald-50 border-emerald-200 text-emerald-950'"
-      >
-        <!-- Animated Cooldown Progress Bar -->
-        <div
-          v-if="isCooldown"
-          class="absolute bottom-0 left-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 transition-all duration-75 ease-linear"
-          :style="{ width: `${cooldownProgress}%` }"
-        ></div>
-
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition-colors"
-            :class="isCooldown
-              ? 'bg-amber-100 text-amber-700 border border-amber-300 animate-pulse'
-              : 'bg-emerald-100 text-emerald-700 border border-emerald-300'"
-          >
-            <Hourglass v-if="isCooldown" :size="20" class="animate-spin" />
-            <Zap v-else :size="20" class="text-emerald-600" />
-          </div>
-
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span
-                class="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
-                :class="isCooldown
-                  ? 'bg-amber-200 text-amber-900 border border-amber-300'
-                  : 'bg-emerald-200 text-emerald-900 border border-emerald-300'"
-              >
-                {{ isCooldown ? 'Jeda Pemindaian Aktif' : 'Sensor Siap Memindai' }}
-              </span>
-              <span class="text-xs text-slate-500 font-mono hidden sm:inline">
-                Jeda 3 Detik Anti-Duplikasi
-              </span>
-            </div>
-
-            <p class="text-sm font-semibold text-slate-800 truncate mt-0.5">
-              <template v-if="isCooldown">
-                Menyiapkan mesin untuk pasien berikutnya... Mohon tunggu
-                <span class="font-mono font-bold text-amber-800 text-base">({{ cooldownRemaining }}s)</span>
-              </template>
-              <template v-else>
-                Silakan tempelkan QR tiket ke mesin scan fisik atau hadapkan ke kamera di bawah.
-              </template>
-            </p>
-          </div>
-        </div>
-
-        <!-- Sensor Status Indicator Pill -->
-        <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-          <div
-            class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-2 border bg-white shadow-xs"
-            :class="isCooldown
-              ? 'border-amber-300 text-amber-800'
-              : 'border-emerald-300 text-emerald-800'"
-          >
-            <span class="w-2.5 h-2.5 rounded-full" :class="isCooldown ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'"></span>
-            {{ isCooldown ? `JEDA (${cooldownRemaining}s)` : 'SIAP MEMINDAI' }}
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- MAIN SINGLE-PAGE SCANNER WORKSPACE -->
-    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 pb-10">
+    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 pb-10 items-stretch">
       <!-- LEFT COLUMN: LIVE SCANNER VIEWPORT (7 COLS) -->
-      <section class="lg:col-span-7 space-y-4">
+      <section class="lg:col-span-7 flex flex-col space-y-4">
         <!-- Main Scanner Frame Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+        <div class="bg-white rounded-[19px] border border-[var(--line)] p-5 sm:p-6 shadow-xs space-y-4">
           <!-- Viewport Header -->
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <ScanLine :size="22" class="text-emerald-600" />
-                Area Pemindaian QR Tiket
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--line)] pb-3.5">
+            <div class="min-w-0 flex-1">
+              <h2 class="text-base sm:text-lg font-bold font-['Manrope'] text-[var(--deep)] tracking-tight">
+                <span class="whitespace-nowrap sm:whitespace-normal">Area Pemindaian QR Tiket</span>
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">
-                Kamera kios aktif membaca kode QR secara real-time.
-              </p>
             </div>
 
             <!-- Mode Switcher (Kamera vs Input Manual) -->
-            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <div class="flex items-center gap-1 bg-[#f6f8f5] p-1 rounded-full border border-[var(--line)] shrink-0 self-start sm:self-auto">
               <button
                 type="button"
-                class="px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
-                :class="scannerMode === 'camera' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                class="h-8 px-3.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                :class="scannerMode === 'camera' ? 'bg-white text-[var(--deep)] shadow-xs' : 'text-[var(--muted)] hover:text-[var(--deep)]'"
                 @click="scannerMode = 'camera'"
               >
-                <Camera :size="13" /> Kamera Kios
+                <Camera :size="14" class="shrink-0" />
+                <span>Kamera Kios</span>
               </button>
               <button
                 type="button"
-                class="px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
-                :class="scannerMode === 'manual' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                class="h-8 px-3.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                :class="scannerMode === 'manual' ? 'bg-white text-[var(--deep)] shadow-xs' : 'text-[var(--muted)] hover:text-[var(--deep)]'"
                 @click="scannerMode = 'manual'"
               >
-                <Keyboard :size="13" /> Input Kode
+                <Keyboard :size="14" class="shrink-0" />
+                <span>Input Kode</span>
               </button>
             </div>
           </div>
@@ -253,64 +174,42 @@
               </div>
             </div>
 
-            <!-- Camera Controls & Device Picker -->
-            <div class="flex flex-wrap items-center gap-3">
+            <!-- Camera Controls -->
+            <div>
               <button
                 type="button"
-                class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center justify-center gap-2"
+                class="w-full h-11 px-6 rounded-full font-bold text-xs sm:text-sm transition-all shadow-[0_5px_15px_#195a5f12] flex items-center justify-center gap-2 whitespace-nowrap"
                 :class="isCameraActive
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'"
+                  ? 'bg-[var(--coral)] hover:opacity-90 text-white'
+                  : 'bg-[var(--deep)] hover:bg-[#237079] text-white'"
                 :disabled="cameraLoading"
                 @click="toggleCamera"
               >
                 <Loader2 v-if="cameraLoading" :size="16" class="animate-spin" />
                 <Square v-else-if="isCameraActive" :size="16" />
                 <Play v-else :size="16" />
-                {{ isCameraActive ? 'Matikan Kamera' : 'Nyalakan Kamera Kios' }}
+                <span>{{ isCameraActive ? 'Matikan Kamera' : 'Nyalakan Kamera Kios' }}</span>
               </button>
-
-              <div v-if="cameraDevices.length > 1" class="flex items-center gap-1.5">
-                <select
-                  id="camera-select"
-                  v-model="selectedCameraId"
-                  :disabled="isCameraActive || cameraLoading"
-                  class="rounded-xl border border-slate-300 py-2 px-3 text-xs bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  @change="onCameraChange"
-                >
-                  <option v-for="dev in cameraDevices" :key="dev.id" :value="dev.id">
-                    {{ dev.label || `Kamera ${dev.id}` }}
-                  </option>
-                </select>
-                <button
-                  type="button"
-                  title="Muat ulang kamera"
-                  class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
-                  @click="refreshCameras"
-                >
-                  <RefreshCw :size="14" />
-                </button>
-              </div>
             </div>
 
             <!-- Camera Error Card -->
             <div
               v-if="cameraError"
-              class="rounded-xl border p-3.5 text-xs space-y-2"
+              class="rounded-[14px] border p-3.5 text-xs space-y-2"
               :class="isDeviceInUseError
-                ? 'bg-amber-50 border-amber-300 text-amber-900'
-                : 'bg-rose-50 border-rose-200 text-rose-900'"
+                ? 'bg-[var(--warm)] border-[#e7ded4] text-[var(--deep)]'
+                : 'bg-[#fdf3f0] border-[#f5d5ce] text-[var(--deep)]'"
             >
               <div class="flex items-start gap-2">
-                <AlertTriangle v-if="isDeviceInUseError" :size="16" class="text-amber-600 shrink-0 mt-0.5" />
-                <AlertCircle v-else :size="16" class="text-rose-600 shrink-0 mt-0.5" />
+                <AlertTriangle v-if="isDeviceInUseError" :size="16" class="text-[var(--coral)] shrink-0 mt-0.5" />
+                <AlertCircle v-else :size="16" class="text-[var(--coral)] shrink-0 mt-0.5" />
                 <p class="leading-relaxed font-medium">
                   {{ cameraError }}
                 </p>
               </div>
               <button
                 type="button"
-                class="py-1 px-2.5 rounded-lg font-semibold text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors"
+                class="py-1.5 px-3 rounded-full font-semibold text-xs bg-white border border-[var(--line)] hover:bg-[#f6f8f5] text-[var(--deep)] transition-colors"
                 @click="forceResetCamera"
               >
                 Coba Reset Kamera
@@ -322,7 +221,7 @@
           <div v-show="scannerMode === 'manual'" class="space-y-4">
             <form @submit.prevent="handleManualSubmit" class="space-y-3">
               <div>
-                <label for="manual-token" class="block text-xs font-semibold text-slate-700 mb-1">
+                <label for="manual-token" class="block text-xs font-semibold text-[var(--deep)] mb-1">
                   Masukkan Kode Token QR Tiket:
                 </label>
                 <div class="relative">
@@ -332,12 +231,12 @@
                     type="text"
                     required
                     placeholder="Contoh: qr-ahmad-fauzi-004 atau token registrasi..."
-                    class="w-full rounded-xl border border-slate-300 py-2.5 pl-3.5 pr-10 text-sm font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    class="w-full rounded-[9px] border border-[#dce5df] py-2.5 pl-3.5 pr-10 text-sm font-mono text-[#243e40] focus:border-[var(--teal)] focus:ring-2 focus:ring-[#12b8b030] focus:outline-none bg-white"
                   />
                   <button
                     v-if="manualToken"
                     type="button"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[#243e40]"
                     @click="manualToken = ''"
                   >
                     <X :size="16" />
@@ -347,12 +246,12 @@
 
               <!-- Quick Demo Chips for Testing -->
               <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                <span class="text-xs text-slate-400">Pilihan Cepat:</span>
+                <span class="text-xs text-[var(--muted)]">Pilihan Cepat:</span>
                 <button
                   v-for="chip in quickChips"
                   :key="chip.code"
                   type="button"
-                  class="text-[11px] font-mono px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
+                  class="text-[11px] font-mono px-3 py-1 rounded-full bg-[#f6f8f5] hover:bg-[#eaf6f2] text-[var(--deep)] transition-colors border border-[var(--line)]"
                   @click="manualToken = chip.code"
                 >
                   {{ chip.label }}
@@ -361,10 +260,10 @@
 
               <button
                 type="submit"
-                class="w-full py-2.5 px-4 rounded-xl font-bold text-sm transition-all shadow-xs flex items-center justify-center gap-2"
+                class="w-full py-2.5 px-4 rounded-full font-semibold text-sm transition-all shadow-[0_5px_15px_#195a5f12] flex items-center justify-center gap-2"
                 :class="isCooldown
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'"
+                  ? 'bg-[#f6f8f5] text-[var(--muted)] cursor-not-allowed border border-[var(--line)]'
+                  : 'bg-[var(--deep)] hover:bg-[#237079] text-white'"
                 :disabled="verifyingToken === manualToken || !manualToken.trim() || isCooldown"
               >
                 <Loader2 v-if="verifyingToken === manualToken" :size="16" class="animate-spin" />
@@ -374,56 +273,18 @@
             </form>
           </div>
         </div>
-
-        <!-- HARDWARE SCANNER PERPETUAL LISTENER STATUS CARD -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all"
-              :class="scannerSignalActive
-                ? 'bg-amber-100 border-amber-300 text-amber-700 shadow-sm animate-bounce'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-700'"
-            >
-              <Barcode :size="20" />
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-900">Mesin Scan Fisik (USB / Bluetooth HID)</span>
-                <span
-                  class="text-[10px] font-bold px-1.5 py-0.2 rounded-full uppercase"
-                  :class="scannerSignalActive ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'"
-                >
-                  {{ scannerSignalActive ? 'Data Terbaca!' : 'Selalu Siaga' }}
-                </span>
-              </div>
-              <p class="text-xs text-slate-500 truncate mt-0.5">
-                <template v-if="scannerSignalActive">
-                  Terdeteksi scan barcode: <strong class="text-slate-800 font-mono">{{ lastDetectedScanString }}</strong>
-                </template>
-                <template v-else>
-                  Tembakkan barcode scanner langsung ke QR tiket kapan saja tanpa perlu klik kursor.
-                </template>
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 shrink-0">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="hidden sm:inline">Plug & Play Ready</span>
-          </div>
-        </div>
       </section>
 
       <!-- RIGHT COLUMN: VERIFICATION RESULT CARD (5 COLS) -->
-      <section class="lg:col-span-5 space-y-4">
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4 min-h-[420px] flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 class="font-bold text-slate-900 flex items-center gap-2 text-base">
-                <Activity :size="18" class="text-emerald-600" />
+      <section class="lg:col-span-5 flex flex-col space-y-4">
+        <div class="bg-white rounded-[19px] border border-[var(--line)] p-5 sm:p-6 shadow-xs flex-1 flex flex-col justify-between">
+          <div class="flex-1 flex flex-col">
+            <div class="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4 shrink-0">
+              <h3 class="font-bold font-['Manrope'] text-[var(--deep)] flex items-center gap-2 text-base">
+                <Activity :size="18" class="text-[var(--teal)]" />
                 Hasil Verifikasi Pasien
               </h3>
-              <span v-if="lastResult" class="text-xs font-mono text-slate-400">
+              <span v-if="lastResult" class="text-xs font-mono text-[var(--muted)]">
                 {{ lastResultTime }} WIB
               </span>
             </div>
@@ -431,67 +292,109 @@
             <!-- STATE 1: STANDBY / READY TO SCAN -->
             <div
               v-if="!lastResult && !verifyingToken"
-              class="py-16 px-4 text-center text-slate-400 flex flex-col items-center justify-center gap-3"
+              class="flex-1 flex flex-col justify-between py-1 space-y-5"
             >
-              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400">
-                <ScanLine :size="42" class="text-emerald-600 animate-pulse" />
-              </div>
-              <div class="space-y-1">
-                <p class="font-bold text-slate-800 text-base">Silakan Pindai Tiket Anda</p>
-                <p class="text-xs text-slate-500 max-w-xs leading-relaxed">
+              <!-- Center Prompter -->
+              <div class="text-center flex flex-col items-center justify-center pt-2">
+                <div class="w-16 h-16 rounded-2xl bg-[#eaf6f2] border border-[#c8e8df] text-[var(--deep)] flex items-center justify-center mb-3 shadow-xs">
+                  <ScanLine :size="32" class="text-[var(--teal)] animate-pulse" />
+                </div>
+                <h4 class="font-bold font-['Manrope'] text-[var(--deep)] text-base sm:text-lg">
+                  Silakan Pindai Tiket Anda
+                </h4>
+                <p class="text-xs text-[var(--muted)] max-w-xs leading-relaxed mt-1">
                   Dekatkan QR tiket antrean ke kamera atau sorotkan laser mesin scanner fisik.
                 </p>
+              </div>
+
+              <!-- 3-Step Guided Walkthrough (Eliminates Empty Space & Explains Kiosk Workflow) -->
+              <div class="space-y-2.5 my-auto">
+                <div class="p-3 rounded-[12px] bg-[#f6f8f5] border border-[var(--line)] flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-[var(--deep)] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-[var(--deep)]">Posisikan Kode QR</p>
+                    <p class="text-[11px] text-[var(--muted)] leading-normal mt-0.5">
+                      Pegang tiket fisik atau tunjukkan layar HP sejajar 15-20 cm dari lensa kamera.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-[12px] bg-[#f6f8f5] border border-[var(--line)] flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-[var(--deep)] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-[var(--deep)]">Validasi Otomatis</p>
+                    <p class="text-[11px] text-[var(--muted)] leading-normal mt-0.5">
+                      Sistem memeriksa keabsahan NIK dan tiket antrean Anda secara instan.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-[12px] bg-[#f6f8f5] border border-[var(--line)] flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-[var(--deep)] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-[var(--deep)]">Masuk Antrean Poli</p>
+                    <p class="text-[11px] text-[var(--muted)] leading-normal mt-0.5">
+                      Status check-in aktif dan nomor Anda langsung masuk daftar panggil dokter.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- STATE 2: LOADING / VERIFYING -->
             <div
               v-else-if="verifyingToken"
-              class="py-16 px-4 text-center flex flex-col items-center justify-center gap-3 text-emerald-600"
+              class="py-16 px-4 text-center flex flex-col items-center justify-center gap-3 text-[var(--deep)]"
             >
               <div class="relative">
-                <div class="w-14 h-14 rounded-full border-4 border-emerald-100 border-t-emerald-600 animate-spin"></div>
+                <div class="w-14 h-14 rounded-full border-4 border-[#c8e8df] border-t-[var(--teal)] animate-spin"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
-                  <QrCode :size="20" class="text-emerald-600" />
+                  <QrCode :size="20" class="text-[var(--deep)]" />
                 </div>
               </div>
-              <p class="font-bold text-slate-900 text-sm">Memvalidasi Tiket Pasien...</p>
-              <p class="text-xs text-slate-500">Menghubungi database Supabase PostgreSQL...</p>
+              <p class="font-bold font-['Manrope'] text-[var(--deep)] text-sm">Memvalidasi Tiket Pasien...</p>
+              <p class="text-xs text-[var(--muted)]">Menghubungi database sistem antrean...</p>
             </div>
 
             <!-- STATE 3A: SUCCESS (NEW CHECK-IN) -->
             <div
               v-else-if="lastResult && lastResult.success && !lastResult.data?.already_checked_in"
-              class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50/30 to-white p-5 space-y-4 shadow-sm"
+              class="rounded-[19px] border border-[#c8e8df] bg-[#eaf6f2] p-5 space-y-4 shadow-xs"
             >
               <div class="flex items-start gap-3">
-                <div class="p-2.5 rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 shrink-0">
-                  <CheckCircle2 :size="26" />
+                <div class="p-2.5 rounded-[12px] bg-[var(--deep)] text-white shadow-xs shrink-0">
+                  <CheckCircle2 :size="24" />
                 </div>
                 <div class="min-w-0">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-600 text-white uppercase tracking-wider">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--deep)] text-white uppercase tracking-wider">
                     Check-In Berhasil
                   </span>
-                  <h4 class="text-xl font-bold text-slate-900 mt-1 truncate">
+                  <h4 class="text-xl font-bold font-['Manrope'] text-[var(--deep)] mt-1 truncate">
                     {{ lastResultPatientName || 'Pasien AntriSehat' }}
                   </h4>
                 </div>
               </div>
 
               <!-- Patient ID & Ticket Code Box -->
-              <div class="p-4 rounded-xl bg-white border border-emerald-200/80 shadow-xs space-y-3">
+              <div class="p-4 rounded-[14px] bg-white border border-[#c8e8df] shadow-xs space-y-3">
                 <div class="flex items-center justify-between">
                   <div>
-                    <span class="text-xs text-slate-500 font-medium">Nomor Antrean Anda</span>
-                    <p class="text-4xl font-black text-emerald-700 tracking-tight">
+                    <span class="text-xs text-[var(--muted)] font-medium">Nomor Antrean Anda</span>
+                    <p class="text-5xl font-black font-['Manrope'] text-[var(--deep)] tracking-tight">
                       {{ lastResult.data?.queue_code || 'A-001' }}
                     </p>
                   </div>
                   <div class="text-right">
-                    <span class="text-xs text-slate-500 font-medium">Status</span>
+                    <span class="text-xs text-[var(--muted)] font-medium">Status</span>
                     <div>
-                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#eaf6f2] text-[var(--deep)] border border-[#c8e8df]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[var(--teal)]"></span>
                         Checked-In
                       </span>
                     </div>
@@ -499,36 +402,36 @@
                 </div>
 
                 <!-- Patient ID and Polyclinic details -->
-                <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                <div class="pt-3 border-t border-[var(--line)] space-y-2 text-xs">
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">ID Pasien:</span>
-                    <span class="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 truncate max-w-[210px]">
+                    <span class="text-[var(--muted)]">ID Pasien:</span>
+                    <span class="font-mono font-bold text-[var(--deep)] bg-[#f6f8f5] px-2 py-0.5 rounded border border-[var(--line)] truncate max-w-[210px]">
                       {{ lastResultPatientId || lastResult.data?.patient_id || '-' }}
                     </span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Nama Lengkap:</span>
-                    <span class="font-bold text-slate-900">{{ lastResultPatientName || '-' }}</span>
+                    <span class="text-[var(--muted)]">Nama Lengkap:</span>
+                    <span class="font-bold text-[#243e40]">{{ lastResultPatientName || '-' }}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Poli Tujuan:</span>
-                    <span class="font-semibold text-slate-800">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
+                    <span class="text-[var(--muted)]">Poli Tujuan:</span>
+                    <span class="font-semibold text-[#243e40]">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Waktu Check-In:</span>
-                    <span class="font-semibold text-slate-800">{{ lastResultCheckInTime }} WIB</span>
+                    <span class="text-[var(--muted)]">Waktu Check-In:</span>
+                    <span class="font-semibold text-[#243e40]">{{ lastResultCheckInTime }} WIB</span>
                   </div>
                 </div>
 
                 <!-- Wait time estimate info -->
-                <div v-if="queueEstimate" class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-900 flex items-center justify-between font-semibold">
+                <div v-if="queueEstimate" class="p-2.5 rounded-[9px] bg-[#eaf6f2] border border-[#c8e8df] text-xs text-[var(--deep)] flex items-center justify-between font-semibold">
                   <span>Estimasi Menunggu:</span>
-                  <span class="text-emerald-700 font-bold">~{{ queueEstimate.estimate_minutes }} Menit ({{ queueEstimate.ahead_count }} di depan)</span>
+                  <span class="text-[var(--deep)] font-bold">~{{ queueEstimate.estimate_minutes }} Menit ({{ queueEstimate.ahead_count }} di depan)</span>
                 </div>
               </div>
 
-              <div class="p-2.5 rounded-xl bg-emerald-100/60 text-xs text-emerald-900 flex items-start gap-2">
-                <Info :size="15" class="text-emerald-700 shrink-0 mt-0.5" />
+              <div class="p-3 rounded-[12px] bg-white border border-[#c8e8df] text-xs text-[var(--deep)] flex items-start gap-2">
+                <Info :size="15" class="text-[var(--teal)] shrink-0 mt-0.5" />
                 <p>Silakan simpan struk Anda dan langsung menuju ruang tunggu <strong>{{ lastResultPolyclinic }}</strong>.</p>
               </div>
             </div>
@@ -536,65 +439,65 @@
             <!-- STATE 3B: DUPLICATE CHECK-IN PREVENTED -->
             <div
               v-else-if="lastResult && lastResult.success && lastResult.data?.already_checked_in"
-              class="rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 via-blue-50/40 to-white p-5 space-y-4 shadow-sm"
+              class="rounded-[19px] border border-[#e7ded4] bg-[var(--warm)] p-5 space-y-4 shadow-xs"
             >
               <div class="flex items-start gap-3">
-                <div class="p-2.5 rounded-xl bg-sky-600 text-white shadow-sm shadow-sky-600/30 shrink-0">
-                  <CheckCheck :size="26" />
+                <div class="p-2.5 rounded-[12px] bg-[var(--deep)] text-white shadow-xs shrink-0">
+                  <CheckCheck :size="24" />
                 </div>
                 <div class="min-w-0">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-sky-600 text-white uppercase tracking-wider">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--deep)] text-white uppercase tracking-wider">
                     Sudah Check-In Sebelumnya
                   </span>
-                  <h4 class="text-xl font-bold text-slate-900 mt-1 truncate">
+                  <h4 class="text-xl font-bold font-['Manrope'] text-[var(--deep)] mt-1 truncate">
                     {{ lastResultPatientName || 'Pasien AntriSehat' }}
                   </h4>
                 </div>
               </div>
 
               <!-- Ticket Info -->
-              <div class="p-4 rounded-xl bg-white border border-sky-200 shadow-xs space-y-3">
+              <div class="p-4 rounded-[14px] bg-white border border-[#e7ded4] shadow-xs space-y-3">
                 <div class="flex items-center justify-between">
                   <div>
-                    <span class="text-xs text-slate-500 font-medium">Nomor Antrean Anda</span>
-                    <p class="text-4xl font-black text-sky-700 tracking-tight">
+                    <span class="text-xs text-[var(--muted)] font-medium">Nomor Antrean Anda</span>
+                    <p class="text-5xl font-black font-['Manrope'] text-[var(--deep)] tracking-tight">
                       {{ lastResult.data?.queue_code || 'A-001' }}
                     </p>
                   </div>
                   <div class="text-right">
-                    <span class="text-xs text-slate-500 font-medium">Status</span>
+                    <span class="text-xs text-[var(--muted)] font-medium">Status</span>
                     <div>
-                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
-                        <span class="w-1.5 h-1.5 rounded-full bg-sky-600"></span>
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#f6f8f5] text-[var(--deep)] border border-[var(--line)]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[var(--teal)]"></span>
                         {{ formatStatus(lastResult.data?.status) }}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                <div class="pt-3 border-t border-[var(--line)] space-y-2 text-xs">
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">ID Pasien:</span>
-                    <span class="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 truncate max-w-[210px]">
+                    <span class="text-[var(--muted)]">ID Pasien:</span>
+                    <span class="font-mono font-bold text-[var(--deep)] bg-[#f6f8f5] px-2 py-0.5 rounded border border-[var(--line)] truncate max-w-[210px]">
                       {{ lastResultPatientId || lastResult.data?.patient_id || '-' }}
                     </span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Nama Lengkap:</span>
-                    <span class="font-bold text-slate-900">{{ lastResultPatientName || '-' }}</span>
+                    <span class="text-[var(--muted)]">Nama Lengkap:</span>
+                    <span class="font-bold text-[#243e40]">{{ lastResultPatientName || '-' }}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Poli Tujuan:</span>
-                    <span class="font-semibold text-slate-800">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
+                    <span class="text-[var(--muted)]">Poli Tujuan:</span>
+                    <span class="font-semibold text-[#243e40]">{{ lastResultPolyclinic || 'Poli Umum' }}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Waktu Check-In Awal:</span>
-                    <span class="font-semibold text-slate-800">{{ lastResultCheckInTime }} WIB</span>
+                    <span class="text-[var(--muted)]">Waktu Check-In Awal:</span>
+                    <span class="font-semibold text-[#243e40]">{{ lastResultCheckInTime }} WIB</span>
                   </div>
                 </div>
 
-                <div class="p-2.5 rounded-xl bg-sky-100/60 text-xs text-sky-900 flex items-start gap-2">
-                  <Info :size="15" class="text-sky-700 shrink-0 mt-0.5" />
+                <div class="p-3 rounded-[12px] bg-white border border-[#e7ded4] text-xs text-[var(--deep)] flex items-start gap-2">
+                  <Info :size="15" class="text-[var(--coral)] shrink-0 mt-0.5" />
                   <p><strong>Tidak Duplikat:</strong> Anda sudah terdaftar dan nomor antrean Anda tetap aktif. Silakan langsung menuju ruang tunggu.</p>
                 </div>
               </div>
@@ -603,40 +506,40 @@
             <!-- STATE 4: ERROR / FAILED -->
             <div
               v-else-if="lastResult && !lastResult.success"
-              class="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 via-orange-50/20 to-white p-5 space-y-4 shadow-sm"
+              class="rounded-[19px] border border-[#f7d6cf] bg-[#fdf0ed] p-5 space-y-4 shadow-xs"
             >
               <div class="flex items-start gap-3">
-                <div class="p-2.5 rounded-xl bg-rose-600 text-white shadow-sm shrink-0">
-                  <XCircle :size="26" />
+                <div class="p-2.5 rounded-[12px] bg-[var(--coral)] text-white shadow-xs shrink-0">
+                  <XCircle :size="24" />
                 </div>
                 <div>
-                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-600 text-white uppercase tracking-wider">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--coral)] text-white uppercase tracking-wider">
                     Check-In Gagal
                   </span>
-                  <h4 class="text-base font-bold text-slate-900 mt-1">
+                  <h4 class="text-base font-bold font-['Manrope'] text-[var(--deep)] mt-1">
                     {{ lastResult.message || 'Verifikasi Tiket Tidak Berhasil' }}
                   </h4>
                 </div>
               </div>
 
-              <div class="p-3.5 rounded-xl bg-white border border-rose-200 text-xs space-y-1.5">
-                <div class="flex items-center justify-between text-slate-600">
+              <div class="p-3.5 rounded-[12px] bg-white border border-[#f7d6cf] text-xs space-y-1.5">
+                <div class="flex items-center justify-between text-[var(--muted)]">
                   <span>Kode Masalah:</span>
-                  <span class="font-mono font-bold text-rose-700">{{ lastResult.code || 'BAD_REQUEST' }}</span>
+                  <span class="font-mono font-bold text-[var(--coral)]">{{ lastResult.code || 'BAD_REQUEST' }}</span>
                 </div>
-                <div class="flex items-center justify-between text-slate-600">
+                <div class="flex items-center justify-between text-[var(--muted)]">
                   <span>Token Terpindai:</span>
-                  <span class="font-mono text-slate-800 truncate max-w-[200px]">{{ lastScannedToken }}</span>
+                  <span class="font-mono text-[#243e40] truncate max-w-[200px]">{{ lastScannedToken }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Bottom Dismiss Button -->
-          <div v-if="lastResult" class="pt-3 border-t border-slate-100 flex gap-2">
+          <div v-if="lastResult" class="pt-3 border-t border-[var(--line)] flex gap-2">
             <button
               type="button"
-              class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              class="w-full py-2.5 px-5 rounded-full text-xs font-bold bg-[#f6f8f5] hover:bg-[#eaf6f2] text-[var(--deep)] border border-[var(--line)] transition-colors"
               @click="resetLastResult"
             >
               Tutup & Siapkan Pindai Berikutnya

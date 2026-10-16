@@ -321,10 +321,6 @@
             </span>
             <ShieldCheck :size="30" />
           </label>
-          <div class="info-note">
-            <ShieldCheck :size="17" /> Data pribadi Anda hanya digunakan untuk
-            pelayanan kesehatan.
-          </div>
         </template>
 
         <!-- Step 2: Layanan & Jadwal -->
@@ -868,24 +864,23 @@ async function handleSubmit() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #e6f7f6 0%, #f0faf9 100%);
-  color: var(--deep, #195a5f);
-  border: 1.5px solid var(--teal, #12b8b0);
-  border-radius: 12px;
-  padding: 9px 18px;
+  background: #ffffff;
+  color: var(--deep);
+  border: 1px solid var(--teal);
+  border-radius: 50px;
+  padding: 10px 18px;
   font-size: 13.5px;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(18, 184, 176, 0.15);
+  transition: transform 0.2s, background 0.2s, color 0.2s;
+  box-shadow: 0 5px 15px #195a5f10;
   white-space: nowrap;
-  shrink: 0;
+  flex-shrink: 0;
 }
 .scan-ktp-btn:hover {
-  background: var(--teal, #12b8b0);
+  background: var(--deep);
   color: #fff;
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 14px rgba(18, 184, 176, 0.35);
+  transform: translateY(-2px);
 }
 .scan-ktp-btn:active {
   transform: translateY(0);
@@ -894,15 +889,15 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ebfbf9;
-  border: 1.5px solid #a7ebd8;
-  color: #0b6860;
-  border-radius: 12px;
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
+  color: var(--deep);
+  border-radius: 14px;
   padding: 12px 18px;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 550;
   margin-bottom: 22px;
-  box-shadow: 0 2px 10px rgba(18, 184, 176, 0.08);
+  box-shadow: 0 4px 12px rgba(25, 90, 95, 0.05);
   animation: slideDown 0.3s ease-out;
 }
 @keyframes slideDown {
@@ -931,10 +926,10 @@ async function handleSubmit() {
 /* Shift Section Styling - Clean, Professional Clinic UX */
 .shift-section {
   margin-top: 24px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  padding: 22px;
 }
 .shift-heading-row {
   display: flex;
@@ -944,14 +939,14 @@ async function handleSubmit() {
 }
 .shift-subtext {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   margin: 0 0 16px 0;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 .shift-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 15px;
   margin-bottom: 18px;
 }
 @media (max-width: 820px) {
@@ -961,33 +956,33 @@ async function handleSubmit() {
 }
 .shift-card {
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 10px;
   position: relative;
 }
 .shift-card:hover:not(:disabled) {
-  border-color: #0f766e;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.08);
+  border-color: var(--teal);
+  box-shadow: 0 10px 25px #195a5f08;
   transform: translateY(-2px);
 }
 .shift-card.selected {
-  border-color: #0f766e;
+  border-color: var(--teal);
   background: #ffffff;
-  box-shadow: 0 0 0 2px #0f766e;
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.25);
 }
 .shift-card.full,
 .shift-card:disabled {
-  opacity: 0.6;
-  background: #f1f5f9;
+  opacity: 0.55;
+  background: #f6f8f5;
   cursor: not-allowed;
-  border-color: #e2e8f0;
+  border-color: var(--line);
 }
 .shift-card-top {
   display: flex;
@@ -996,74 +991,74 @@ async function handleSubmit() {
 }
 .shift-name-tag {
   font-size: 12px;
-  font-weight: 700;
-  color: #1e293b;
-  background: #f1f5f9;
+  font-weight: 650;
+  color: var(--deep);
+  background: #f0f4f2;
   padding: 3px 8px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 .status-tag-avail {
   font-size: 11px;
   font-weight: 600;
-  color: #0f766e;
-  background: #f0fdfa;
+  color: #2b7064;
+  background: #eaf6f2;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 .status-tag-full {
   font-size: 11px;
-  font-weight: 700;
-  color: #dc2626;
-  background: #fee2e2;
+  font-weight: 650;
+  color: var(--coral);
+  background: #fdf0ed;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 .shift-time-main {
   display: flex;
   align-items: center;
   gap: 7px;
   font-size: 15px;
-  color: #0f172a;
+  color: #243e40;
 }
 .shift-time-main strong {
-  font-weight: 800;
+  font-weight: 750;
 }
 .time-icon {
-  color: #0f766e;
+  color: var(--teal);
 }
 .shift-doctor-line {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 12.5px;
-  color: #475569;
+  color: var(--muted);
   font-weight: 500;
 }
 .shift-card-bottom {
   margin-top: 2px;
   padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .est-tag {
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--muted);
 }
 .est-tag strong {
-  color: #0f766e;
+  color: var(--deep);
   font-weight: 700;
 }
 .check-icon {
-  color: #0f766e;
+  color: var(--teal);
 }
 
 /* Appointment Summary Box */
 .shift-summary-box {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px 18px;
   display: flex;
@@ -1088,44 +1083,44 @@ async function handleSubmit() {
 }
 .summary-item .label {
   font-size: 11px;
-  color: #64748b;
+  color: var(--muted);
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 .summary-item .val {
   font-size: 15px;
-  color: #0f172a;
+  color: #243e40;
   font-weight: 700;
 }
 .summary-item .val.highlight {
-  color: #0f766e;
+  color: var(--deep);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 750;
 }
 .summary-item.arrival-warning .early-val {
-  color: #b45309;
+  color: var(--coral);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 750;
 }
 .summary-item small {
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--muted);
 }
 .summary-notice-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fffbeb;
-  border: 1px solid #fef3c7;
-  border-radius: 8px;
-  padding: 8px 12px;
+  background: var(--warm);
+  border: 1px solid #e7ded4;
+  border-radius: 9px;
+  padding: 10px 14px;
   font-size: 12px;
-  color: #92400e;
-  line-height: 1.4;
+  color: var(--deep);
+  line-height: 1.5;
 }
 .notice-icon {
-  color: #d97706;
+  color: var(--coral);
 }
 
 /* Date Quick Picker & Restriction Styles */
@@ -1137,13 +1132,13 @@ async function handleSubmit() {
   margin-bottom: 8px;
 }
 .field-subtitle-note {
-  font-size: 12px;
-  color: #0f766e;
+  font-size: 11.5px;
+  color: var(--deep);
   font-weight: 600;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #eaf6f2;
+  border: 1px solid #c8e8df;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 50px;
 }
 .date-quick-picker {
   display: grid;
@@ -1164,39 +1159,39 @@ async function handleSubmit() {
   text-align: left;
   padding: 12px 14px;
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  border: 1px solid var(--line);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s;
 }
 .date-card:hover {
-  border-color: #0d9488;
-  background: #f0fdfa;
+  border-color: var(--teal);
+  background: #f6fbf9;
 }
 .date-card.selected {
-  border-color: #0f766e;
-  background: #f0fdfa;
-  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+  border-color: var(--teal);
+  background: #f6fbf9;
+  box-shadow: 0 0 0 2px rgba(18, 184, 176, 0.2);
 }
 .date-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: #243e40;
 }
 .date-card.selected .date-card-title {
-  color: #0f766e;
+  color: var(--deep);
 }
 .date-card-day {
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--muted);
   margin-top: 2px;
 }
 .date-check-icon {
   position: absolute;
   top: 12px;
   right: 12px;
-  color: #0f766e;
+  color: var(--teal);
 }
 .date-manual-input-wrap {
   display: flex;
@@ -1209,23 +1204,26 @@ async function handleSubmit() {
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
-  color: #475569;
+  color: var(--muted);
   font-weight: 500;
 }
 .date-input-control {
-  padding: 6px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
   font-size: 13px;
   outline: none;
   background: #ffffff;
+  color: #243e40;
+  transition: border-color 0.2s, outline 0.2s;
 }
 .date-input-control:focus {
-  border-color: #0f766e;
+  border-color: var(--teal);
+  outline: 2px solid #12b8b030;
 }
 .date-restriction-note {
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--muted);
   font-style: italic;
 }
 </style>
